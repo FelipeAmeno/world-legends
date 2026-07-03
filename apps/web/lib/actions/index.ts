@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Barrel re-export for all Server Actions.
  * Import from '@/lib/actions' — each sub-module groups by domain.
