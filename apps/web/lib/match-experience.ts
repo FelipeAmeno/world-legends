@@ -247,11 +247,24 @@ export function buildMomentumCurve(events: RichEvent[]): MomentumPoint[] {
 // ─── Função principal: prepare de experiência ─────────────────────────────────
 
 export type MatchExperienceData = {
-  display:   MatchDisplay;
-  rich:      RichEvent[];
-  momentum:  MomentumPoint[];
-  opponent:  MatchOpponent;
+  display:    MatchDisplay;
+  rich:       RichEvent[];
+  momentum:   MomentumPoint[];
+  opponent:   MatchOpponent;
+  matchId:    string;
+  newBalance: number;
 };
+
+export function buildMatchExperienceData(
+  display:    MatchDisplay,
+  opponent:   MatchOpponent,
+  matchId:    string,
+  newBalance: number,
+): MatchExperienceData {
+  const rich     = buildRichEvents(display.events);
+  const momentum = buildMomentumCurve(rich);
+  return { display, rich, momentum, opponent, matchId, newBalance };
+}
 
 export function prepareMatchExperience(
   opponentId: string,

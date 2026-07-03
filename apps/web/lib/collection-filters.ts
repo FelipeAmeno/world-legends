@@ -16,25 +16,29 @@ export type SortField = 'overall' | 'name' | 'rarity' | 'era' | 'position';
 export type SortDir   = 'asc' | 'desc';
 
 export type CollectionFilters = {
-  search:    string;          // nome (debounced)
-  positions: string[];        // multi
-  rarities:  string[];        // multi
-  eras:      string[];        // multi
-  countries: string[];        // multi (nationality code)
-  favorites: boolean;         // só favoritas
-  sortField: SortField;
-  sortDir:   SortDir;
+  search:     string;          // nome (debounced)
+  positions:  string[];        // multi
+  rarities:   string[];        // multi
+  eras:       string[];        // multi
+  countries:  string[];        // multi (nationality code)
+  favorites:  boolean;         // só favoritas
+  overallMin: number;          // overall mínimo (0–99)
+  overallMax: number;          // overall máximo (0–99)
+  sortField:  SortField;
+  sortDir:    SortDir;
 };
 
 export const DEFAULT_FILTERS: CollectionFilters = {
-  search:    '',
-  positions: [],
-  rarities:  [],
-  eras:      [],
-  countries: [],
-  favorites: false,
-  sortField: 'overall',
-  sortDir:   'desc',
+  search:     '',
+  positions:  [],
+  rarities:   [],
+  eras:       [],
+  countries:  [],
+  favorites:  false,
+  overallMin: 0,
+  overallMax: 99,
+  sortField:  'overall',
+  sortDir:    'desc',
 };
 
 // ─── Rarity order ─────────────────────────────────────────────────────────────
@@ -118,6 +122,14 @@ export function filterAndSort(
   // Favorites only
   if (filters.favorites) {
     result = result.filter(c => favorites.has(c.cardId));
+  }
+
+  // Overall range
+  if (filters.overallMin > 0) {
+    result = result.filter(c => c.overall >= filters.overallMin);
+  }
+  if (filters.overallMax < 99) {
+    result = result.filter(c => c.overall <= filters.overallMax);
   }
 
   // Sort

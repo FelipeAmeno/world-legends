@@ -282,3 +282,10 @@ export function getPoolCards(allCards: CollectionCard[], state: SBState): Collec
   state.bench.forEach(c => c && usedIds.add(c.cardId));
   return allCards.filter(c => !usedIds.has(c.cardId));
 }
+
+export function getAutoSuggest(position: string, pool: CollectionCard[], max = 5): CollectionCard[] {
+  return pool
+    .filter((c) => getPositionCompat(c.position, position as Parameters<typeof getPositionCompat>[1]) > 0)
+    .sort((a, b) => b.overall - a.overall)
+    .slice(0, max);
+}
