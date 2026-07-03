@@ -258,6 +258,21 @@ export const ALL_MISSION_DEFS: readonly MissionDef[] = [
   ...LIFETIME_DEFS,
 ];
 
+export const ACHIEVEMENT_IDS: readonly string[] = LIFETIME_DEFS.map((d) => d.id);
+
+export function dailyPeriodKey(date = new Date()): string {
+  return `daily:${date.toISOString().slice(0, 10)}`;
+}
+
+export function weeklyPeriodKey(date = new Date()): string {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayOfWeek = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayOfWeek);
+  const year = d.getUTCFullYear();
+  const week = Math.ceil(((d.getTime() - Date.UTC(year, 0, 1)) / 86400000 + 1) / 7);
+  return `weekly:${year}-W${String(week).padStart(2, '0')}`;
+}
+
 // ─── LiveOps: fetchMissionDefs ────────────────────────────────────────────────
 
 /**

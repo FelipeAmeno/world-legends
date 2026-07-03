@@ -45,7 +45,7 @@ const CONTRACT_STATUS = (c: number) =>
 
 export function CardDetailModal({ card, isFav, isComparing, onClose, onFav, onCompare }: Props) {
   const visual = RARITY_VISUAL[card.rarityCode];
-  const status = CONTRACT_STATUS(card.contracts);
+  const status = CONTRACT_STATUS(10);
 
   return (
     <>
@@ -212,14 +212,14 @@ export function CardDetailModal({ card, isFav, isComparing, onClose, onFav, onCo
             <section className="grid grid-cols-3 gap-3">
               <StatusCard
                 label="Contratos"
-                value={card.contracts}
+                value={10}
                 sub={status.label}
                 valueColor={status.color}
               />
               <StatusCard
                 label="Evolução"
-                value={`+${card.evolution}`}
-                sub={`Nível ${card.evolution}`}
+                value="+0"
+                sub="Nível 0"
                 valueColor="text-gold"
               />
               <StatusCard

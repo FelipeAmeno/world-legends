@@ -393,6 +393,23 @@ export function getCollection(): CollectionCard[] {
   });
 }
 
+/** Indexed map for O(1) lookup by cardId — used by pack-opening and server actions. */
+export function getCollectionMap(): Map<string, CollectionCard> {
+  const all = getCollection();
+  return new Map(all.map((c) => [c.cardId, c]));
+}
+
+/** Enriches DB user-card rows with catalog data, preserving order. */
+export function enrichWithUserCards(
+  rows: ReadonlyArray<{ cardId: string; userCardId: string; acquiredAt: string }>,
+): CollectionCard[] {
+  const catalog = getCollectionMap();
+  return rows.flatMap((row) => {
+    const card = catalog.get(row.cardId);
+    return card ? [card] : [];
+  });
+}
+
 /** Retorna os metadados de todas as raridades (para filtros e badges). */
 export function getAvailableRarities(): readonly Rarity[] {
   return getAllRarities();
