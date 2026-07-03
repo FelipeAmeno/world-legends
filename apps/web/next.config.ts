@@ -144,16 +144,17 @@ const withAnalyzer = withBundleAnalyzer({
 export default withSentryConfig(
   withAnalyzer(nextConfig),
   {
-    org:     process.env.SENTRY_ORG     ?? 'world-legends',
-    project: process.env.SENTRY_PROJECT ?? 'world-legends-web',
+    org:       process.env.SENTRY_ORG     ?? 'world-legends',
+    project:   process.env.SENTRY_PROJECT ?? 'world-legends-web',
+    authToken: process.env.SENTRY_AUTH_TOKEN,
     silent:  true,
-    disableLogger:    true,
-    tunnelRoute:      '/monitoring',
+    disableLogger: true,
+    tunnelRoute:   '/monitoring',
     autoInstrumentServerFunctions: true,
     autoInstrumentMiddleware:      true,
     autoInstrumentAppDirectory:    true,
     sourcemaps: { disable: true },
-    automaticallyCreateRelease: false,
-    telemetry: false,
+    release:    { create: false, finalize: false },
+    telemetry:  false,
   },
 );
