@@ -1,0 +1,133 @@
+import { OvrDisplay } from '@/components/ui/OvrDisplay';
+import { RarityBadge } from '@/components/ui/RarityBadge';
+import { RARITY_VISUAL } from '@/lib/collection-data';
+import type { DrawnCard } from '@/lib/pack-logic';
+import type { PackDefinitionUI } from '@/lib/pack-logic';
+
+type Props = {
+  cards: DrawnCard[];
+  pack: PackDefinitionUI;
+  onOpenAnother: () => void;
+  onBack: () => void;
+};
+
+export function RevealSummary({ cards, pack, onOpenAnother, onBack }: Props) {
+  const best = [...cards].sort((a, b) => b.card.overall - a.card.overall)[0]!;
+  const avgOvr = Math.round(cards.reduce((s, c) => s + c.card.overall, 0) / cards.length);
+  const rarities = cards.map((c) => c.card.rarityCode);
+  const hasLegendary = rarities.some(
+    (r) => r === 'legendary' || r === 'ultra' || r === 'world_cup_hero',
+  );
+
+  return (
+    <div className="space-y-5 animate-[slideUp_0.4s_ease-out]">
+      {/* Header */}
+      <div className="text-center">
+        {hasLegendary ? (
+          <>
+            <p className="font-display text-4xl gold-text tracking-wider">INCRÍVEL! 🎉</p>
+            <p className="text-muted text-sm mt-1">Você encontrou cartas especiais</p>
+          </>
+        ) : (
+          <>
+            <p className="font-display text-3xl text-parchment tracking-wider">PACK ABERTO</p>
+            <p className="text-muted text-sm mt-1">Cartas adicionadas à coleção</p>
+          </>
+        )}
+      </div>
+
+      {/* Best card em destaque */}
+      <div
+        className="flex items-center gap-4 p-4 rounded-2xl border"
+        style={{
+          background: `linear-gradient(135deg, ${pack.gradientFrom}, ${pack.gradientTo})`,
+          borderColor: pack.borderColor,
+          boxShadow: `0 0 24px ${pack.glowColor}`,
+        }}
+      >
+        <div
+          className={[
+            'w-16 h-20 rounded-xl border-2 flex flex-col items-center justify-center',
+            RARITY_VISUAL[best.card.rarityCode].bgClass,
+            RARITY_VISUAL[best.card.rarityCode].borderClass,
+            RARITY_VISUAL[best.card.rarityCode].glowClass,
+          ].join(' ')}
+        >
+          <OvrDisplay value={best.card.overall} size="md" />
+          <p
+            className={`text-[7px] font-bold mt-0.5 ${RARITY_VISUAL[best.card.rarityCode].textClass}`}
+          >
+            {best.card.position}
+          </p>
+        </div>
+        <div>
+          <p className="text-muted text-[10px] uppercase tracking-widest">Melhor carta</p>
+          <p className="text-parchment font-bold text-lg leading-tight">{best.card.displayName}</p>
+          <div className="mt-1">
+            <RarityBadge code={best.card.rarityCode} label={best.card.rarityLabel} size="sm" />
+          </div>
+        </div>
+        <div className="ml-auto text-right">
+          <p className="text-muted text-[9px]">OVR médio</p>
+          <OvrDisplay value={avgOvr} size="md" />
+        </div>
+      </div>
+
+      {/* Grade completa das cartas */}
+      <div className="bg-surface border border-border rounded-xl p-4">
+        <p className="text-muted text-[10px] uppercase tracking-wider mb-3">Todas as cartas</p>
+        <div className="flex flex-wrap gap-2">
+          {cards.map((drawn, i) => {
+            const v = RARITY_VISUAL[drawn.card.rarityCode];
+            return (
+              <div
+                key={i}
+                className={[
+                  'flex items-center gap-2 px-2.5 py-1.5 rounded-lg border',
+                  v.bgClass,
+                  v.borderClass,
+                ].join(' ')}
+              >
+                <span className={`font-display text-base ${v.textClass}`}>
+                  {drawn.card.overall}
+                </span>
+                <div>
+                  <p className="text-parchment text-[10px] font-medium leading-tight">
+                    {drawn.card.displayName}
+                  </p>
+                  <p className={`text-[8px] font-bold ${v.textClass}`}>
+                    {drawn.card.rarityCode === 'world_cup_hero' ? 'WCH' : drawn.card.rarityLabel}
+                    {drawn.wasForced && ' ★'}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Ações */}
+      <div className="flex gap-3">
+        <button
+          onClick={onBack}
+          className="px-5 py-3 rounded-xl border border-border text-muted text-sm
+                     hover:text-parchment hover:bg-white/5 transition-all"
+        >
+          ← Loja
+        </button>
+        <button
+          onClick={onOpenAnother}
+          className="flex-1 py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.02]"
+          style={{
+            background: `linear-gradient(135deg, ${pack.gradientFrom.replace('1a', '2a')}, ${pack.borderColor.replace(/[\d.]+\)$/, '0.3)')})`,
+            border: `1px solid ${pack.borderColor}`,
+            color: pack.borderColor.replace(/[\d.]+\)$/, '1)'),
+            boxShadow: `0 0 16px ${pack.glowColor}`,
+          }}
+        >
+          📦 Abrir Outro {pack.name}
+        </button>
+      </div>
+    </div>
+  );
+}

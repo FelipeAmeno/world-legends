@@ -1,0 +1,156 @@
+'use client';
+
+import type { DrawnCard, PackDefinitionUI } from '@/lib/pack-logic';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useCallback, useEffect, useState } from 'react';
+import { GoatReveal } from './GoatReveal';
+import { RevealedCard } from './RevealedCard';
+
+type Props = {
+  cards: DrawnCard[];
+  pack: PackDefinitionUI;
+  onAllFlipped: () => void;
+};
+
+export function CardRevealScene({ cards, pack, onAllFlipped }: Props) {
+  const [flipped, setFlipped] = useState<Set<number>>(new Set());
+  const [showRevAll, setShowRevAll] = useState(false);
+  const [goatIndex, setGoatIndex] = useState<number | null>(null);
+  const [goatDone, setGoatDone] = useState(false);
+
+  // Checar se há uma GOAT card
+  const goatCard = cards.find((c) => c.effect === 'world_cup_hero');
+  const goatIdx = goatCard ? cards.indexOf(goatCard) : null;
+
+  // Mostrar botão "Revelar tudo" após 1.5s
+  useEffect(() => {
+    const t = setTimeout(() => setShowRevAll(true), 1500);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Detectar conclusão
+  useEffect(() => {
+    const allFlipped = flipped.size === cards.length;
+    const goatPending = goatIdx !== null && !goatDone;
+    if (allFlipped && !goatPending) onAllFlipped();
+  }, [flipped, cards.length, goatIdx, goatDone, onAllFlipped]);
+
+  const handleFlip = useCallback(
+    (idx: number) => {
+      // Carta GOAT → mostrar tela especial
+      if (idx === goatIdx && !goatDone) {
+        setGoatIndex(idx);
+        return;
+      }
+      setFlipped((prev) => new Set([...prev, idx]));
+    },
+    [goatIdx, goatDone],
+  );
+
+  const handleRevealAll = useCallback(() => {
+    setFlipped(new Set(cards.map((_, i) => i)));
+    if (goatIdx !== null && !goatDone) setGoatIndex(goatIdx);
+  }, [cards, goatIdx, goatDone]);
+
+  const handleGoatComplete = useCallback(() => {
+    setGoatDone(true);
+    setGoatIndex(null);
+    setFlipped((prev) => new Set([...prev, goatIdx!]));
+  }, [goatIdx]);
+
+  const remaining = cards.length - flipped.size;
+
+  return (
+    <>
+      {/* Tela de revelação GOAT */}
+      <AnimatePresence>
+        {goatIndex !== null && (
+          <GoatReveal card={cards[goatIndex]!} onComplete={handleGoatComplete} />
+        )}
+      </AnimatePresence>
+
+      {/* Cena principal */}
+      <div className="min-h-screen flex flex-col items-center px-4 py-6 gap-6">
+        {/* Header */}
+        <motion.div
+          className="text-center"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <p className="font-display text-2xl text-parchment tracking-wider">
+            {pack.name.toUpperCase()}
+          </p>
+          <p className="text-muted text-xs mt-0.5">
+            {remaining > 0
+              ? `${remaining} carta${remaining > 1 ? 's' : ''} para revelar`
+              : '✨ Pack revelado!'}
+          </p>
+        </motion.div>
+
+        {/* Background glow pulsante */}
+        <motion.div
+          className="fixed inset-0 pointer-events-none -z-10"
+          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
+          style={{
+            background: `radial-gradient(ellipse 60% 40% at 50% 50%, ${pack.glowColor.replace(/[\d.]+\)$/, '0.12)')}, transparent)`,
+          }}
+        />
+
+        {/* Grade de cartas */}
+        <div className="flex flex-wrap justify-center gap-4 max-w-sm">
+          {cards.map((drawn, i) => (
+            <motion.div
+              key={drawn.card.cardId + i}
+              initial={{ opacity: 0, y: 80, scale: 0.6, rotateX: 30 }}
+              animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+              transition={{
+                type: 'spring',
+                stiffness: 200,
+                damping: 18,
+                delay: 0.3 + i * 0.12,
+              }}
+            >
+              <RevealedCard drawn={drawn} flipped={flipped.has(i)} onFlip={() => handleFlip(i)} />
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Barra de progresso */}
+        <motion.div
+          className="w-56 h-1.5 rounded-full overflow-hidden"
+          style={{ background: 'rgba(255,255,255,0.06)' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+        >
+          <motion.div
+            className="h-full rounded-full"
+            style={{ background: `linear-gradient(90deg, ${pack.glowColor}, ${pack.borderColor})` }}
+            initial={{ width: '0%' }}
+            animate={{ width: `${(flipped.size / cards.length) * 100}%` }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+          />
+        </motion.div>
+
+        {/* Botão Revelar Tudo */}
+        <AnimatePresence>
+          {showRevAll && remaining > 1 && (
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              onClick={handleRevealAll}
+              className="glass rounded-xl px-6 py-2.5 text-xs font-bold text-parchment
+                         hover:text-gold transition-colors border border-white/10
+                         hover:border-gold/30"
+            >
+              Revelar todas →
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
+    </>
+  );
+}

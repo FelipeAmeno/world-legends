@@ -1,0 +1,133 @@
+# ══════════════════════════════════════════════════════════════
+# World Legends — .gitignore
+# Stack: Turborepo · pnpm · Next.js · TypeScript · Supabase · Vercel
+# ══════════════════════════════════════════════════════════════
+
+# ── Dependencies ──────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# ── Build Outputs ─────────────────────────────────────────────
+dist/
+build/
+out/
+.output/
+storybook-static/
+
+# ── Next.js ───────────────────────────────────────────────────
+.next/
+next-env.d.ts
+
+# ── TypeScript ────────────────────────────────────────────────
+*.tsbuildinfo
+
+# ── Turborepo ─────────────────────────────────────────────────
+.turbo/
+**/.turbo/
+
+# ── Test & Coverage ───────────────────────────────────────────
+coverage/
+.nyc_output/
+*.lcov
+
+# ── Environment & Secrets ─────────────────────────────────────
+# Manter apenas *.example — nunca commitar credenciais reais
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+.env.staging
+.env.staging.local
+.env.*.local
+
+# ── Supabase ──────────────────────────────────────────────────
+supabase/.temp/
+supabase/.branches/
+supabase/functions/.eszip/
+
+# ── Vercel ────────────────────────────────────────────────────
+.vercel/
+.vc-config.json
+
+# ── Cache & Temp ──────────────────────────────────────────────
+.cache/
+*.cache
+tmp/
+temp/
+
+# ── Logs ──────────────────────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ── Archives & Binaries ───────────────────────────────────────
+*.tar
+*.tar.gz
+*.tar.zst
+*.tgz
+*.zip
+
+# ── VS Code ───────────────────────────────────────────────────
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# ── JetBrains ─────────────────────────────────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+.idea_modules/
+
+# ── macOS ─────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Icon?
+
+# ── Linux ─────────────────────────────────────────────────────
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# ── Windows ───────────────────────────────────────────────────
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ── Editor Swap / Backup ──────────────────────────────────────
+*.swp
+*.swo
+*.bak
+*.orig
+*.rej
+
+# ── Sentry ────────────────────────────────────────────────────
+.sentryclirc
+
+# ── Expo / React Native ───────────────────────────────────────
+.expo/
+.expo-shared/
+
+# ── Certificados / Chaves ─────────────────────────────────────
+*.pem
+*.p12
+*.key
+*.crt
+*.pfx
