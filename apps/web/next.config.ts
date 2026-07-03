@@ -141,24 +141,19 @@ const withAnalyzer = withBundleAnalyzer({
 
 // ─── Sentry ────────────────────────────────────────────────────────────────────
 
-const hasSentryCredentials = Boolean(process.env.SENTRY_AUTH_TOKEN);
-
 export default withSentryConfig(
   withAnalyzer(nextConfig),
   {
     org:     process.env.SENTRY_ORG     ?? 'world-legends',
     project: process.env.SENTRY_PROJECT ?? 'world-legends-web',
     silent:  true,
-    hideSourceMaps:  true,
-    disableLogger:   true,
-    widenClientFileUpload:         hasSentryCredentials,
-    tunnelRoute:                   '/monitoring',
-    automaticallyCreateRelease:    hasSentryCredentials,
+    disableLogger:    true,
+    tunnelRoute:      '/monitoring',
     autoInstrumentServerFunctions: true,
     autoInstrumentMiddleware:      true,
     autoInstrumentAppDirectory:    true,
-    sourcemaps: {
-      disable: !hasSentryCredentials,
-    },
+    sourcemaps: { disable: true },
+    automaticallyCreateRelease: false,
+    telemetry: false,
   },
 );
