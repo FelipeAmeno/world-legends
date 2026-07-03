@@ -155,7 +155,7 @@ export class SupabaseMatchRepository implements IMatchRepository {
         description:             e.description,
         meta:                    e.meta as import('../../adapters/database.types').Json,
       }));
-      const { error: evErr } = await (this.db.from('match_events' as unknown as 'matches').insert(events as unknown as Record<string, unknown>) as unknown as Promise<{ error: { code?: string; message?: string } | null }>);
+      const { error: evErr } = (await (this.db as unknown as { from(t: string): { insert(r: unknown[]): Promise<{ error: { code?: string; message?: string } | null }> } }).from('match_events').insert(events)) as { error: { code?: string; message?: string } | null };
       if (evErr) return Err(dbErr(evErr));
     }
 

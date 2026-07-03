@@ -9,7 +9,7 @@
  * Aqui, Porta e Adapter vivem no mesmo arquivo por conveniência —
  * em produção, a Porta seria importada de @world-legends/collection etc.
  */
-import type { DbClient, TableRow } from '../../adapters/supabase-client';
+import type { DbClient, TableRow, TableUpdate } from '../../adapters/supabase-client';
 import { Err, Ok, type Result } from '@world-legends/shared';
 
 // ─── Tipos de domínio (aqui simplificados — em prod vêm de packages de domínio)
@@ -140,7 +140,7 @@ export class SupabaseProfileRepository implements IProfileRepository {
 
     const { data, error } = await this.db
       .from('profiles')
-      .update(patch)
+      .update(patch as TableUpdate<'profiles'>)
       .eq('id', id)
       .select('*')
       .single();
@@ -149,7 +149,8 @@ export class SupabaseProfileRepository implements IProfileRepository {
   }
 
   async creditSoftCurrency(id: string, amount: number): Promise<Result<number, DbError>> {
-    const { data, error } = await this.db.rpc('credit_soft_currency', {
+    type AnyRpc = { rpc(fn: string, args: Record<string, unknown>): Promise<{ data: unknown; error: { code?: string; message?: string } | null }> };
+    const { data, error } = await (this.db as unknown as AnyRpc).rpc('credit_soft_currency', {
       p_profile_id: id, p_amount: amount,
     });
     if (error) return Err(dbErr(error));
