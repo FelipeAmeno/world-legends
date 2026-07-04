@@ -338,10 +338,12 @@ alter table pity_counters     enable row level security;
 -- =============================================================================
 
 -- Qualquer autenticado pode ver username/avatar/elo (campo social)
+DROP POLICY IF EXISTS "profiles_public_read" ON profiles;
 create policy "profiles_public_read" on profiles
   for select using (true);
 
 -- Usuário só atualiza a própria linha
+DROP POLICY IF EXISTS "profiles_own_update" ON profiles;
 create policy "profiles_own_update" on profiles
   for update using (auth.uid() = id);
 
@@ -349,15 +351,19 @@ create policy "profiles_own_update" on profiles
 -- FRIENDSHIPS — só os participantes veem e gerenciam
 -- =============================================================================
 
+DROP POLICY IF EXISTS "friendships_participant_read" ON friendships;
 create policy "friendships_participant_read" on friendships
   for select using (auth.uid() = requester_id or auth.uid() = addressee_id);
 
+DROP POLICY IF EXISTS "friendships_requester_insert" ON friendships;
 create policy "friendships_requester_insert" on friendships
   for insert with check (auth.uid() = requester_id);
 
+DROP POLICY IF EXISTS "friendships_participant_update" ON friendships;
 create policy "friendships_participant_update" on friendships
   for update using (auth.uid() = requester_id or auth.uid() = addressee_id);
 
+DROP POLICY IF EXISTS "friendships_participant_delete" ON friendships;
 create policy "friendships_participant_delete" on friendships
   for delete using (auth.uid() = requester_id or auth.uid() = addressee_id);
 
@@ -365,9 +371,11 @@ create policy "friendships_participant_delete" on friendships
 -- USER_CARDS — totalmente privado ao dono
 -- =============================================================================
 
+DROP POLICY IF EXISTS "user_cards_own_read" ON user_cards;
 create policy "user_cards_own_read" on user_cards
   for select using (auth.uid() = profile_id);
 
+DROP POLICY IF EXISTS "user_cards_own_update" ON user_cards;
 create policy "user_cards_own_update" on user_cards
   for update using (auth.uid() = profile_id);
 
@@ -377,19 +385,24 @@ create policy "user_cards_own_update" on user_cards
 -- SQUADS e SQUAD_SLOTS
 -- =============================================================================
 
+DROP POLICY IF EXISTS "squads_own_read" ON squads;
 create policy "squads_own_read" on squads
   for select using (auth.uid() = profile_id);
 
+DROP POLICY IF EXISTS "squads_own_insert" ON squads;
 create policy "squads_own_insert" on squads
   for insert with check (auth.uid() = profile_id);
 
+DROP POLICY IF EXISTS "squads_own_update" ON squads;
 create policy "squads_own_update" on squads
   for update using (auth.uid() = profile_id);
 
+DROP POLICY IF EXISTS "squads_own_delete" ON squads;
 create policy "squads_own_delete" on squads
   for delete using (auth.uid() = profile_id);
 
 -- Squad slots: quem pode ver o squad pode ver os slots
+DROP POLICY IF EXISTS "squad_slots_own_read" ON squad_slots;
 create policy "squad_slots_own_read" on squad_slots
   for select using (
     exists (
@@ -398,6 +411,7 @@ create policy "squad_slots_own_read" on squad_slots
     )
   );
 
+DROP POLICY IF EXISTS "squad_slots_own_write" ON squad_slots;
 create policy "squad_slots_own_write" on squad_slots
   for all using (
     exists (
@@ -410,6 +424,7 @@ create policy "squad_slots_own_write" on squad_slots
 -- MATCHES e MATCH_EVENTS — leitura para participantes; escrita via service role
 -- =============================================================================
 
+DROP POLICY IF EXISTS "matches_participant_read" ON matches;
 create policy "matches_participant_read" on matches
   for select using (
     auth.uid() = home_profile_id
@@ -423,6 +438,7 @@ create policy "matches_participant_read" on matches
   );
 
 -- match_events: herda a mesma regra da partida pai
+DROP POLICY IF EXISTS "match_events_participant_read" ON match_events;
 create policy "match_events_participant_read" on match_events
   for select using (
     exists (
@@ -436,6 +452,7 @@ create policy "match_events_participant_read" on match_events
 -- LEAGUE_MEMBERS — membros da liga veem; entrar/sair via Server Actions
 -- =============================================================================
 
+DROP POLICY IF EXISTS "league_members_read" ON league_members;
 create policy "league_members_read" on league_members
   for select using (
     exists (
@@ -451,11 +468,13 @@ create policy "league_members_read" on league_members
 -- PACK_OPENINGS — privado ao dono
 -- =============================================================================
 
+DROP POLICY IF EXISTS "pack_openings_own_read" ON pack_openings;
 create policy "pack_openings_own_read" on pack_openings
   for select using (auth.uid() = profile_id);
 
 -- INSERT via Server Action/service role (fluxo de abertura de pack)
 
+DROP POLICY IF EXISTS "pack_opening_cards_own_read" ON pack_opening_cards;
 create policy "pack_opening_cards_own_read" on pack_opening_cards
   for select using (
     exists (
@@ -477,15 +496,23 @@ alter table seasons           enable row level security;
 alter table leagues           enable row level security;
 alter table league_rounds     enable row level security;
 
+DROP POLICY IF EXISTS "players_authed_read" ON players;
 create policy "players_authed_read"        on players          for select using (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "cards_authed_read" ON cards;
 create policy "cards_authed_read"          on cards            for select using (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "rarities_authed_read" ON rarities;
 create policy "rarities_authed_read"       on rarities         for select using (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "packs_authed_read" ON packs;
 create policy "packs_authed_read"          on packs            for select using (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "collection_sets_authed_read" ON collection_sets;
 create policy "collection_sets_authed_read" on collection_sets for select using (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "seasons_authed_read" ON seasons;
 create policy "seasons_authed_read"        on seasons          for select using (auth.role() = 'authenticated');
 
 -- Ligas: leitura pública para descoberta; membros veem detalhes internos
+DROP POLICY IF EXISTS "leagues_public_read" ON leagues;
 create policy "leagues_public_read"  on leagues       for select using (status != 'draft_phase' or owner_profile_id = auth.uid());
+DROP POLICY IF EXISTS "league_rounds_read" ON league_rounds;
 create policy "league_rounds_read"   on league_rounds for select using (
   exists (
     select 1 from leagues l
@@ -498,6 +525,7 @@ create policy "league_rounds_read"   on league_rounds for select using (
 -- RANKINGS — leitura para todos autenticados (ranking é público)
 -- =============================================================================
 
+DROP POLICY IF EXISTS "rankings_authed_read" ON rankings;
 create policy "rankings_authed_read" on rankings
   for select using (auth.role() = 'authenticated');
 
@@ -505,6 +533,7 @@ create policy "rankings_authed_read" on rankings
 -- COLLECTION_PROGRESS — privado ao dono
 -- =============================================================================
 
+DROP POLICY IF EXISTS "collection_progress_own_read" ON collection_progress;
 create policy "collection_progress_own_read" on collection_progress
   for select using (auth.uid() = profile_id);
 
@@ -512,6 +541,7 @@ create policy "collection_progress_own_read" on collection_progress
 -- CRAFT_REQUESTS — privado ao dono
 -- =============================================================================
 
+DROP POLICY IF EXISTS "craft_requests_own_read" ON craft_requests;
 create policy "craft_requests_own_read" on craft_requests
   for select using (auth.uid() = profile_id);
 
@@ -519,6 +549,7 @@ create policy "craft_requests_own_read" on craft_requests
 -- PITY_COUNTERS — privado ao dono
 -- =============================================================================
 
+DROP POLICY IF EXISTS "pity_counters_own_read" ON pity_counters;
 create policy "pity_counters_own_read" on pity_counters
   for select using (auth.uid() = profile_id);
 
@@ -556,24 +587,29 @@ insert into storage.buckets (id, name, public) values
 on conflict (id) do nothing;
 
 -- Avatars: upload pelo próprio usuário, leitura pública
+DROP POLICY IF EXISTS "Avatars leitura pública" ON storage.objects;
 create policy "Avatars leitura pública"
   on storage.objects for select
   using (bucket_id = 'avatars');
 
+DROP POLICY IF EXISTS "Avatar upload próprio" ON storage.objects;
 create policy "Avatar upload próprio"
   on storage.objects for insert
   with check (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
 
+DROP POLICY IF EXISTS "Avatar update próprio" ON storage.objects;
 create policy "Avatar update próprio"
   on storage.objects for update
   using (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
 
 -- Card artwork: leitura pública, escrita só service_role
+DROP POLICY IF EXISTS "Card artwork leitura pública" ON storage.objects;
 create policy "Card artwork leitura pública"
   on storage.objects for select
   using (bucket_id = 'card-artwork');
 
 -- Match replays: acesso privado por usuário
+DROP POLICY IF EXISTS "Match replays acesso próprio" ON storage.objects;
 create policy "Match replays acesso próprio"
   on storage.objects for all
   using (bucket_id = 'match-replays' and auth.uid()::text = (storage.foldername(name))[1]);
@@ -622,11 +658,13 @@ CREATE INDEX IF NOT EXISTS idx_achievement_progress_profile
 ALTER TABLE mission_progress    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE achievement_progress ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "mission_progress_owner" ON mission_progress;
 CREATE POLICY "mission_progress_owner"
   ON mission_progress FOR ALL
   USING (profile_id = auth.uid())
   WITH CHECK (profile_id = auth.uid());
 
+DROP POLICY IF EXISTS "achievement_progress_owner" ON achievement_progress;
 CREATE POLICY "achievement_progress_owner"
   ON achievement_progress FOR ALL
   USING (profile_id = auth.uid())
@@ -652,6 +690,7 @@ ALTER TABLE collection_sets ADD COLUMN IF NOT EXISTS sort_order int NOT NULL DEF
 ALTER TABLE collection_sets ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "collection_sets_public_read" ON collection_sets;
+DROP POLICY IF EXISTS "collection_sets_public_read" ON collection_sets;
 CREATE POLICY "collection_sets_public_read"
   ON collection_sets FOR SELECT USING (true);
 
@@ -659,9 +698,11 @@ CREATE POLICY "collection_sets_public_read"
 ALTER TABLE collection_progress ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "collection_progress_own_read" ON collection_progress;
+DROP POLICY IF EXISTS "collection_progress_own_read" ON collection_progress;
 CREATE POLICY "collection_progress_own_read"
   ON collection_progress FOR SELECT USING (auth.uid() = profile_id);
 
+DROP POLICY IF EXISTS "collection_progress_own_write" ON collection_progress;
 DROP POLICY IF EXISTS "collection_progress_own_write" ON collection_progress;
 CREATE POLICY "collection_progress_own_write"
   ON collection_progress FOR ALL USING (auth.uid() = profile_id);
@@ -761,6 +802,7 @@ CREATE INDEX IF NOT EXISTS idx_daily_login_profile ON daily_login(profile_id);
 
 ALTER TABLE daily_login ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "daily_login_owner" ON daily_login;
 CREATE POLICY "daily_login_owner"
   ON daily_login FOR ALL
   USING (profile_id = auth.uid())
@@ -788,6 +830,7 @@ CREATE INDEX IF NOT EXISTS idx_player_trophies_profile ON player_trophies(profil
 
 ALTER TABLE player_trophies ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "player_trophies_owner" ON player_trophies;
 CREATE POLICY "player_trophies_owner"
   ON player_trophies FOR ALL
   USING  (profile_id = auth.uid())
@@ -813,6 +856,7 @@ CREATE INDEX IF NOT EXISTS idx_card_mastery_profile_card ON card_mastery(profile
 
 ALTER TABLE card_mastery ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "card_mastery_owner" ON card_mastery;
 CREATE POLICY "card_mastery_owner"
   ON card_mastery FOR ALL
   USING  (profile_id = auth.uid())
