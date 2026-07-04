@@ -1,6 +1,9 @@
 'use client';
 
+import { UI_HAPTIC } from '@/lib/haptics';
 import type { MissionReward, MissionView } from '@/lib/mission-system';
+import { markTodayAction } from '@/lib/retention-store';
+import { REWARD_SFX } from '@/lib/sound-manager';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 
@@ -42,6 +45,9 @@ export function MissionCard({ view, onClaim, disabled = false }: Props) {
   const handleClaim = async () => {
     if (!claimable || claiming || disabled) return;
     setClaiming(true);
+    UI_HAPTIC.missionDone();
+    REWARD_SFX.missionDone();
+    markTodayAction('mission');
     onClaim(def.id, currentStage.stage);
     await new Promise((r) => setTimeout(r, 600));
     setClaiming(false);

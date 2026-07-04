@@ -2,15 +2,23 @@
 
 import { useDailyLogin } from '@/lib/hooks/useDailyLogin';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect } from 'react';
 import { DailyLoginModal } from './DailyLoginModal';
 
 /**
  * DailyLoginTrigger — mounts in PremiumHome.
  * Opens the modal automatically on mount if there's an unclaimed reward.
  * Also renders a persistent badge button to reopen manually.
+ * Listens for 'wl:open-daily-login' event so other components can trigger the modal.
  */
 export function DailyLoginTrigger() {
   const { view, loading, claiming, lastClaim, claim, open, dismiss, isOpen } = useDailyLogin();
+
+  useEffect(() => {
+    const handler = () => open();
+    window.addEventListener('wl:open-daily-login', handler);
+    return () => window.removeEventListener('wl:open-daily-login', handler);
+  }, [open]);
 
   if (loading || !view) return null;
 
@@ -39,7 +47,6 @@ export function DailyLoginTrigger() {
               }}
             >
               <span className="text-2xl">🎁</span>
-              {/* Red dot */}
               <motion.div
                 className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 border-2 border-[#07080f]"
                 animate={{ scale: [1, 1.2, 1] }}

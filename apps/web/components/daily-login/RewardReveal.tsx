@@ -1,25 +1,42 @@
 'use client';
 
 import type { ClaimDayPayload, DailyReward } from '@/lib/actions/daily-login';
+import { UI_HAPTIC } from '@/lib/haptics';
+import { markTodayAction } from '@/lib/retention-store';
+import { REWARD_SFX } from '@/lib/sound-manager';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useRef } from 'react';
 
 type Props = {
   payload: ClaimDayPayload;
   onContinue: () => void;
 };
 
-const PARTICLES = Array.from({ length: 16 }, (_, i) => ({
-  angle: (i / 16) * 360,
-  delay: i * 0.04,
-  distance: 60 + (i % 4) * 20,
+const PARTICLES = Array.from({ length: 24 }, (_, i) => ({
+  angle: (i / 24) * 360,
+  delay: i * 0.03,
+  distance: 55 + (i % 5) * 20,
+  size: 4 + (i % 3) * 2,
+  color: ['#c9a84c', '#e6c85a', '#ffffff', '#f0c040', '#fbbf24'][i % 5]!,
 }));
 
 export function RewardReveal({ payload, onContinue }: Props) {
+  const celebrated = useRef(false);
+
+  useEffect(() => {
+    if (celebrated.current) return;
+    celebrated.current = true;
+
+    UI_HAPTIC.reward(payload.day === 7 ? 'large' : payload.streakBonus ? 'large' : 'medium');
+    REWARD_SFX.missionDone();
+    markTodayAction('login');
+    markTodayAction('reward');
+  }, [payload]);
+
   const allRewards: DailyReward[] = [
     ...payload.rewards,
     ...(payload.streakBonus ? [payload.streakBonus] : []),
   ];
-
   const isMilestone = payload.day === 7;
 
   return (
@@ -30,21 +47,24 @@ export function RewardReveal({ payload, onContinue }: Props) {
       exit={{ opacity: 0 }}
     >
       {/* Particle burst */}
-      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-        {PARTICLES.map((p, i) => (
-          <motion.div
-            key={i}
-            className={`absolute w-1.5 h-1.5 rounded-full ${isMilestone ? 'bg-amber-400' : 'bg-gold'}`}
-            initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
-            animate={{
-              x: Math.cos((p.angle * Math.PI) / 180) * p.distance,
-              y: Math.sin((p.angle * Math.PI) / 180) * p.distance,
-              opacity: 0,
-              scale: 0,
-            }}
-            transition={{ duration: 0.8, delay: p.delay, ease: 'easeOut' }}
-          />
-        ))}
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center" style={{ top: '15%' }}>
+        <AnimatePresence>
+          {PARTICLES.map((p, i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full"
+              style={{ width: p.size, height: p.size, background: p.color }}
+              initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+              animate={{
+                x: Math.cos((p.angle * Math.PI) / 180) * p.distance,
+                y: Math.sin((p.angle * Math.PI) / 180) * p.distance,
+                opacity: 0,
+                scale: 0,
+              }}
+              transition={{ duration: 0.9, delay: p.delay, ease: 'easeOut' }}
+            />
+          ))}
+        </AnimatePresence>
       </div>
 
       {/* Day badge */}
@@ -72,11 +92,10 @@ export function RewardReveal({ payload, onContinue }: Props) {
         >
           {isMilestone ? '👑' : '🎁'}
         </div>
-        {/* Ring animation */}
         <motion.div
           className="absolute inset-0 rounded-full border-2 border-gold/40"
-          animate={{ scale: [1, 1.5, 2], opacity: [0.6, 0.3, 0] }}
-          transition={{ duration: 1.2, repeat: 2 }}
+          animate={{ scale: [1, 1.5, 2.2], opacity: [0.7, 0.3, 0] }}
+          transition={{ duration: 1.4, repeat: 2, ease: 'easeOut' }}
         />
       </motion.div>
 
@@ -91,7 +110,9 @@ export function RewardReveal({ payload, onContinue }: Props) {
           {isMilestone ? '🌟 RECOMPENSA SEMANAL!' : `DIA ${payload.day}`}
         </p>
         <p className="text-muted text-xs mt-0.5">
-          {payload.streakBonus ? `${payload.nextState.nextStreak} dias seguidos!` : 'Login diário'}
+          {payload.streakBonus
+            ? `${payload.nextState.nextStreak} dias seguidos! 🔥`
+            : 'Login diário'}
         </p>
       </motion.div>
 
@@ -123,7 +144,11 @@ export function RewardReveal({ payload, onContinue }: Props) {
                     ? 'rgba(59,130,246,0.4)'
                     : 'rgba(201,168,76,0.4)',
               color:
-                reward.kind === 'pack' ? '#c084fc' : reward.kind === 'xp' ? '#93c5fd' : '#fbbf24',
+                reward.kind === 'pack'
+                  ? '#c084fc'
+                  : reward.kind === 'xp'
+                    ? '#93c5fd'
+                    : '#fbbf24',
             }}
           >
             <span>{reward.icon}</span>
@@ -148,7 +173,7 @@ export function RewardReveal({ payload, onContinue }: Props) {
         </motion.div>
       )}
 
-      {/* CTA button */}
+      {/* CTA */}
       <motion.button
         onClick={onContinue}
         initial={{ opacity: 0, y: 10 }}

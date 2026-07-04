@@ -1,10 +1,12 @@
+import { DailyLoginTrigger } from '@/components/daily-login/DailyLoginTrigger';
 import { EventBanner } from './EventBanner';
 import { GameGrid } from './GameGrid';
-import { DailyLoginTrigger } from '@/components/daily-login/DailyLoginTrigger';
 import { NewUserWelcome } from './NewUserWelcome';
 import { PlayerHeader } from './PlayerHeader';
 import { PremiumBottomNav } from './PremiumBottomNav';
+import { ProgressTracker } from './ProgressTracker';
 import { QuickStats } from './QuickStats';
+import { RetentionPanel } from './RetentionPanel';
 import type { FormationKey } from '@/lib/squad-data';
 
 type Props = {
@@ -51,6 +53,8 @@ export function PremiumHome({ serverBalance, isNewUser, collectionCount = 0, squ
         <PlayerHeader serverBalance={serverBalance} />
         <EventBanner />
         <QuickStats />
+        <RetentionPanel />
+        <ProgressTracker />
         <GameGrid collectionCount={collectionCount} squadFormation={squadFormation} />
 
         {/* Spacer */}
