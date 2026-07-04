@@ -326,7 +326,7 @@ export const notify = {
       title, body,
       icon: cfg('system').icon,
       color:cfg('system').color,
-      action: href ? { label:'Saiba mais', href, style:'secondary' } : undefined,
+      ...(href ? { action: { label:'Saiba mais', href, style:'secondary' as const } } : {}),
     });
   },
 };

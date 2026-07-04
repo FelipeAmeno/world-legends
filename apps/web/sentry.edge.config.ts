@@ -6,9 +6,11 @@
 
 import * as Sentry from '@sentry/nextjs';
 
+const _edgeRelease = process.env.NEXT_PUBLIC_SENTRY_RELEASE ?? process.env.VERCEL_GIT_COMMIT_SHA;
+const _edgeDsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 Sentry.init({
-  dsn:         process.env.NEXT_PUBLIC_SENTRY_DSN,
-  release:     process.env.NEXT_PUBLIC_SENTRY_RELEASE ?? process.env.VERCEL_GIT_COMMIT_SHA,
+  ...(_edgeDsn ? { dsn: _edgeDsn } : {}),
+  ...(_edgeRelease ? { release: _edgeRelease } : {}),
   environment: process.env.NEXT_PUBLIC_SENTRY_ENV ?? process.env.NODE_ENV,
   tracesSampleRate: 0.05,
   enabled: !!process.env.NEXT_PUBLIC_SENTRY_DSN,

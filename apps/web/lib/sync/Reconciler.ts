@@ -55,14 +55,14 @@ export function reconcileUser(
 
   // server_wins: XP, level, créditos (protege contra exploits)
   for (const field of ['level', 'current_xp', 'xp_for_next', 'credits', 'fragments'] as const) {
-    merged[field] = server[field];
+    (merged as Record<string, unknown>)[field] = server[field];
     if (local[field] !== server[field]) changed.push(field);
   }
 
   // max: wins/draws/losses (nunca perder placar já gravado)
-  for (const field of ['wins', 'draws', 'losses', 'total_cards', 'packs_opened'] as const) {
+  for (const field of ['wins', 'draws', 'losses'] as const) {
     const winner = Math.max(local[field], server[field]);
-    merged[field] = winner;
+    (merged as Record<string, unknown>)[field] = winner;
     if (winner !== server[field]) changed.push(field);
   }
 
@@ -133,7 +133,8 @@ export class OfflineDeltaTracker {
   } = { wins:0, draws:0, losses:0, xp:0, credits:0 };
 
   addMatch(outcome: 'win' | 'draw' | 'loss', xp: number, credits: number): void {
-    this.deltas[outcome]++;
+    const key = outcome === 'win' ? 'wins' : outcome === 'draw' ? 'draws' : 'losses';
+    this.deltas[key]++;
     this.deltas.xp      += xp;
     this.deltas.credits += credits;
   }

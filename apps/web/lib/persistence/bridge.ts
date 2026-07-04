@@ -59,8 +59,6 @@ export async function loadOrCreateUser(userId: string, username: string) {
     wins:        0,
     draws:       0,
     losses:      0,
-    total_cards: 0,
-    packs_opened:0,
   });
 
   if (!created.ok) {
@@ -114,7 +112,6 @@ export async function persistMatchResult(userId: string, result: MatchResult) {
   const matchRes = await matches.create({
     user_id:        userId,
     opponent:       result.opponent,
-    opponent_ovr:   result.opponentOvr,
     home_score:     result.homeScore,
     away_score:     result.awayScore,
     outcome:        result.outcome,
@@ -152,11 +149,10 @@ export async function persistPackOpening(userId: string, result: PackOpenResult)
 
   // 1. Registrar abertura de pack
   const packRes = await packs.create({
-    user_id:    userId,
-    pack_id:    result.packId,
-    pack_name:  result.packName,
-    cards_json: result.cardsJson,
-    cost:       result.cost,
+    user_id:  userId,
+    pack_id:  result.packId,
+    card_ids: result.newCardIds,
+    cost:     result.cost,
   });
   log('persistPackOpening:pack', packRes);
 
@@ -169,11 +165,6 @@ export async function persistPackOpening(userId: string, result: PackOpenResult)
     log('persistPackOpening:cards', cardRes);
   }
 
-  // 3. Incrementar packs_opened no perfil
-  const statsRes = await users.updateProgress(userId, {
-    packs_opened: undefined,  // será atualizado pelo trigger ou pelo addReward
-  });
-  log('persistPackOpening:stats', statsRes);
 }
 
 // ─── Squad ───────────────────────────────────────────────────────────────────
@@ -191,10 +182,11 @@ export async function persistSquad(userId: string, squad: SquadState) {
   if (!userId) return;
   const { squads } = getRegistry();
   const result = await squads.upsert({
-    user_id:   userId,
-    formation: squad.formation,
-    slots:     squad.slots as any,
-    bench_ids: squad.benchIds,
+    user_id:    userId,
+    formation:  squad.formation,
+    slots:      squad.slots as any,
+    bench_ids:  squad.benchIds as readonly string[],
+    updated_at: new Date().toISOString(),
   });
   log('persistSquad', result);
 }

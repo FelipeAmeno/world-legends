@@ -119,7 +119,7 @@ export function usePackPersist() {
  */
 export function useSquadPersist() {
   const { user }       = useAuth();
-  const debounceRef    = useRef<NodeJS.Timeout>();
+  const debounceRef    = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const saveSquad = useCallback((squad: SquadState) => {
     if (!user) return;

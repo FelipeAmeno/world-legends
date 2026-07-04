@@ -19,10 +19,10 @@ const SENTRY_ENV     = process.env.NEXT_PUBLIC_SENTRY_ENV ?? process.env.NODE_EN
 const SENTRY_RELEASE = process.env.NEXT_PUBLIC_SENTRY_RELEASE ?? process.env.VERCEL_GIT_COMMIT_SHA;
 
 Sentry.init({
-  dsn: SENTRY_DSN,
+  ...(SENTRY_DSN ? { dsn: SENTRY_DSN } : {}),
 
   // Release para correlacionar erros com deploys
-  release:     SENTRY_RELEASE,
+  ...(SENTRY_RELEASE ? { release: SENTRY_RELEASE } : {}),
   environment: SENTRY_ENV,
 
   // Performance

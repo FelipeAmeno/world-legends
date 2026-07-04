@@ -29,8 +29,8 @@ export type GameContext = {
 export function setGameContext(ctx: GameContext): void {
   if (ctx.userId) {
     Sentry.setUser({
-      id:         ctx.userId,
-      username:   ctx.username,
+      id:       ctx.userId,
+      ...(ctx.username !== undefined ? { username: ctx.username } : {}),
     });
   }
 
@@ -108,7 +108,7 @@ function addBreadcrumb(
   data?:    BreadcrumbData,
   level:    Sentry.SeverityLevel = 'info',
 ): void {
-  Sentry.addBreadcrumb({ category, message, data, level, timestamp: Date.now() / 1000 });
+  Sentry.addBreadcrumb({ category, message, level, timestamp: Date.now() / 1000, ...(data !== undefined ? { data } : {}) });
 }
 
 export const breadcrumb = {

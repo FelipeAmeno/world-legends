@@ -7,9 +7,11 @@
 
 import * as Sentry from '@sentry/nextjs';
 
+const _serverRelease = process.env.NEXT_PUBLIC_SENTRY_RELEASE ?? process.env.VERCEL_GIT_COMMIT_SHA;
+const _serverDsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 Sentry.init({
-  dsn:         process.env.NEXT_PUBLIC_SENTRY_DSN,
-  release:     process.env.NEXT_PUBLIC_SENTRY_RELEASE ?? process.env.VERCEL_GIT_COMMIT_SHA,
+  ...(_serverDsn ? { dsn: _serverDsn } : {}),
+  ...(_serverRelease ? { release: _serverRelease } : {}),
   environment: process.env.NEXT_PUBLIC_SENTRY_ENV ?? process.env.NODE_ENV,
 
   // Server traces (menor volume que cliente)

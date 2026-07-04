@@ -32,7 +32,6 @@ const nextConfig: NextConfig = {
   // ── Experimental ────────────────────────────────────────────────────────────
   experimental: {
     esmExternals:       'loose',
-    instrumentationHook:true,
     // optimizeCss:     true,   // habilitar quando critters estiver disponível
     optimizePackageImports:[
       'framer-motion',       // tree-shake Framer Motion
@@ -146,7 +145,7 @@ export default withSentryConfig(
   {
     org:       process.env.SENTRY_ORG     ?? 'world-legends',
     project:   process.env.SENTRY_PROJECT ?? 'world-legends-web',
-    authToken: process.env.SENTRY_AUTH_TOKEN,
+    ...(process.env.SENTRY_AUTH_TOKEN ? { authToken: process.env.SENTRY_AUTH_TOKEN } : {}),
     silent:  true,
     disableLogger: true,
     tunnelRoute:   '/monitoring',
@@ -156,5 +155,5 @@ export default withSentryConfig(
     sourcemaps: { disable: true },
     release:    { create: false, finalize: false },
     telemetry:  false,
-  },
+  } as Parameters<typeof withSentryConfig>[1],
 );

@@ -153,7 +153,7 @@ export function useSyncOnChange<T>(
 ): void {
   const isFirstRender = useRef(true);
   const savedValue    = useRef(value);
-  const timer         = useRef<NodeJS.Timeout>();
+  const timer         = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
     // Ignorar render inicial

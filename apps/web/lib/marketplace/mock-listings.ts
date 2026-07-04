@@ -82,15 +82,15 @@ export function getListings(): MarketListing[] {
       nationality:  card.nationality,
       flagEmoji:    card.flagEmoji,
       era:          card.era,
-      evolution:    card.evolution,
-      contracts:    card.contracts,
+      evolution:    card.evolution ?? 0,
+      contracts:    card.contracts ?? 10,
 
       sellerId:     seller.id,
       sellerName:   seller.name,
       sellerLevel:  seller.level,
 
       price:        credits(price),
-      originalPrice: idx % 3 === 0 ? credits(Math.round(price * 1.15)) : undefined,
+      ...(idx % 3 === 0 ? { originalPrice: credits(Math.round(price * 1.15)) } : {}),
 
       ...(listingType === 'auction' ? {
         auction: {

@@ -71,6 +71,7 @@ export type MatchDisplay = {
   homeScore:   number;
   awayScore:   number;
   winner:      'home' | 'away' | 'draw';
+  userOvr?:   number;
   events:      EventDisplay[];
   stats: {
     possession:    [number, number];
@@ -123,6 +124,7 @@ const USER_ID = 'user-001';
 export function runMatch(
   opponent: MatchOpponent,
   seed:     number,
+  _lineup?: ReadonlyArray<{ slotId: string; cardId: string }>,
 ): MatchDisplay {
   const allCards    = getCollection();
   const cardMap     = new Map(allCards.map(c => [c.playerId, c]));
@@ -311,7 +313,7 @@ function transformEvents(
 ): EventDisplay[] {
   const cardMap = new Map(cards.map(c => [c.playerId, c.displayName]));
 
-  return events.map(ev => {
+  return (events.map(ev => {
     const base = {
       minute:    (ev as any).minute ?? 0,
       type:      ev.type,
@@ -337,12 +339,12 @@ function transformEvents(
       case 'card': {
         const name   = cardMap.get(ev.playerUserCardId) ?? ev.playerUserCardId.slice(0, 8);
         const isHome = !aiCardIds.includes(ev.playerUserCardId);
-        const color  = ev.color === 'yellow' ? '🟨' : '🟥';
-        return { ...base, side: isHome ? 'home' : 'away', text: `${color} ${name} — ${ev.color === 'yellow' ? 'amarelo' : 'vermelho'}` };
+        const color  = ev.cardType === 'yellow' ? '🟨' : '🟥';
+        return { ...base, side: isHome ? 'home' : 'away', text: `${color} ${name} — ${ev.cardType === 'yellow' ? 'amarelo' : 'vermelho'}` };
       }
       case 'injury': {
-        const name   = cardMap.get(ev.injuredPlayerUserCardId) ?? ev.injuredPlayerUserCardId.slice(0, 8);
-        const isHome = !aiCardIds.includes(ev.injuredPlayerUserCardId);
+        const name   = cardMap.get(ev.playerUserCardId) ?? ev.playerUserCardId.slice(0, 8);
+        const isHome = !aiCardIds.includes(ev.playerUserCardId);
         return { ...base, side: isHome ? 'home' : 'away', text: `🚑 Lesão: ${name} (${ev.severity})` };
       }
       case 'substitution': {
@@ -354,7 +356,7 @@ function transformEvents(
       default:
         return { ...base, text: ev.description ?? ev.type };
     }
-  }).filter(e => e.type !== 'assist'); // assists mostrados como parte do gol
+  }) as EventDisplay[]).filter(e => e.type !== 'assist'); // assists mostrados como parte do gol
 }
 
 // ─── Recompensas ──────────────────────────────────────────────────────────────

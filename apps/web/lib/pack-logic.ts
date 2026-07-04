@@ -11,7 +11,7 @@
  *   4. Retornar DrawnCard[] (DTO visual) para a UI
  */
 
-import { openPack }             from '@world-legends/packs';
+import { openPack, createUserPityState } from '@world-legends/packs';
 import { CLASSIC_PACK, ELITE_PACK, LEGEND_PACK, type Pack } from '@world-legends/packs';
 import type { UserPityState }   from '@world-legends/packs';
 import { getCollection, RARITY_VISUAL, type CollectionCard } from './collection-data';
@@ -113,10 +113,7 @@ const PARTICLE_MAP: Record<RarityCode, string> = {
 // ─── Estado de pity vazio (sem histórico) ────────────────────────────────────
 
 function freshPityState(): UserPityState {
-  return {
-    legendaryPlus: { packId: 'classic' as any, openingsSinceLastHit: 0, isActivated: false, forcedMinRarity: undefined },
-    ultraPlus:     { packId: 'classic' as any, openingsSinceLastHit: 0, isActivated: false, forcedMinRarity: undefined },
-  };
+  return createUserPityState();
 }
 
 // ─── drawPack — usa openPack() real ──────────────────────────────────────────

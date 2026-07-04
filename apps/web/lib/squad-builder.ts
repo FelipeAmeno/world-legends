@@ -62,7 +62,10 @@ export type SBAction =
   | { type:'REMOVE_SLOT';     slotId:  string }
   | { type:'REMOVE_BENCH';    idx:     number }
   | { type:'CHANGE_FORMATION';formation:FormationKey }
-  | { type:'CLEAR_ALL' };
+  | { type:'CLEAR_ALL' }
+  | { type:'PLACE_IN_SLOT';   cardId: string; slotId: string; allCards: CollectionCard[] }
+  | { type:'TAP_ADD';         cardId: string; allCards: CollectionCard[] }
+  | { type:'AUTO_FILL';       allCards: CollectionCard[] };
 
 export function sbReducer(state: SBState, action: SBAction): SBState {
   switch (action.type) {
@@ -135,6 +138,42 @@ export function sbReducer(state: SBState, action: SBAction): SBState {
 
     case 'CLEAR_ALL': {
       return createSBState(state.formation);
+    }
+
+    case 'PLACE_IN_SLOT': {
+      const card = action.allCards.find((c) => c.cardId === action.cardId);
+      if (!card) return state;
+      const slots = { ...state.slots, [action.slotId]: card };
+      return { ...state, slots };
+    }
+
+    case 'TAP_ADD': {
+      const card = action.allCards.find((c) => c.cardId === action.cardId);
+      if (!card) return state;
+      const slots = { ...state.slots };
+      const emptySlotId = Object.keys(slots).find((id) => !slots[id]);
+      if (emptySlotId) {
+        slots[emptySlotId] = card;
+        return { ...state, slots };
+      }
+      const bench = [...state.bench];
+      const emptyBench = bench.findIndex((b) => !b);
+      if (emptyBench >= 0) {
+        bench[emptyBench] = card;
+        return { ...state, bench };
+      }
+      return state;
+    }
+
+    case 'AUTO_FILL': {
+      const pool = getPoolCards(action.allCards, state);
+      const slots = { ...state.slots };
+      for (const slotId of Object.keys(slots)) {
+        if (!slots[slotId] && pool.length > 0) {
+          slots[slotId] = pool.shift()!;
+        }
+      }
+      return { ...state, slots };
     }
 
     default: return state;
@@ -285,7 +324,7 @@ export function getPoolCards(allCards: CollectionCard[], state: SBState): Collec
 
 export function getAutoSuggest(position: string, pool: CollectionCard[], max = 5): CollectionCard[] {
   return pool
-    .filter((c) => getPositionCompat(c.position, position as Parameters<typeof getPositionCompat>[1]) > 0)
+    .filter((c) => getPositionCompat(c.position, position as Parameters<typeof getPositionCompat>[1]) !== 'awkward')
     .sort((a, b) => b.overall - a.overall)
     .slice(0, max);
 }

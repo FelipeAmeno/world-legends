@@ -26,7 +26,7 @@ export async function getUserCollection(userId: string): Promise<CollectionCard[
   const result = await repo.findByProfile(userId);
   if (!result.ok) return [];
   return enrichWithUserCards(
-    result.value.map((uc) => ({ cardId: uc.cardId, userCardId: uc.id, acquiredAt: uc.acquiredAt })),
+    result.value.map((uc) => ({ cardId: uc.cardId, userCardId: uc.id, acquiredAt: uc.acquiredAt instanceof Date ? uc.acquiredAt.toISOString() : String(uc.acquiredAt) })),
   );
 }
 

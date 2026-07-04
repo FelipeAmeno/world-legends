@@ -12,10 +12,8 @@
  *   - createSelector    → selector memoizado (inspirado em Reselect)
  */
 
-import {
-  useCallback, useMemo, useRef,
-  useState, useEffect, DependencyList,
-} from 'react';
+import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
+import type { DependencyList } from 'react';
 
 // ─── useStableCallback ────────────────────────────────────────────────────────
 
@@ -87,7 +85,7 @@ export function useThrottled<T>(value: T, intervalMs: number): T {
 
 /** Captura o valor anterior para detectar mudanças. */
 export function usePrevious<T>(value: T): T | undefined {
-  const ref = useRef<T>();
+  const ref = useRef<T | undefined>(undefined);
   useEffect(() => { ref.current = value; });
   return ref.current;
 }

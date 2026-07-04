@@ -12,7 +12,7 @@ import type { CollectionCard } from './collection-data';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
-export type SortField = 'overall' | 'name' | 'rarity' | 'era' | 'position';
+export type SortField = 'overall' | 'name' | 'rarity' | 'era' | 'position' | 'recente';
 export type SortDir   = 'asc' | 'desc';
 
 export type CollectionFilters = {
@@ -137,6 +137,7 @@ export function filterAndSort(
     let cmp = 0;
     switch (filters.sortField) {
       case 'overall':  cmp = a.overall - b.overall; break;
+      case 'recente':  cmp = 0; break;
       case 'name':     cmp = a.displayName.localeCompare(b.displayName); break;
       case 'rarity':   cmp = (RARITY_ORDER[a.rarityCode] ?? 0) - (RARITY_ORDER[b.rarityCode] ?? 0); break;
       case 'era':      cmp = (ERA_ORDER[a.era] ?? 0) - (ERA_ORDER[b.era] ?? 0); break;
@@ -199,15 +200,15 @@ export type CardDiff = {
 export function compareCards(cards: CollectionCard[]): CardDiff[] {
   if (cards.length < 2) return [];
 
-  const numField = (label: string, getter: (c: CollectionCard) => number): CardDiff => {
-    const vals   = cards.map(c => getter(c));
+  const numField = (label: string, getter: (c: CollectionCard) => number | undefined): CardDiff => {
+    const vals   = cards.map(c => getter(c) ?? 0);
     const maxVal = Math.max(...vals);
     return {
       field:  label,
       values: cards.map(c => ({
         cardId: c.cardId,
-        value:  getter(c),
-        best:   getter(c) === maxVal,
+        value:  getter(c) ?? 0,
+        best:   (getter(c) ?? 0) === maxVal,
       })),
     };
   };
@@ -220,8 +221,8 @@ export function compareCards(cards: CollectionCard[]): CardDiff[] {
     numField('Drible',     c => c.attributes.dribbling),
     numField('Defesa',     c => c.attributes.defending),
     numField('Físico',     c => c.attributes.physical),
-    numField('Contratos',  c => c.contracts),
-    numField('Evolução',   c => c.evolution),
+    numField('Contratos',  c => c.contracts ?? 10),
+    numField('Evolução',   c => c.evolution ?? 0),
   ];
 }
 

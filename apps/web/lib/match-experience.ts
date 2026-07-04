@@ -206,7 +206,7 @@ export function buildRichEvents(events: EventDisplay[]): RichEvent[] {
       headline:   isGoal ? 'GOOOOOL!' : style.icon + ' ' + kindLabel(kind),
       commentary: pickComment(kind, actor, undefined, i),
       side:       ev.side,
-      actor,
+      ...(actor !== undefined ? { actor } : {}),
       isKey:      isGoal || isSave || kind === 'full_time',
       momentum:   MOMENTUM_DELTA[kind] ?? 0,
       bgColor:    style.bg,
@@ -277,5 +277,5 @@ export function prepareMatchExperience(
   const rich     = buildRichEvents(display.events);
   const momentum = buildMomentumCurve(rich);
 
-  return { display, rich, momentum, opponent };
+  return { display, rich, momentum, opponent, matchId: '', newBalance: 0 };
 }

@@ -16,10 +16,10 @@ export function BuffsPanel({ cards }: Props) {
   const contractStates = cards.map((c) => ({
     name: c.displayName,
     overall: c.overall,
-    contracts: c.contracts,
-    status: contractStatus(c.contracts),
-    evo: c.evolution,
-    evoTag: getEvolutionTag(c.evolution),
+    contracts: c.contracts ?? 10,
+    status: contractStatus(c.contracts ?? 10),
+    evo: c.evolution ?? 0,
+    evoTag: getEvolutionTag(c.evolution ?? 0),
     rarity: c.rarityCode,
   }));
 

@@ -64,6 +64,11 @@ export type CollectionCard = Readonly<{
   // Metadados de exibição
   readonly bioShort:   string;
   readonly era:        string;  // "1990s", "2000s", …
+
+  // Campos de instância do usuário (preenchidos ao enriquecer com dados do DB)
+  readonly userCardId?: string;   // ID da instância na tabela user_cards
+  readonly contracts?:  number;   // Contratos restantes (padrão 10 — não rastreado ainda)
+  readonly evolution?:  number;   // Nível de evolução (padrão 0 — não rastreado ainda)
 }>;
 
 // ─── Mapa de bandeiras ────────────────────────────────────────────────────────
@@ -297,22 +302,28 @@ function ensureInitialized() {
   // Registrar jogadores
   for (const seed of PLAYER_SEEDS) {
     const result = createPlayer({
-      id:           playerId(seed.id),
-      fullName:     seed.fullName,
-      knownAs:      seed.knownAs,
-      birthYear:    seed.birthYear,
-      nationality:  seed.nationality,
-      positions:    { primary: seed.primary, secondary: seed.secondary },
-      preferredFoot:seed.foot,
-      heightCm:     seed.height,
-      era:          { start: seed.eraStart, end: seed.eraEnd },
-      baseAttributes: attrs(seed.baseAttrs),
-      bioShort:     seed.bio,
-      sourceNotes:  'Dados históricos curados — fontes: Wikipedia, FIFA, RSSSF.',
-      isActive:     true,
+      id:                  playerId(seed.id),
+      fullName:            seed.fullName,
+      knownAs:             seed.knownAs,
+      birthYear:           seed.birthYear,
+      nationality:         seed.nationality,
+      primaryPosition:     seed.primary,
+      secondaryPositions:  seed.secondary,
+      preferredFoot:       seed.foot,
+      heightCm:            seed.height,
+      eraStart:            seed.eraStart,
+      eraEnd:              seed.eraEnd,
+      baseAttributes:      attrs(seed.baseAttrs),
+      bioShort:            seed.bio,
+      sourceNotes:         'Dados históricos curados — fontes: Wikipedia, FIFA, RSSSF.',
     });
     if (result.ok) playerCatalog.register(result.value);
   }
+
+  const WCH_CONTEXT: Record<string, import('@world-legends/cards').TournamentContext> = {
+    pelé:     { tournament:'FIFA World Cup', year:1970, hostCountry:'Mexico', narrativeDescription:'O Rei na Copa de 1970', performanceIndicator:99 },
+    maradona: { tournament:'FIFA World Cup', year:1986, hostCountry:'Mexico', narrativeDescription:'La Mano de Dios na Copa de 1986', performanceIndicator:99 },
+  };
 
   // Registrar cartas
   for (const seed of CARD_SEEDS) {
@@ -320,13 +331,17 @@ function ensureInitialized() {
     if (!player) continue;
 
     const result = createCard({
-      playerId:        player.id,
-      rarityCode:      seed.rarity,
-      editionCode:     'base',
-      baseAttributes:  player.baseAttributes,
-      position:        player.positions.primary,
+      id:             cardId(`${seed.playerId}-${seed.rarity}`),
+      playerId:       player.id,
+      rarityCode:     seed.rarity,
+      editionCode:    'base',
+      baseAttributes: player.baseAttributes,
+      playerPosition: player.positions.primary,
       editionMetadata: { kind: 'base' },
-      traits:          seed.traits,
+      traits:         seed.traits,
+      ...(seed.rarity === 'world_cup_hero'
+        ? { tournamentContext: WCH_CONTEXT[seed.playerId] ?? { tournament:'FIFA World Cup', year:2002, hostCountry:'Japan/Korea', narrativeDescription:'Ícone da Copa do Mundo', performanceIndicator:90 } }
+        : {}),
     });
 
     if (result.ok) cardCatalog.register(result.value);
@@ -370,7 +385,7 @@ function toCollectionCard(card: Card, player: Player): CollectionCard {
     fullName:     player.fullName,
     nationality:  player.nationality,
     flagEmoji:    flag(player.nationality),
-    position:     card.position,
+    position:     player.positions.primary,
     overall:      card.overall,
     rarityCode:   card.rarityCode,
     rarityLabel:  rarity.label,
@@ -406,7 +421,7 @@ export function enrichWithUserCards(
   const catalog = getCollectionMap();
   return rows.flatMap((row) => {
     const card = catalog.get(row.cardId);
-    return card ? [card] : [];
+    return card ? [{ ...card, userCardId: row.userCardId, contracts: 10, evolution: 0 }] : [];
   });
 }
 

@@ -56,8 +56,12 @@ export type TrackKey =
   | 'wins'
   | 'losses'
   | 'draws'
+  | 'goals'
+  | 'goalsScored'
   | 'packsOpened'
   | 'cardsOwned'
+  | 'legendaryCards'
+  | 'brazilianCards'
   | 'creditsEarned'
   | 'dailiesCompleted'
   | 'missionsCompleted'
@@ -258,7 +262,9 @@ export const ALL_MISSION_DEFS: readonly MissionDef[] = [
   ...LIFETIME_DEFS,
 ];
 
-export const ACHIEVEMENT_IDS: readonly string[] = LIFETIME_DEFS.map((d) => d.id);
+export const ACHIEVEMENT_IDS: readonly string[]    = LIFETIME_DEFS.map((d) => d.id);
+export const DAILY_MISSION_IDS: readonly string[]  = DAILY_DEFS.map((d) => d.id);
+export const WEEKLY_MISSION_IDS: readonly string[] = WEEKLY_DEFS.map((d) => d.id);
 
 export function dailyPeriodKey(date = new Date()): string {
   return `daily:${date.toISOString().slice(0, 10)}`;
@@ -405,8 +411,12 @@ export type PlayerMetrics = {
   wins:             number;
   losses:           number;
   draws:            number;
+  goals?:           number;
+  goalsScored?:     number;
   packsOpened:      number;
   cardsOwned:       number;
+  legendaryCards?:  number;
+  brazilianCards?:  number;
   creditsEarned:    number;
   dailiesCompleted: number;
   missionsCompleted:number;
