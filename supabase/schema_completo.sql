@@ -861,3 +861,29 @@ CREATE POLICY "card_mastery_owner"
   ON card_mastery FOR ALL
   USING  (profile_id = auth.uid())
   WITH CHECK (profile_id = auth.uid());
+
+-- =============================================================================
+-- RPCs de economia (chamadas via service_role — bypass RLS)
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION public.credit_soft_currency(p_profile_id UUID, p_amount INT)
+RETURNS BIGINT
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  new_balance BIGINT;
+BEGIN
+  UPDATE profiles
+  SET soft_currency = soft_currency + p_amount,
+      updated_at    = now()
+  WHERE id = p_profile_id
+  RETURNING soft_currency INTO new_balance;
+
+  IF new_balance IS NULL THEN
+    RAISE EXCEPTION 'profile not found: %', p_profile_id;
+  END IF;
+
+  RETURN new_balance;
+END;
+$$;
