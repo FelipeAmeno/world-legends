@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Notification }                from './types';
-import { getNotificationStore, notify, triggerDemoNotifications } from './store';
+import { getNotificationStore, notify } from './store';
 
 export type UseNotificationsReturn = {
   notifications:  Notification[];
@@ -29,9 +29,6 @@ export function useNotifications(): UseNotificationsReturn {
   const [notifications, setNotifications] = useState<Notification[]>(() => store.getAll());
 
   useEffect(() => {
-    // Inicializar com demo data na primeira vez
-    triggerDemoNotifications();
-
     const unsub = store.subscribe(setNotifications);
     return unsub;
   }, [store]);
