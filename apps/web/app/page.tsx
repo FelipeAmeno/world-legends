@@ -1,12 +1,9 @@
-/**
- * app/page.tsx — Home Screen Premium (T051)
- *
- * Server Component que renderiza a PremiumHome.
- * A PremiumHome tem seu próprio background, header e bottom nav —
- * por isso escapa do layout padrão via overflow.
- */
+import { redirect } from 'next/navigation';
+import { getCurrentUser } from '@/lib/supabase/server';
 import { PremiumHome } from '@/components/home/PremiumHome';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
   return <PremiumHome />;
 }
