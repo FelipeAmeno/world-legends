@@ -1,5 +1,6 @@
 'use client';
 
+import { UI_HAPTIC } from '@/lib/haptics';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -99,6 +100,7 @@ export function PremiumBottomNav() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => UI_HAPTIC.navTap()}
               className="flex-1 flex flex-col items-center justify-center pt-2.5 pb-2 gap-1 relative active:scale-95 transition-transform duration-75"
             >
               {/* Top indicator pill */}

@@ -19,6 +19,7 @@
 import { AVAILABLE_COUNTRIES, getLeaderboard } from '@/lib/leaderboard/mock-data';
 import type { LeaderboardCategory, LeaderboardEntry } from '@/lib/leaderboard/types';
 import { CATEGORY_CONFIGS } from '@/lib/leaderboard/types';
+import type { LeaderboardUserRow } from '@/lib/server/game-data';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useMemo, useState, useTransition } from 'react';
 
@@ -27,13 +28,55 @@ import { SeasonTimer } from './SeasonTimer';
 
 const CATEGORIES = Object.values(CATEGORY_CONFIGS);
 
-export function LeaderboardExperience() {
+const COUNTRY_FLAGS: Record<string, string> = {
+  BR:'🇧🇷', AR:'🇦🇷', FR:'🇫🇷', DE:'🇩🇪', IT:'🇮🇹', ES:'🇪🇸',
+  PT:'🇵🇹', NL:'🇳🇱', CM:'🇨🇲', SN:'🇸🇳', NG:'🇳🇬', EN:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+  UY:'🇺🇾', MX:'🇲🇽', CO:'🇨🇴', CL:'🇨🇱', GH:'🇬🇭', JP:'🇯🇵',
+  KR:'🇰🇷', SE:'🇸🇪', US:'🇺🇸', GB:'🇬🇧',
+};
+
+function rowToEntry(row: LeaderboardUserRow, rank: number, currentUserId?: string): LeaderboardEntry {
+  const total = row.wins + row.draws + row.losses;
+  return {
+    rank,
+    userId:        row.profileId,
+    username:      row.username,
+    avatarInitial: row.username.charAt(0).toUpperCase(),
+    nationality:   row.countryCode,
+    flagEmoji:     COUNTRY_FLAGS[row.countryCode] ?? '🏳️',
+    level:         1,
+    wins:          row.wins,
+    losses:        row.losses,
+    winRate:       total > 0 ? Math.round((row.wins / total) * 100) : 0,
+    squadOvr:      0,
+    totalCards:    0,
+    seasonPoints:  row.eloRating,
+    isCurrentUser: row.profileId === currentUserId,
+    isFriend:      false,
+    isOnline:      false,
+  };
+}
+
+type Props = {
+  realData?:       LeaderboardUserRow[];
+  currentUserId?:  string | undefined;
+};
+
+export function LeaderboardExperience({ realData, currentUserId }: Props) {
   const [category, setCategory] = useState<LeaderboardCategory>('global_wins');
   const [country, setCountry] = useState('BR');
   const [showCountryPicker, setShowCP] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const data = useMemo(() => getLeaderboard(category, country), [category, country]);
+  const data = useMemo(() => {
+    const isGlobal = category === 'global_wins' || category === 'season';
+    if (realData && realData.length > 0 && isGlobal) {
+      const entries = realData.map((r, i) => rowToEntry(r, i + 1, currentUserId));
+      const currentUser = entries.find((e) => e.isCurrentUser) ?? null;
+      return { entries, currentUser, totalPlayers: entries.length, season: null };
+    }
+    return getLeaderboard(category, country);
+  }, [realData, currentUserId, category, country]);
 
   const handleTab = useCallback((c: LeaderboardCategory) => {
     startTransition(() => setCategory(c));

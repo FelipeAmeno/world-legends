@@ -1,7 +1,7 @@
 'use client';
 
+import { useAuth } from '@/lib/auth-context';
 import { useGameState } from '@/lib/game-context';
-import { USER_PROFILE } from '@/lib/mock-data';
 import { motion } from 'framer-motion';
 
 function levelTitle(lv: number): string {
@@ -25,12 +25,18 @@ type Props = {
 
 export function ProfileHero({ wins, draws, losses, winRate }: Props) {
   const state = useGameState();
-  const name = state.isOnboarded ? state.username : USER_PROFILE.username;
-  const level = state.isOnboarded ? state.level : USER_PROFILE.level;
-  const xpCur = state.isOnboarded ? state.currentXp : USER_PROFILE.currentXp;
-  const xpNext = state.isOnboarded ? state.xpForNext : USER_PROFILE.xpForNext;
-  const credits = state.isOnboarded ? state.credits : USER_PROFILE.credits;
-  const frags = state.isOnboarded ? state.fragments : USER_PROFILE.fragments;
+  const { user } = useAuth();
+
+  const guestName = user?.user_metadata?.['name'] as string | undefined
+    ?? user?.email?.split('@')[0]
+    ?? 'Jogador';
+
+  const name    = state.isOnboarded ? state.username  : guestName;
+  const level   = state.isOnboarded ? state.level     : 1;
+  const xpCur   = state.isOnboarded ? state.currentXp : 0;
+  const xpNext  = state.isOnboarded ? state.xpForNext : 100;
+  const credits = state.isOnboarded ? state.credits   : 0;
+  const frags   = state.isOnboarded ? state.fragments : 0;
   const title = levelTitle(level);
   const xpPct = Math.round((xpCur / Math.max(1, xpNext)) * 100);
   const initial = name.charAt(0).toUpperCase();

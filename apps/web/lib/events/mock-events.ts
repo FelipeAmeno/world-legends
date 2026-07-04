@@ -59,7 +59,7 @@ export const MOCK_EVENTS: GameEvent[] = [
     endsAt:       fromNow(28 * DAY),
     maxEntries:   3,
     format:       'tournament',
-    participants: 48_392,
+    participants: 0,
     tags:         ['copa','world_cup','2026','exclusivo'],
 
     requirements: [
@@ -123,7 +123,7 @@ export const MOCK_EVENTS: GameEvent[] = [
     endsAt:       fromNow(9 * DAY),
     maxEntries:   1,
     format:       'tournament',
-    participants: 31_847,
+    participants: 0,
     tags:         ['europa','champions','uefa','eliminatória'],
 
     requirements: [
@@ -168,7 +168,7 @@ export const MOCK_EVENTS: GameEvent[] = [
     endsAt:       fromNow(14 * DAY),
     maxEntries:   2,
     format:       'best_of_3',
-    participants: 22_108,
+    participants: 0,
     tags:         ['america_sul','libertadores','conmebol'],
 
     requirements: [
@@ -212,7 +212,7 @@ export const MOCK_EVENTS: GameEvent[] = [
     endsAt:       fromNow(3 * DAY),
     maxEntries:   2,
     format:       'single_match',
-    participants: 15_442,
+    participants: 0,
     tags:         ['copa_america','america_sul','seleção'],
 
     requirements: [
@@ -256,7 +256,7 @@ export const MOCK_EVENTS: GameEvent[] = [
     endsAt:       fromNow(6 * DAY),
     maxEntries:   3,
     format:       'accumulate',
-    participants: 8_234,
+    participants: 0,
     tags:         ['semanal','challenge','gols'],
 
     requirements: [
@@ -293,7 +293,7 @@ export const MOCK_EVENTS: GameEvent[] = [
     endsAt:       new Date(new Date().setHours(23,59,59,999)).toISOString(),
     maxEntries:   1,
     format:       'challenge',
-    participants: 3_892,
+    participants: 0,
     tags:         ['diário','fácil','beginner'],
 
     requirements: [

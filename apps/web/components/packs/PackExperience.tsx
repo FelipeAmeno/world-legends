@@ -13,14 +13,17 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { DrawnCardInfo } from '@/lib/actions';
 import { openPackAction } from '@/lib/actions';
 import type { CollectionCard } from '@/lib/collection-data';
 import { getCollection } from '@/lib/collection-data';
+import { vibrate } from '@/lib/haptics';
 import { type DrawnCard, PACK_DEFS, type PackDefinitionUI, drawPack } from '@/lib/pack-logic';
+import { SFX } from '@/lib/sound-manager';
 import type { RarityCode } from '@world-legends/types';
+import { useCameraShake } from './hooks/useCameraShake';
 import { CardRevealScene } from './CardRevealScene';
 import { ExplosionOverlay } from './ExplosionOverlay';
 import { PackFloatScene } from './PackFloatScene';
@@ -92,23 +95,39 @@ function buildDrawnCardsFromServer(
 
 type Props = {
   initialBalance?: number;
+  isWelcome?: boolean;
 };
 
-export function PackExperience({ initialBalance = 500 }: Props) {
+export function PackExperience({ initialBalance = 500, isWelcome = false }: Props) {
   const [phase, setPhase] = useState<Phase>('SELECT');
   const [pack, setPack] = useState<PackDefinitionUI | null>(null);
   const [cards, setCards] = useState<DrawnCard[]>([]);
   const [balance, setBalance] = useState(initialBalance);
   const [seed, setSeed] = useState(Date.now());
   const [selected, setSelected] = useState<PackDefinitionUI | null>(null);
+  const [insufficientFunds, setInsufficientFunds] = useState(false);
+
+  const { elRef: shakeRef, shake } = useCameraShake();
 
   // Promessa do servidor — criada no CHARGE, aguardada no BURST
   const pendingOpenRef = useRef<ReturnType<typeof openPackAction> | null>(null);
 
+  // Auto-limpar erro de saldo insuficiente após 3s
+  useEffect(() => {
+    if (!insufficientFunds) return;
+    const t = setTimeout(() => setInsufficientFunds(false), 3000);
+    return () => clearTimeout(t);
+  }, [insufficientFunds]);
+
   // ── Selecionar pack e ir para FLOAT ──────────────────────────────────────────
   const handleChoosePack = useCallback(
     (p: PackDefinitionUI) => {
-      if (balance < p.price) return;
+      if (balance < p.price) {
+        setInsufficientFunds(true);
+        vibrate('packSelect');
+        return;
+      }
+      setInsufficientFunds(false);
       setPack(p);
       setSeed((s) => s + 1);
       setPhase('FLOAT');
@@ -124,15 +143,19 @@ export function PackExperience({ initialBalance = 500 }: Props) {
     // Otimista: debitar saldo localmente para resposta imediata na UI
     setBalance((b) => b - pack.price);
 
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate([40, 30, 80, 20, 120]);
-    }
+    vibrate('packCharge');
+    SFX.packCharge();
 
     // Iniciar server action em paralelo com a animação (1.4s charge + 0.7s burst)
     pendingOpenRef.current = openPackAction(pack.id);
 
-    setTimeout(() => setPhase('BURST'), 1400);
-  }, [phase, pack]);
+    setTimeout(() => {
+      setPhase('BURST');
+      SFX.packOpen();
+      shake(14, 550);
+      vibrate('packOpen');
+    }, 1400);
+  }, [phase, pack, shake]);
 
   // ── BURST → REVEAL ───────────────────────────────────────────────────────────
   const handleBurstComplete = useCallback(() => {
@@ -202,7 +225,11 @@ export function PackExperience({ initialBalance = 500 }: Props) {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="relative min-h-screen overflow-hidden hero-bg select-none">
+    <div
+      ref={shakeRef}
+      className="relative min-h-screen overflow-hidden hero-bg select-none"
+      style={{ willChange: 'transform' }}
+    >
       <AnimatePresence>
         {phase === 'BURST' && pack && (
           <ExplosionOverlay
@@ -232,6 +259,26 @@ export function PackExperience({ initialBalance = 500 }: Props) {
                   <span className="text-muted ml-1">saldo</span>
                 </div>
               </div>
+
+              {/* Erro de saldo insuficiente */}
+              <AnimatePresence>
+                {insufficientFunds && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                    exit={{ opacity: 0, y: -8, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="mt-3 rounded-xl px-4 py-2.5 text-xs font-bold text-center"
+                    style={{
+                      background: 'rgba(239,68,68,0.12)',
+                      border: '1px solid rgba(239,68,68,0.35)',
+                      color: '#f87171',
+                    }}
+                  >
+                    Créditos insuficientes para abrir este pack
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <PackSelector
@@ -265,7 +312,7 @@ export function PackExperience({ initialBalance = 500 }: Props) {
             transition={{ duration: 0.5 }}
             className="absolute inset-0"
           >
-            <CardRevealScene cards={cards} pack={pack} onAllFlipped={handleAllFlipped} />
+            <CardRevealScene cards={cards} pack={pack} onAllFlipped={handleAllFlipped} onShake={shake} />
           </motion.div>
         )}
 
@@ -282,6 +329,7 @@ export function PackExperience({ initialBalance = 500 }: Props) {
               pack={pack}
               onOpenAnother={handleOpenAnother}
               onBack={handleBack}
+              isWelcome={isWelcome}
             />
           </motion.div>
         )}

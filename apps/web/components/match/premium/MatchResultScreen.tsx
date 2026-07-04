@@ -327,6 +327,35 @@ export function MatchResultScreen({ data, onRematch, onBack }: Props) {
         </AnimatePresence>
       </div>
 
+      {/* Missão diária */}
+      <div className="px-4 pt-3">
+        <div
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+          style={{
+            background: 'rgba(201,168,76,0.06)',
+            border: '1px solid rgba(201,168,76,0.18)',
+          }}
+        >
+          <span className="text-lg shrink-0">🎯</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold text-gold/80 leading-tight">Missão Diária</p>
+            <p className="text-[9px] text-white/40 leading-tight mt-0.5">
+              Jogue 3 partidas hoje · Recompensa: +300c
+            </p>
+          </div>
+          <div
+            className="shrink-0 text-[9px] font-bold px-2 py-1 rounded-lg"
+            style={{
+              background: 'rgba(201,168,76,0.12)',
+              color: '#c9a84c',
+              border: '1px solid rgba(201,168,76,0.25)',
+            }}
+          >
+            1/3
+          </div>
+        </div>
+      </div>
+
       {/* Ações */}
       <div className="flex gap-3 px-4 py-4 border-t border-white/5 bg-black/30">
         <button

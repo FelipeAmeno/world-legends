@@ -3,15 +3,17 @@ import { RarityBadge } from '@/components/ui/RarityBadge';
 import { RARITY_VISUAL } from '@/lib/collection-data';
 import type { DrawnCard } from '@/lib/pack-logic';
 import type { PackDefinitionUI } from '@/lib/pack-logic';
+import Link from 'next/link';
 
 type Props = {
   cards: DrawnCard[];
   pack: PackDefinitionUI;
   onOpenAnother: () => void;
   onBack: () => void;
+  isWelcome?: boolean;
 };
 
-export function RevealSummary({ cards, pack, onOpenAnother, onBack }: Props) {
+export function RevealSummary({ cards, pack, onOpenAnother, onBack, isWelcome }: Props) {
   const best = [...cards].sort((a, b) => b.card.overall - a.card.overall)[0]!;
   const avgOvr = Math.round(cards.reduce((s, c) => s + c.card.overall, 0) / cards.length);
   const rarities = cards.map((c) => c.card.rarityCode);
@@ -107,27 +109,42 @@ export function RevealSummary({ cards, pack, onOpenAnother, onBack }: Props) {
       </div>
 
       {/* Ações */}
-      <div className="flex gap-3">
-        <button
-          onClick={onBack}
-          className="px-5 py-3 rounded-xl border border-border text-muted text-sm
-                     hover:text-parchment hover:bg-white/5 transition-all"
-        >
-          ← Loja
-        </button>
-        <button
-          onClick={onOpenAnother}
-          className="flex-1 py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.02]"
+      {isWelcome ? (
+        <Link
+          href="/squad"
+          className="block w-full py-4 rounded-2xl font-display text-xl tracking-wider text-center
+                     transition-all hover:scale-[1.02]"
           style={{
-            background: `linear-gradient(135deg, ${pack.gradientFrom.replace('1a', '2a')}, ${pack.borderColor.replace(/[\d.]+\)$/, '0.3)')})`,
-            border: `1px solid ${pack.borderColor}`,
-            color: pack.borderColor.replace(/[\d.]+\)$/, '1)'),
-            boxShadow: `0 0 16px ${pack.glowColor}`,
+            background: 'linear-gradient(135deg, #8c6f27, #c9a84c, #e6c85a)',
+            color: '#07080f',
+            boxShadow: '0 0 32px rgba(201,168,76,0.45), 0 4px 16px rgba(0,0,0,0.4)',
           }}
         >
-          📦 Abrir Outro {pack.name}
-        </button>
-      </div>
+          ⚽ MONTAR MEU SQUAD →
+        </Link>
+      ) : (
+        <div className="flex gap-3">
+          <button
+            onClick={onBack}
+            className="px-5 py-3 rounded-xl border border-border text-muted text-sm
+                       hover:text-parchment hover:bg-white/5 transition-all"
+          >
+            ← Loja
+          </button>
+          <button
+            onClick={onOpenAnother}
+            className="flex-1 py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.02]"
+            style={{
+              background: `linear-gradient(135deg, ${pack.gradientFrom.replace('1a', '2a')}, ${pack.borderColor.replace(/[\d.]+\)$/, '0.3)')})`,
+              border: `1px solid ${pack.borderColor}`,
+              color: pack.borderColor.replace(/[\d.]+\)$/, '1)'),
+              boxShadow: `0 0 16px ${pack.glowColor}`,
+            }}
+          >
+            📦 Abrir Outro {pack.name}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

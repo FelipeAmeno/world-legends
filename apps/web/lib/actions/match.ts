@@ -1,5 +1,6 @@
 'use server';
 
+import { crash } from '@/lib/crash/sentry';
 import type { MatchDisplay, MatchOpponent } from '@/lib/match-data';
 import { MATCH_OPPONENTS, runMatch } from '@/lib/match-data';
 import {
@@ -133,8 +134,13 @@ export async function playMatchAction(opponentId: string): Promise<PlayMatchResu
 
       // Check and unlock Xbox-style achievements
       await checkAndUnlockAchievementsInternal(userId);
-    } catch {
-      // Falha silenciosa — missões/conquistas não devem impedir o fluxo da partida
+    } catch (e) {
+      crash.captureError(e, {
+        context: 'match_post_game_background',
+        userId,
+        extras: { opponentId, outcome, homeGoals },
+        level: 'warning',
+      });
     }
   })();
 

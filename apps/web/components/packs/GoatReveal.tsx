@@ -1,52 +1,190 @@
 'use client';
 
 import type { DrawnCard } from '@/lib/pack-logic';
+import { vibrate } from '@/lib/haptics';
+import { SFX } from '@/lib/sound-manager';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ConfettiCanvas } from './ConfettiCanvas';
 
 type Props = {
   card: DrawnCard;
   onComplete: () => void;
 };
 
-// ─── Partículas do GOAT ───────────────────────────────────────────────────────
-
-const GOAT_PARTICLES = Array.from({ length: 80 }, (_, i) => {
-  const angle = (i / 80) * Math.PI * 2;
-  const spread = 60 + (i % 8) * 30; // 60–270px
-  const isGold = i % 3 === 0;
-  const isWhite = i % 7 === 0;
-  return {
-    tx: Math.round(Math.cos(angle) * spread),
-    ty: Math.round(Math.sin(angle) * spread),
-    size: 2 + (i % 6),
-    delay: (i % 10) * 0.03,
-    dur: 0.8 + (i % 5) * 0.15,
-    color: isWhite ? '#ffffff' : isGold ? '#c9a84c' : '#e2e8f0',
-  };
-});
-
-// ─── Phase ────────────────────────────────────────────────────────────────────
-
 type GoatPhase = 'dark' | 'text' | 'card' | 'burst' | 'hold';
+
+const PHASE_ORDER: GoatPhase[] = ['dark', 'text', 'card', 'burst', 'hold'];
+
+// ─── Canvas Burst Particles ───────────────────────────────────────────────────
+
+function BurstCanvas() {
+  const ref = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const W = canvas.width  = canvas.offsetWidth;
+    const H = canvas.height = canvas.offsetHeight;
+    const cx = W / 2;
+    const cy = H / 2;
+
+    const COLORS = ['#c9a84c', '#e6c85a', '#f5e098', '#ffffff', '#e2e8f0', '#a855f7'];
+    const COUNT  = 120;
+
+    type Particle = {
+      x: number; y: number; vx: number; vy: number;
+      size: number; color: string; alpha: number; life: number;
+    };
+
+    const particles: Particle[] = Array.from({ length: COUNT }, (_, i) => {
+      const angle  = (i / COUNT) * Math.PI * 2 + Math.random() * 0.3;
+      const speed  = 2 + Math.random() * 7;
+      return {
+        x: cx, y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        size:  2 + Math.random() * 6,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)]!,
+        alpha: 1,
+        life:  0.7 + Math.random() * 0.6,
+      };
+    });
+
+    let raf = 0;
+    let elapsed = 0;
+    let last = performance.now();
+
+    const tick = (now: number) => {
+      const dt = (now - last) / 1000;
+      last = now;
+      elapsed += dt;
+
+      ctx.clearRect(0, 0, W, H);
+      let any = false;
+
+      for (const p of particles) {
+        p.x  += p.vx;
+        p.y  += p.vy;
+        p.vy += 0.15;
+        p.vx *= 0.97;
+        p.alpha = Math.max(0, 1 - elapsed / p.life);
+        if (p.alpha <= 0) continue;
+        any = true;
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle   = p.color;
+        ctx.shadowBlur  = p.size * 2;
+        ctx.shadowColor = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      if (any) raf = requestAnimationFrame(tick);
+      else ctx.clearRect(0, 0, W, H);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(raf); ctx.clearRect(0, 0, W, H); };
+  }, []);
+
+  return (
+    <canvas
+      ref={ref}
+      className="absolute inset-0 pointer-events-none"
+      style={{ width: '100%', height: '100%' }}
+    />
+  );
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export function GoatReveal({ card, onComplete }: Props) {
   const [phase, setPhase] = useState<GoatPhase>('dark');
+  const timerRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const phaseRef  = useRef<GoatPhase>('dark');
 
+  const advancePhase = useCallback(() => {
+    const current = phaseRef.current;
+    const idx = PHASE_ORDER.indexOf(current);
+    if (idx < 0 || idx >= PHASE_ORDER.length - 1) return;
+    const next = PHASE_ORDER[idx + 1]!;
+    phaseRef.current = next;
+    setPhase(next);
+    if (next === 'burst') {
+      vibrate('cardGoat');
+      SFX.cardGoat?.();
+    }
+  }, []);
+
+  // Sequência automática
   useEffect(() => {
-    // 1. Tela escura (suspense)
-    const t1 = setTimeout(() => setPhase('text'), 900);
-    // 2. Texto dramático
-    const t2 = setTimeout(() => setPhase('card'), 2000);
-    // 3. Carta aparece
-    const t3 = setTimeout(() => setPhase('burst'), 3200);
-    // 4. Explosão de partículas
-    const t4 = setTimeout(() => setPhase('hold'), 4200);
-    // 5. Segurar → chamar onComplete
-    const t5 = setTimeout(onComplete, 6500);
+    const delays: [number, GoatPhase][] = [
+      [900,  'text'],
+      [2000, 'card'],
+      [3200, 'burst'],
+      [4200, 'hold'],
+    ];
 
-    return () => [t1, t2, t3, t4, t5].forEach(clearTimeout);
+    timerRefs.current = delays.map(([ms, p]) =>
+      setTimeout(() => {
+        phaseRef.current = p;
+        setPhase(p);
+        if (p === 'burst') {
+          vibrate('cardGoat');
+          SFX.cardGoat?.();
+        }
+      }, ms),
+    );
+
+    const tDone = setTimeout(onComplete, 6500);
+    timerRefs.current.push(tDone);
+
+    return () => {
+      timerRefs.current.forEach(clearTimeout);
+      timerRefs.current = [];
+    };
   }, [onComplete]);
+
+  // Tap handler: skip para próxima fase (exceto hold → onComplete)
+  const handleTap = useCallback(() => {
+    const current = phaseRef.current;
+    if (current === 'hold') {
+      timerRefs.current.forEach(clearTimeout);
+      timerRefs.current = [];
+      onComplete();
+      return;
+    }
+    // Limpar timers automáticos e avançar manualmente
+    timerRefs.current.forEach(clearTimeout);
+    timerRefs.current = [];
+    advancePhase();
+
+    // Reescalonar timers para as fases restantes a partir daqui
+    const currentIdx = PHASE_ORDER.indexOf(phaseRef.current);
+    const remaining: [number, GoatPhase][] = [
+      [600,  'card'],
+      [1400, 'burst'],
+      [2200, 'hold'],
+    ].slice(Math.max(0, currentIdx - 1)) as [number, GoatPhase][];
+
+    timerRefs.current = remaining.map(([ms, p]) =>
+      setTimeout(() => {
+        phaseRef.current = p;
+        setPhase(p);
+        if (p === 'burst') {
+          vibrate('cardGoat');
+          SFX.cardGoat?.();
+        }
+      }, ms),
+    );
+    timerRefs.current.push(setTimeout(onComplete, remaining.at(-1)?.[0]! + 2000));
+  }, [onComplete, advancePhase]);
 
   return (
     <motion.div
@@ -56,9 +194,21 @@ export function GoatReveal({ card, onComplete }: Props) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
       style={{ background: 'rgba(2,2,6,0.98)' }}
-      onClick={phase === 'hold' ? onComplete : undefined}
+      onClick={handleTap}
     >
-      {/* Aura de fundo dourada (phases: card/burst/hold) */}
+      {/* Confetti durante burst/hold */}
+      <AnimatePresence>
+        {(phase === 'burst' || phase === 'hold') && (
+          <ConfettiCanvas key="goat-confetti" rarity="world_cup_hero" count={140} />
+        )}
+      </AnimatePresence>
+
+      {/* Burst Canvas particles */}
+      <AnimatePresence>
+        {phase === 'burst' && <BurstCanvas key="burst" />}
+      </AnimatePresence>
+
+      {/* Aura de fundo dourada */}
       <AnimatePresence>
         {(phase === 'card' || phase === 'burst' || phase === 'hold') && (
           <motion.div
@@ -119,6 +269,7 @@ export function GoatReveal({ card, onComplete }: Props) {
               animate={{ scaleX: [0, 1] }}
               transition={{ duration: 0.8 }}
             />
+            <p className="text-white/20 text-[10px] mt-6 tracking-widest">toque para avançar</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -159,7 +310,6 @@ export function GoatReveal({ card, onComplete }: Props) {
                   </span>
                 </div>
 
-                {/* OVR enorme */}
                 <motion.p
                   className="font-display text-6xl leading-none"
                   style={{
@@ -177,8 +327,7 @@ export function GoatReveal({ card, onComplete }: Props) {
                 <div
                   className="mt-2 mb-3 h-px w-20"
                   style={{
-                    background:
-                      'linear-gradient(90deg, transparent, rgba(240,244,255,0.6), transparent)',
+                    background: 'linear-gradient(90deg, transparent, rgba(240,244,255,0.6), transparent)',
                   }}
                 />
 
@@ -219,34 +368,6 @@ export function GoatReveal({ card, onComplete }: Props) {
               )}
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Explosão de partículas GOAT (fase burst) */}
-      <AnimatePresence>
-        {phase === 'burst' && (
-          <div
-            className="absolute pointer-events-none"
-            style={{ top: '50%', left: '50%', width: 0, height: 0 }}
-          >
-            {GOAT_PARTICLES.map((p, i) => (
-              <motion.div
-                key={i}
-                className="absolute rounded-full"
-                style={{
-                  width: p.size,
-                  height: p.size,
-                  top: -p.size / 2,
-                  left: -p.size / 2,
-                  background: p.color,
-                  boxShadow: `0 0 ${p.size * 2}px ${p.color}`,
-                }}
-                initial={{ x: 0, y: 0, scale: 0, opacity: 1 }}
-                animate={{ x: p.tx, y: p.ty, scale: [0, 2, 0], opacity: [1, 0.8, 0] }}
-                transition={{ duration: p.dur, delay: p.delay, ease: 'easeOut' }}
-              />
-            ))}
-          </div>
         )}
       </AnimatePresence>
 

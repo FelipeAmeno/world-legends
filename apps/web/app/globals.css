@@ -1113,3 +1113,146 @@ textarea {
     opacity: 1;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SPRINT 3 — GAME FEEL SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Skeleton shimmer ──────────────────────────────────────────────────────── */
+@keyframes skeleton-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+/* ── Ripple (MicroFeedback) ────────────────────────────────────────────────── */
+@keyframes wl-ripple {
+  0%   { transform: scale(0);   opacity: 0.5; }
+  100% { transform: scale(1);   opacity: 0;   }
+}
+
+/* ── Gold shimmer sweep ────────────────────────────────────────────────────── */
+@keyframes gold-sweep {
+  0%   { transform: translateX(-100%) skewX(-20deg); opacity: 0;   }
+  20%  {                                              opacity: 0.6; }
+  80%  {                                              opacity: 0.4; }
+  100% { transform: translateX(200%)  skewX(-20deg); opacity: 0;   }
+}
+
+/* ── Float vertical (ambient) ─────────────────────────────────────────────── */
+@keyframes float-y {
+  0%, 100% { transform: translateY(0);    }
+  50%       { transform: translateY(-6px); }
+}
+
+/* ── Pulse ring (soft glow ring expanding outward) ────────────────────────── */
+@keyframes pulse-ring {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  100% { transform: scale(1.5); opacity: 0;   }
+}
+
+/* ── Star twinkle ─────────────────────────────────────────────────────────── */
+@keyframes twinkle {
+  0%, 100% { opacity: 1;   transform: scale(1);    }
+  50%       { opacity: 0.3; transform: scale(0.7);  }
+}
+
+/* ── Bounce in ────────────────────────────────────────────────────────────── */
+@keyframes bounce-in {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.1); opacity: 1; }
+  80%  { transform: scale(0.95);            }
+  100% { transform: scale(1);               }
+}
+
+/* ── Slide up fade ────────────────────────────────────────────────────────── */
+@keyframes slide-up-fade {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── Toast progress bar ───────────────────────────────────────────────────── */
+@keyframes toast-progress {
+  from { width: 100%; }
+  to   { width: 0%;   }
+}
+
+/* ── Number count up ──────────────────────────────────────────────────────── */
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(8px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);   }
+}
+
+/* ── Glow pulse (reutilizável via classe) ─────────────────────────────────── */
+.animate-glow-gold {
+  animation: pulseGold 2s ease-in-out infinite;
+}
+.animate-glow-green {
+  animation: glow-green 2s ease-in-out infinite;
+}
+@keyframes glow-green {
+  0%, 100% { box-shadow: 0 0 8px rgba(16,185,129,0.25);  }
+  50%       { box-shadow: 0 0 24px rgba(16,185,129,0.60); }
+}
+
+/* ── Float (para elementos flutuantes) ────────────────────────────────────── */
+.animate-float {
+  animation: float-y 3s ease-in-out infinite;
+}
+
+/* ── Ripple CSS class ─────────────────────────────────────────────────────── */
+.animate-ripple {
+  animation: wl-ripple 0.65s ease-out forwards;
+}
+
+/* ── Skeleton shimmer class ───────────────────────────────────────────────── */
+.animate-skeleton {
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
+}
+
+/* ── Bounce in ────────────────────────────────────────────────────────────── */
+.animate-bounce-in {
+  animation: bounce-in 0.5s var(--ease-spring) forwards;
+}
+
+/* ── Gold sweep (hover shimmer sobre botões gold) ─────────────────────────── */
+.gold-sweep {
+  position: relative;
+  overflow: hidden;
+}
+.gold-sweep::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(245,224,152,0.25) 50%,
+    transparent 65%
+  );
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.gold-sweep:hover::after {
+  opacity: 1;
+  animation: gold-sweep 0.7s ease-out forwards;
+}
+
+/* ── Tap highlight (mobile touch) ────────────────────────────────────────── */
+.tap-highlight {
+  -webkit-tap-highlight-color: rgba(201, 168, 76, 0.12);
+}
+
+/* ── Safe area padding helpers ────────────────────────────────────────────── */
+.pt-safe    { padding-top:    env(safe-area-inset-top);    }
+.pb-safe    { padding-bottom: env(safe-area-inset-bottom); }
+.pl-safe    { padding-left:   env(safe-area-inset-left);   }
+.pr-safe    { padding-right:  env(safe-area-inset-right);  }
+
+/* ── Stagger animation helpers ─────────────────────────────────────────────── */
+.stagger-1  { animation-delay: 0.05s; }
+.stagger-2  { animation-delay: 0.10s; }
+.stagger-3  { animation-delay: 0.15s; }
+.stagger-4  { animation-delay: 0.20s; }
+.stagger-5  { animation-delay: 0.25s; }
+.stagger-6  { animation-delay: 0.30s; }

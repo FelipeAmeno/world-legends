@@ -1,12 +1,7 @@
-/**
- * app/profile/page.tsx — T057 Perfil Premium
- *
- * Server Component: computa todos os dados e renderiza o perfil premium.
- */
-
+import { getCurrentUser } from '@/lib/supabase/server';
 import { getCollection } from '@/lib/collection-data';
-import { RECENT_MATCHES, USER_PROFILE } from '@/lib/mock-data';
-import { SEASONS, buildAchievements, buildAdvancedStats, buildTitles } from '@/lib/profile-data';
+import { getUserCollection, getUserMatchStats } from '@/lib/server/game-data';
+import { SEASONS, buildAdvancedStats, buildTitles, buildAchievements } from '@/lib/profile-data';
 
 import { AchievementsGrid } from '@/components/profile/premium/AchievementsGrid';
 import { BestCardShowcase } from '@/components/profile/premium/BestCardShowcase';
@@ -20,66 +15,69 @@ import { ProfileHero } from '@/components/profile/premium/ProfileHero';
 import { SeasonsHistory } from '@/components/profile/premium/SeasonsHistory';
 import { TitlesGrid } from '@/components/profile/premium/TitlesGrid';
 
-export default function ProfilePage() {
-  const collection = getCollection();
-  const p = USER_PROFILE;
-  const total = p.wins + p.draws + p.losses;
-  const winRate = total > 0 ? Math.round((p.wins / total) * 100) : 0;
+export default async function ProfilePage() {
+  const user = await getCurrentUser();
+  const collection = user ? await getUserCollection(user.id) : getCollection();
 
-  const stats = buildAdvancedStats(collection);
-  const titles = buildTitles(p.wins, p.level, collection);
-  const achiev = buildAchievements(p.wins, p.draws, p.losses, p.level, p.credits, collection);
-  stats.winRate = winRate;
+  let wins = 0, draws = 0, losses = 0;
+  let recentMatches: Awaited<ReturnType<typeof getUserMatchStats>>['recentMatches'] = [];
+
+  if (user) {
+    const stats = await getUserMatchStats(user.id);
+    wins   = stats.wins;
+    draws  = stats.draws;
+    losses = stats.losses;
+    recentMatches = stats.recentMatches;
+  }
+
+  const total   = wins + draws + losses;
+  const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+
+  const advStats = buildAdvancedStats(collection);
+  const titles   = buildTitles(wins, 1, collection);
+  const achiev   = buildAchievements(wins, draws, losses, 1, 0, collection);
+  advStats.winRate = winRate;
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 pb-10 animate-[fadeIn_0.4s_ease-out]">
-      {/* Hero */}
       <div className="glass rounded-3xl overflow-hidden border border-white/5">
-        <ProfileHero wins={p.wins} draws={p.draws} losses={p.losses} winRate={winRate} />
+        <ProfileHero wins={wins} draws={draws} losses={losses} winRate={winRate} />
       </div>
 
-      {/* Melhor carta */}
       <div className="px-5 py-5 glass rounded-3xl border border-white/5">
         <BestCardShowcase
-          card={stats.bestCard}
-          avgOvr={stats.avgOvr}
-          legendaryPlus={stats.legendaryPlus}
+          card={advStats.bestCard}
+          avgOvr={advStats.avgOvr}
+          legendaryPlus={advStats.legendaryPlus}
         />
       </div>
 
-      {/* Coleção */}
       <div className="px-5 py-5 glass rounded-3xl border border-white/5">
-        <CollectionOverview cards={collection} stats={stats} />
+        <CollectionOverview cards={collection} stats={advStats} />
       </div>
 
-      {/* Títulos */}
       <div className="px-5 py-5 glass rounded-3xl border border-white/5">
         <TitlesGrid titles={titles} />
       </div>
 
-      {/* Conquistas */}
       <div className="px-5 py-5 glass rounded-3xl border border-white/5">
         <AchievementsGrid achievements={achiev} />
       </div>
 
-      {/* Temporadas */}
       <div className="px-5 py-5 glass rounded-3xl border border-white/5">
         <SeasonsHistory seasons={SEASONS} />
       </div>
 
-      {/* Histórico */}
       <div className="px-5 py-5 glass rounded-3xl border border-white/5">
-        <MatchHistorySection matches={RECENT_MATCHES} />
+        <MatchHistorySection matches={recentMatches} />
       </div>
 
-      {/* Favoritas */}
       <div className="px-5 py-5 glass rounded-3xl border border-white/5">
         <FavoriteCards allCards={collection} />
       </div>
 
-      {/* Países */}
       <div className="px-5 py-5 glass rounded-3xl border border-white/5">
-        <CountriesUnlocked countries={stats.uniqueCountries} />
+        <CountriesUnlocked countries={advStats.uniqueCountries} />
       </div>
     </div>
   );

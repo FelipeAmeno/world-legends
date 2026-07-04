@@ -41,7 +41,7 @@ function LoginContent() {
   const handleGoogle = async () => {
     setPhase('loading');
     setError(null);
-    const { error } = await signInGoogle();
+    const { error } = await signInGoogle(redirect);
     if (error) {
       setError(error.message);
       setPhase('choose');
@@ -52,7 +52,7 @@ function LoginContent() {
   const handleApple = async () => {
     setPhase('loading');
     setError(null);
-    const { error } = await signInApple();
+    const { error } = await signInApple(redirect);
     if (error) {
       setError(error.message);
       setPhase('choose');

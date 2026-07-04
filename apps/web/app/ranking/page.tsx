@@ -1,6 +1,13 @@
+import { getCurrentUser } from '@/lib/supabase/server';
+import { getLeaderboardData } from '@/lib/server/game-data';
 import { LeaderboardExperience } from '@/components/ranking/LeaderboardExperience';
 
-export default function RankingPage() {
+export default async function RankingPage() {
+  const [user, leaderboardRows] = await Promise.all([
+    getCurrentUser(),
+    getLeaderboardData(),
+  ]);
+
   return (
     <div className="flex flex-col h-full">
       <div className="page-header shrink-0">
@@ -16,7 +23,10 @@ export default function RankingPage() {
         </div>
       </div>
       <div className="flex-1 min-h-0">
-        <LeaderboardExperience />
+        <LeaderboardExperience
+          realData={leaderboardRows}
+          currentUserId={user?.id}
+        />
       </div>
     </div>
   );

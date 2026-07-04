@@ -1,6 +1,6 @@
 'use client';
 
-import type { MatchRecord } from '@/lib/mock-data';
+import type { MatchRecord } from '@/lib/server/game-data';
 import { motion } from 'framer-motion';
 
 type Props = { matches: MatchRecord[] };

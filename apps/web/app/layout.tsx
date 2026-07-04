@@ -16,8 +16,10 @@ import { LevelUpOverlay } from '@/components/flow/LevelUpOverlay';
 import { RewardToast } from '@/components/flow/RewardToast';
 import { AppShell } from '@/components/nav/AppShell';
 import { NotificationToast } from '@/components/notifications/NotificationToast';
+import { WLToast } from '@/components/ui/WLToast';
 import { SessionProvider } from '@/lib/auth-context';
 import { GameProvider } from '@/lib/game-context';
+import { getCurrentUser } from '@/lib/supabase/server';
 
 // ─── Fonts (preload + subset automático) ─────────────────────────────────────
 
@@ -67,7 +69,9 @@ export const viewport: Viewport = {
 
 // ─── Layout ───────────────────────────────────────────────────────────────────
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const initialUser = await getCurrentUser();
+
   return (
     <html lang="pt-BR" className={`${bebasNeue.variable} ${inter.variable}`}>
       <head>
@@ -86,12 +90,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="bg-obsidian text-parchment font-body antialiased">
-        <SessionProvider>
+        <SessionProvider initialUser={initialUser}>
           <GameProvider>
             <PostHogProvider>
               <LevelUpOverlay />
               <RewardToast />
               <NotificationToast />
+              <WLToast />
               <AppShell>{children}</AppShell>
             </PostHogProvider>
           </GameProvider>

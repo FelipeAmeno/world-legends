@@ -33,9 +33,9 @@ type AuthContextValue = {
   configured:    boolean;   // true se env vars presentes
 
   /** Login com Google OAuth */
-  signInGoogle: () => Promise<SignInResult>;
+  signInGoogle: (redirectTo?: string) => Promise<SignInResult>;
   /** Login com Apple OAuth */
-  signInApple:  () => Promise<SignInResult>;
+  signInApple:  (redirectTo?: string) => Promise<SignInResult>;
   /** Login com email/senha */
   signInEmail:  (email: string, password: string) => Promise<SignInResult>;
   /** Magic link (email apenas) */
@@ -50,8 +50,8 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue>({
   user:null, session:null, loading:true, isGuest:true, configured:false,
-  signInGoogle:async()=>({error:null}),
-  signInApple: async()=>({error:null}),
+  signInGoogle:async(_r?: string)=>({error:null}),
+  signInApple: async(_r?: string)=>({error:null}),
   signInEmail: async()=>({error:null}),
   signInMagicLink:async()=>({error:null}),
   signUp:      async()=>({error:null}),
@@ -104,23 +104,27 @@ export function SessionProvider({ children, initialUser=null, initialSession=nul
 
   // ── Auth actions ─────────────────────────────────────────────────────────────
 
-  const signInGoogle = useCallback(async (): Promise<SignInResult> => {
+  const signInGoogle = useCallback(async (redirectTo = '/'): Promise<SignInResult> => {
     if (!sb) return { error: null };
+    const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+    if (redirectTo && redirectTo !== '/') callbackUrl.searchParams.set('next', redirectTo);
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
       options:  {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callbackUrl.toString(),
         queryParams: { prompt: 'select_account' },
       },
     });
     return { error };
   }, [sb]);
 
-  const signInApple = useCallback(async (): Promise<SignInResult> => {
+  const signInApple = useCallback(async (redirectTo = '/'): Promise<SignInResult> => {
     if (!sb) return { error: null };
+    const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+    if (redirectTo && redirectTo !== '/') callbackUrl.searchParams.set('next', redirectTo);
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'apple',
-      options:  { redirectTo: `${window.location.origin}/auth/callback` },
+      options:  { redirectTo: callbackUrl.toString() },
     });
     return { error };
   }, [sb]);

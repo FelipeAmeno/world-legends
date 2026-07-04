@@ -11,8 +11,30 @@ import { type CollectionCard, enrichWithUserCards } from '@/lib/collection-data'
 import { getServiceDb } from '@/lib/server/db';
 import type { SBState } from '@/lib/squad-builder';
 import type { FormationKey } from '@/lib/squad-data';
-import { SupabaseProfileRepository, SupabaseUserCardRepository } from '@world-legends/db';
+import { SupabaseProfileRepository, SupabaseRankingRepository, SupabaseSeasonRepository, SupabaseUserCardRepository } from '@world-legends/db';
 import type { ProfileRow } from '@world-legends/db';
+
+// ─── Tipos de match history ───────────────────────────────────────────────────
+
+export type MatchRecord = {
+  id:         string;
+  opponent:   string;
+  homeScore:  number;
+  awayScore:  number;
+  isHome:     boolean;
+  outcome:    'win' | 'draw' | 'loss';
+  credits:    number;
+  xp:         number;
+  date:       string;
+};
+
+export type UserMatchStats = {
+  wins:          number;
+  draws:         number;
+  losses:        number;
+  recentMatches: MatchRecord[];
+  eloRating:     number;
+};
 
 // ─── Coleção do usuário ───────────────────────────────────────────────────────
 
@@ -105,6 +127,194 @@ export async function getUserActiveSquad(userId: string): Promise<SavedSquad | n
     })),
   };
 }
+
+// ─── Match stats do usuário ───────────────────────────────────────────────────
+
+/**
+ * Retorna wins/draws/losses (da temporada ativa ou soma total),
+ * elo_rating do perfil, e as últimas 10 partidas.
+ */
+export async function getUserMatchStats(userId: string): Promise<UserMatchStats> {
+  const db = getServiceDb();
+  const empty: UserMatchStats = { wins: 0, draws: 0, losses: 0, recentMatches: [], eloRating: 1000 };
+
+  // Perfil → elo_rating atual
+  const profileRepo = new SupabaseProfileRepository(db);
+  const profileResult = await profileRepo.findById(userId);
+  const eloRating = profileResult.ok && profileResult.value ? profileResult.value.eloRating : 1000;
+
+  // Temporada ativa → wins/draws/losses
+  const seasonRepo  = new SupabaseSeasonRepository(db);
+  const rankingRepo = new SupabaseRankingRepository(db);
+  const seasonResult = await seasonRepo.findActive();
+  let wins = 0, draws = 0, losses = 0;
+
+  if (seasonResult.ok && seasonResult.value) {
+    const rankResult = await rankingRepo.findBySeasonAndProfile(seasonResult.value.id, userId);
+    if (rankResult.ok && rankResult.value) {
+      wins   = rankResult.value.wins;
+      draws  = rankResult.value.draws;
+      losses = rankResult.value.losses;
+    }
+  } else {
+    // Sem temporada ativa → contar das partidas diretamente
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    type MatchRow = { id: string; home_profile_id: string | null; home_score: number | null; away_score: number | null };
+    const { data } = (await (db as any)
+      .from('matches')
+      .select('id, home_profile_id, home_score, away_score')
+      .or(`home_profile_id.eq.${userId},away_profile_id.eq.${userId}`)
+      .eq('status', 'simulated')) as { data: MatchRow[] | null };
+
+    for (const m of data ?? []) {
+      const hs = m.home_score ?? 0;
+      const as_ = m.away_score ?? 0;
+      const isHome = m.home_profile_id === userId;
+      const myScore    = isHome ? hs : as_;
+      const theirScore = isHome ? as_ : hs;
+      if (myScore > theirScore) wins++;
+      else if (myScore === theirScore) draws++;
+      else losses++;
+    }
+  }
+
+  // Últimas 10 partidas com nome do adversário
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type FullMatchRow = {
+    id: string;
+    home_profile_id: string | null;
+    away_profile_id: string | null;
+    home_score: number | null;
+    away_score: number | null;
+    simulated_at: string | null;
+    home_profile: { username: string } | null;
+    away_profile: { username: string } | null;
+  };
+  const { data: matchRows } = (await (db as any)
+    .from('matches')
+    .select('id, home_profile_id, away_profile_id, home_score, away_score, simulated_at, home_profile:profiles!home_profile_id(username), away_profile:profiles!away_profile_id(username)')
+    .or(`home_profile_id.eq.${userId},away_profile_id.eq.${userId}`)
+    .eq('status', 'simulated')
+    .order('simulated_at', { ascending: false })
+    .limit(10)) as { data: FullMatchRow[] | null };
+
+  const recentMatches: MatchRecord[] = (matchRows ?? []).map((m) => {
+    const isHome     = m.home_profile_id === userId;
+    const homeScore  = m.home_score  ?? 0;
+    const awayScore  = m.away_score  ?? 0;
+    const myScore    = isHome ? homeScore : awayScore;
+    const theirScore = isHome ? awayScore : homeScore;
+    const opponent   = isHome
+      ? (m.away_profile?.username ?? 'Adversário')
+      : (m.home_profile?.username ?? 'Adversário');
+
+    let outcome: 'win' | 'draw' | 'loss' = 'draw';
+    if (myScore > theirScore) outcome = 'win';
+    else if (myScore < theirScore) outcome = 'loss';
+
+    const when = m.simulated_at ? new Date(m.simulated_at) : null;
+    const now  = new Date();
+    let date = 'Recente';
+    if (when) {
+      const diffDays = Math.floor((now.getTime() - when.getTime()) / 86_400_000);
+      if (diffDays === 0) date = 'Hoje';
+      else if (diffDays === 1) date = 'Ontem';
+      else if (diffDays < 7) date = `${diffDays} dias atrás`;
+      else date = when.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    }
+
+    return {
+      id: m.id,
+      opponent,
+      homeScore: isHome ? homeScore : awayScore,
+      awayScore: isHome ? awayScore : homeScore,
+      isHome,
+      outcome,
+      credits: 0,
+      xp: 0,
+      date,
+    };
+  });
+
+  return { wins, draws, losses, recentMatches, eloRating };
+}
+
+// ─── Leaderboard ──────────────────────────────────────────────────────────────
+
+export type LeaderboardUserRow = {
+  profileId:     string;
+  username:      string;
+  countryCode:   string;
+  eloRating:     number;
+  wins:          number;
+  draws:         number;
+  losses:        number;
+  matchesPlayed: number;
+};
+
+/**
+ * Retorna o leaderboard global (top 100 por elo_rating).
+ * Usa rankings da temporada ativa; fallback para profiles se sem temporada.
+ */
+export async function getLeaderboardData(): Promise<LeaderboardUserRow[]> {
+  const db = getServiceDb();
+  const seasonRepo  = new SupabaseSeasonRepository(db);
+  const rankingRepo = new SupabaseRankingRepository(db);
+
+  const seasonResult = await seasonRepo.findActive();
+
+  if (seasonResult.ok && seasonResult.value) {
+    const result = await rankingRepo.findLeaderboard(seasonResult.value.id, 100);
+    if (result.ok && result.value.length > 0) {
+      // Join de profile usernames inline — service_role não exige RLS
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      type PRow = { id: string; username: string; country_code: string };
+      const profileIds = result.value.map((r) => r.profileId);
+      const { data: profiles } = (await (db as any)
+        .from('profiles')
+        .select('id, username, country_code')
+        .in('id', profileIds)) as { data: PRow[] | null };
+
+      const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+
+      return result.value.map((r) => {
+        const p = profileMap.get(r.profileId);
+        return {
+          profileId:     r.profileId,
+          username:      p?.username ?? 'Jogador',
+          countryCode:   p?.country_code ?? 'BR',
+          eloRating:     r.eloRating,
+          wins:          r.wins,
+          draws:         r.draws,
+          losses:        r.losses,
+          matchesPlayed: r.matchesPlayed,
+        };
+      });
+    }
+  }
+
+  // Fallback: sem temporada → query direto na tabela profiles
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type ProfileFallback = { id: string; username: string; country_code: string; elo_rating: number };
+  const { data: profileFallback } = (await (db as any)
+    .from('profiles')
+    .select('id, username, country_code, elo_rating')
+    .order('elo_rating', { ascending: false })
+    .limit(100)) as { data: ProfileFallback[] | null };
+
+  return (profileFallback ?? []).map((p) => ({
+    profileId:     p.id,
+    username:      p.username,
+    countryCode:   p.country_code,
+    eloRating:     p.elo_rating,
+    wins:          0,
+    draws:         0,
+    losses:        0,
+    matchesPlayed: 0,
+  }));
+}
+
+// ─── Squad salvo ─────────────────────────────────────────────────────────────
 
 /**
  * Reconstrói o SBState a partir dos dados do banco.

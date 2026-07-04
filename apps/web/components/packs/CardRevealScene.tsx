@@ -1,22 +1,28 @@
 'use client';
 
+import type { RevealEffect } from '@/lib/pack-logic';
 import type { DrawnCard, PackDefinitionUI } from '@/lib/pack-logic';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useState } from 'react';
+import { ConfettiCanvas } from './ConfettiCanvas';
 import { GoatReveal } from './GoatReveal';
 import { RevealedCard } from './RevealedCard';
+
+const HIGH_RARITY_CONFETTI = new Set<RevealEffect>(['legendary', 'ultra', 'world_cup_hero']);
 
 type Props = {
   cards: DrawnCard[];
   pack: PackDefinitionUI;
   onAllFlipped: () => void;
+  onShake?: (intensity?: number, duration?: number) => void;
 };
 
-export function CardRevealScene({ cards, pack, onAllFlipped }: Props) {
+export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
   const [flipped, setFlipped] = useState<Set<number>>(new Set());
   const [showRevAll, setShowRevAll] = useState(false);
   const [goatIndex, setGoatIndex] = useState<number | null>(null);
   const [goatDone, setGoatDone] = useState(false);
+  const [confettiRarity, setConfettiRarity] = useState<RevealEffect | null>(null);
 
   // Checar se há uma GOAT card
   const goatCard = cards.find((c) => c.effect === 'world_cup_hero');
@@ -35,6 +41,13 @@ export function CardRevealScene({ cards, pack, onAllFlipped }: Props) {
     if (allFlipped && !goatPending) onAllFlipped();
   }, [flipped, cards.length, goatIdx, goatDone, onAllFlipped]);
 
+  // Confetti sai após 2.5s
+  useEffect(() => {
+    if (!confettiRarity) return;
+    const t = setTimeout(() => setConfettiRarity(null), 2500);
+    return () => clearTimeout(t);
+  }, [confettiRarity]);
+
   const handleFlip = useCallback(
     (idx: number) => {
       // Carta GOAT → mostrar tela especial
@@ -45,6 +58,17 @@ export function CardRevealScene({ cards, pack, onAllFlipped }: Props) {
       setFlipped((prev) => new Set([...prev, idx]));
     },
     [goatIdx, goatDone],
+  );
+
+  const handleHighRarity = useCallback(
+    (effect: RevealEffect) => {
+      if (HIGH_RARITY_CONFETTI.has(effect)) {
+        setConfettiRarity(effect);
+      }
+      if (effect === 'legendary') onShake?.(10, 450);
+      if (effect === 'ultra') onShake?.(16, 600);
+    },
+    [onShake],
   );
 
   const handleRevealAll = useCallback(() => {
@@ -62,6 +86,11 @@ export function CardRevealScene({ cards, pack, onAllFlipped }: Props) {
 
   return (
     <>
+      {/* Confetti para raridade alta */}
+      <AnimatePresence>
+        {confettiRarity && <ConfettiCanvas key={confettiRarity} rarity={confettiRarity} />}
+      </AnimatePresence>
+
       {/* Tela de revelação GOAT */}
       <AnimatePresence>
         {goatIndex !== null && (
@@ -112,7 +141,12 @@ export function CardRevealScene({ cards, pack, onAllFlipped }: Props) {
                 delay: 0.3 + i * 0.12,
               }}
             >
-              <RevealedCard drawn={drawn} flipped={flipped.has(i)} onFlip={() => handleFlip(i)} />
+              <RevealedCard
+                drawn={drawn}
+                flipped={flipped.has(i)}
+                onFlip={() => handleFlip(i)}
+                onHighRarity={handleHighRarity}
+              />
             </motion.div>
           ))}
         </div>

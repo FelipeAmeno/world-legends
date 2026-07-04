@@ -1,11 +1,12 @@
+import { notFound } from 'next/navigation';
 import { getCollection } from '@/lib/collection-data';
 import { SQUAD_CHEMISTRY, SQUAD_RATING, USER_PROFILE } from '@/lib/mock-data';
 import { calculateChemistry } from '@world-legends/chemistry';
 /**
  * app/dashboard/page.tsx — Debug Dashboard
  *
- * Painel de desenvolvimento para inspecionar o estado interno do engine.
- * Consome packages de domínio diretamente — zero abstração intermediária.
+ * Painel de desenvolvimento: SOMENTE disponível em ambientes não-produção.
+ * Em produção retorna 404.
  */
 import { BASE_RARITY_WEIGHTS, CLASSIC_PACK, ELITE_PACK, LEGEND_PACK } from '@world-legends/packs';
 
@@ -17,6 +18,8 @@ import { RngInspector } from '@/components/dashboard/RngInspector';
 import { TraitsPanel } from '@/components/dashboard/TraitsPanel';
 
 export default function DashboardPage() {
+  if (process.env.NODE_ENV === 'production') notFound();
+
   const collection = getCollection();
 
   // Drop rate data — ler direto dos packs de domínio

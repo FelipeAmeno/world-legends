@@ -4,6 +4,10 @@ import { useAuth } from '@/lib/auth-context';
 import { useGameState } from '@/lib/game-context';
 import Link from 'next/link';
 
+type Props = {
+  serverBalance?: number;
+};
+
 function getTitle(level: number): string {
   if (level >= 50) return 'GOAT';
   if (level >= 30) return 'Imortal';
@@ -16,7 +20,7 @@ function getTitle(level: number): string {
   return 'Recruta';
 }
 
-export function PlayerHeader() {
+export function PlayerHeader({ serverBalance }: Props) {
   const state = useGameState();
   const { user } = useAuth();
 
@@ -24,12 +28,14 @@ export function PlayerHeader() {
     ?? user?.email?.split('@')[0]
     ?? 'Jogador';
 
-  const name = state.isOnboarded ? state.username : guestName;
-  const level = state.isOnboarded ? state.level : 1;
-  const xpCur = state.isOnboarded ? state.currentXp : 0;
-  const xpNext = state.isOnboarded ? state.xpForNext : 105;
-  const credits = state.isOnboarded ? state.credits : 500;
-  const frags = state.isOnboarded ? state.fragments : 0;
+  const name    = state.isOnboarded ? state.username   : guestName;
+  const level   = state.isOnboarded ? state.level      : 1;
+  const xpCur   = state.isOnboarded ? state.currentXp  : 0;
+  const xpNext  = state.isOnboarded ? state.xpForNext  : 105;
+  // serverBalance é a fonte autoritativa (Supabase); fallback para GameContext
+  // apenas se o prop não foi fornecido (ex: componente usado fora da home page).
+  const credits = serverBalance ?? (state.isOnboarded ? state.credits : 500);
+  const frags   = state.isOnboarded ? state.fragments  : 0;
   const initial = name.charAt(0).toUpperCase();
   const title = getTitle(level);
   const xpPct = Math.round((xpCur / Math.max(1, xpNext)) * 100);

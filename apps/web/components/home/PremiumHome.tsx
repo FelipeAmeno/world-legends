@@ -1,25 +1,24 @@
 import { EventBanner } from './EventBanner';
 import { GameGrid } from './GameGrid';
-/**
- * PremiumHome — Home Screen premium do World Legends.
- *
- * Composição de componentes especializados:
- *   PlayerHeader  — glassmorphism com avatar, nome, XP, créditos, gems
- *   EventBanner   — banner rotativo com motion (auto-slide 4s)
- *   QuickStats    — barra de stats do squad em glass pill
- *   GameGrid      — hero card (Jogar) + grid 2×3 de ações
- *   PremiumBottomNav — bottom nav estilo EA FC Mobile
- *   DailyLoginTrigger — auto-popup + badge para recompensa diária
- *
- * Background: deep dark com radial gradients em camadas
- * Design: glassmorphism + blur + noise + animações de entrada staggered
- */
 import { DailyLoginTrigger } from '@/components/daily-login/DailyLoginTrigger';
+import { NewUserWelcome } from './NewUserWelcome';
 import { PlayerHeader } from './PlayerHeader';
 import { PremiumBottomNav } from './PremiumBottomNav';
 import { QuickStats } from './QuickStats';
+import type { FormationKey } from '@/lib/squad-data';
 
-export function PremiumHome() {
+type Props = {
+  serverBalance: number;
+  isNewUser?: boolean;
+  collectionCount?: number;
+  squadFormation?: FormationKey | null | undefined;
+};
+
+export function PremiumHome({ serverBalance, isNewUser, collectionCount = 0, squadFormation }: Props) {
+  if (isNewUser) {
+    return <NewUserWelcome />;
+  }
+
   return (
     <div
       className="min-h-screen relative"
@@ -49,10 +48,10 @@ export function PremiumHome() {
         className="relative z-10 flex flex-col gap-4"
         style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}
       >
-        <PlayerHeader />
+        <PlayerHeader serverBalance={serverBalance} />
         <EventBanner />
         <QuickStats />
-        <GameGrid />
+        <GameGrid collectionCount={collectionCount} squadFormation={squadFormation} />
 
         {/* Spacer */}
         <div className="h-2" />

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 type Props = {
   packColor: string;
@@ -9,36 +9,89 @@ type Props = {
   onComplete: () => void;
 };
 
-// ─── Partículas determinísticas ────────────────────────────────────────────────
+// ─── Canvas burst — substitui 64 divs Framer Motion ──────────────────────────
 
-function buildParticles(glowColor: string) {
-  const COUNT = 64;
-  return Array.from({ length: COUNT }, (_, i) => {
-    const angle = (i / COUNT) * Math.PI * 2;
-    const spread = 80 + (i % 5) * 40; // 80–240px
-    const tx = Math.round(Math.cos(angle) * spread);
-    const ty = Math.round(Math.sin(angle) * spread);
-    const size = 3 + (i % 5);
-    const dur = 0.5 + (i % 4) * 0.12;
-    const delay = (i % 8) * 0.025;
-    const isGold = i % 3 === 0;
-    const isWhite = i % 7 === 0;
-    const color = isWhite
-      ? '#ffffff'
-      : isGold
-        ? '#c9a84c'
-        : glowColor.replace(/rgba?\(([^)]+)\)/, (_, g) => `rgba(${g})`);
-    const blur = i % 3 === 0 ? 2 : 0;
-    return { tx, ty, size, dur, delay, color, blur };
-  });
+function BurstCanvas({ glowColor }: { glowColor: string }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const W = canvas.width  = canvas.offsetWidth;
+    const H = canvas.height = canvas.offsetHeight;
+    const cx = W / 2;
+    const cy = H / 2;
+
+    const COUNT = 72;
+    type P = { x: number; y: number; vx: number; vy: number; size: number; color: string; alpha: number };
+
+    const particles: P[] = Array.from({ length: COUNT }, (_, i) => {
+      const angle  = (i / COUNT) * Math.PI * 2 + Math.random() * 0.1;
+      const spread = 80 + (i % 5) * 40;
+      const speed  = spread / 18;
+      const isGold  = i % 3 === 0;
+      const isWhite = i % 7 === 0;
+      const color   = isWhite ? '#ffffff' : isGold ? '#c9a84c' : glowColor;
+      return {
+        x: cx, y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        size:  3 + (i % 5),
+        color,
+        alpha: 1,
+      };
+    });
+
+    let raf = 0;
+    let frame = 0;
+    const TOTAL = 32;
+
+    const tick = () => {
+      ctx.clearRect(0, 0, W, H);
+      frame++;
+      const progress = frame / TOTAL;
+      let any = false;
+
+      for (const p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha = Math.max(0, 1 - progress);
+        if (p.alpha <= 0) continue;
+        any = true;
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle   = p.color;
+        ctx.shadowBlur  = p.size * 2;
+        ctx.shadowColor = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      if (any && frame < TOTAL) raf = requestAnimationFrame(tick);
+      else ctx.clearRect(0, 0, W, H);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(raf); ctx.clearRect(0, 0, W, H); };
+  }, [glowColor]);
+
+  return (
+    <canvas
+      ref={ref}
+      className="absolute inset-0 pointer-events-none"
+      style={{ width: '100%', height: '100%' }}
+    />
+  );
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function ExplosionOverlay({ packColor, packGlow, onComplete }: Props) {
-  const particles = buildParticles(packGlow);
-
-  // Notificar fim após 0.75s (flash + particles)
   useEffect(() => {
     const t = setTimeout(onComplete, 750);
     return () => clearTimeout(t);
@@ -46,7 +99,10 @@ export function ExplosionOverlay({ packColor, packGlow, onComplete }: Props) {
 
   return (
     <div className="fixed inset-0 z-[100] pointer-events-none flex items-center justify-center">
-      {/* Flash branco — camada principal */}
+      {/* Canvas particles */}
+      <BurstCanvas glowColor={packGlow} />
+
+      {/* Flash branco */}
       <motion.div
         className="absolute inset-0"
         initial={{ opacity: 0 }}
@@ -55,7 +111,7 @@ export function ExplosionOverlay({ packColor, packGlow, onComplete }: Props) {
         style={{ background: '#ffffff' }}
       />
 
-      {/* Flash colorido — segunda camada */}
+      {/* Flash colorido */}
       <motion.div
         className="absolute inset-0"
         initial={{ opacity: 0 }}
@@ -66,37 +122,6 @@ export function ExplosionOverlay({ packColor, packGlow, onComplete }: Props) {
         }}
       />
 
-      {/* Partículas */}
-      <div className="relative" style={{ width: 0, height: 0 }}>
-        {particles.map((p, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full"
-            style={{
-              width: p.size,
-              height: p.size,
-              background: p.color,
-              boxShadow: `0 0 ${p.size * 2}px ${p.color}`,
-              top: -p.size / 2,
-              left: -p.size / 2,
-              filter: p.blur > 0 ? `blur(${p.blur}px)` : undefined,
-            }}
-            initial={{ x: 0, y: 0, scale: 0, opacity: 1 }}
-            animate={{
-              x: p.tx,
-              y: p.ty,
-              scale: [0, 1.8, 0],
-              opacity: [1, 1, 0],
-            }}
-            transition={{
-              duration: p.dur,
-              delay: p.delay,
-              ease: 'easeOut',
-            }}
-          />
-        ))}
-      </div>
-
       {/* Ring de expansão */}
       <motion.div
         className="absolute rounded-full border-2"
@@ -106,7 +131,7 @@ export function ExplosionOverlay({ packColor, packGlow, onComplete }: Props) {
         transition={{ duration: 0.7, ease: 'easeOut' }}
       />
 
-      {/* Ring secundário menor */}
+      {/* Ring secundário */}
       <motion.div
         className="absolute rounded-full border"
         style={{ borderColor: '#ffffff' }}

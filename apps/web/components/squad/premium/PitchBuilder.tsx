@@ -33,6 +33,8 @@ import {
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 
+import { toast } from '@/lib/wl-toast';
+import Link from 'next/link';
 import { BenchStrip } from './BenchStrip';
 import { CardPoolSheet } from './CardPoolSheet';
 import { FormationSelect } from './FormationSelect';
@@ -110,9 +112,11 @@ export function PitchBuilder({ allCards, initialState }: Props) {
       if (result.ok) {
         lastSavedRef.current = key;
         setSaveStatus('saved');
+        toast.success('Squad salvo!', '⚽');
         setTimeout(() => setSaveStatus('idle'), 2000);
       } else {
         setSaveStatus('error');
+        toast.error('Erro ao salvar squad');
         setTimeout(() => setSaveStatus('idle'), 3000);
       }
     }, 1500);
@@ -295,6 +299,29 @@ export function PitchBuilder({ allCards, initialState }: Props) {
                 <span className="text-[9px] text-white/40">{saveDot.label}</span>
               </div>
             )}
+            <AnimatePresence>
+              {saveStatus === 'saved' && snapshot.starterCount >= 11 && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+                >
+                  <Link
+                    href="/match"
+                    className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-lg font-bold transition-all"
+                    style={{
+                      background: 'linear-gradient(135deg, #064e3b, #065f46)',
+                      border: '1px solid rgba(16,185,129,0.4)',
+                      color: '#34d399',
+                      boxShadow: '0 0 10px rgba(16,185,129,0.25)',
+                    }}
+                  >
+                    ⚽ Jogar
+                  </Link>
+                </motion.div>
+              )}
+            </AnimatePresence>
             <button
               onClick={handleAutoFill}
               className="text-[10px] px-2 py-1 rounded-lg border border-gold-dim/40 text-gold hover:bg-gold/10 transition-colors"
@@ -309,6 +336,38 @@ export function PitchBuilder({ allCards, initialState }: Props) {
             </button>
           </div>
         </div>
+
+        {/* ── Empty squad guidance ─── */}
+        <AnimatePresence>
+          {snapshot.starterCount === 0 && allCards.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25 }}
+              className="overflow-hidden"
+            >
+              <div
+                className="mx-3 my-1.5 px-4 py-2.5 rounded-xl flex items-center justify-between gap-3"
+                style={{
+                  background: 'rgba(201,168,76,0.06)',
+                  border: '1px solid rgba(201,168,76,0.2)',
+                }}
+              >
+                <p className="text-[11px] text-gold/80">
+                  Toque em um slot · arraste cartas · ou use <strong>auto-fill</strong>
+                </p>
+                <button
+                  onClick={handleAutoFill}
+                  className="shrink-0 text-[10px] px-3 py-1 rounded-lg font-bold text-obsidian transition-all"
+                  style={{ background: 'linear-gradient(135deg, #c9a84c, #e6c85a)' }}
+                >
+                  auto-fill
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── Main area ─── */}
         <div className="flex-1 flex min-h-0 overflow-hidden">

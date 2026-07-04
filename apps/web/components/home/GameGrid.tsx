@@ -1,3 +1,4 @@
+import type { FormationKey } from '@/lib/squad-data';
 import Link from 'next/link';
 
 // ─── Card config ──────────────────────────────────────────────────────────────
@@ -15,91 +16,99 @@ type GameCard = {
   accent: string;
   badge?: { text: string; color: string };
   disabled?: boolean;
-  wide?: boolean; // ocupa toda a largura
+  wide?: boolean;
 };
 
-const CARDS: GameCard[] = [
-  {
-    id: 'play',
-    label: 'Jogar',
-    sub: 'Partida rápida',
-    href: '/match',
-    icon: '⚽',
-    from: '#001a0f',
-    via: '#064e3b',
-    to: '#065f46',
-    glow: 'rgba(16,185,129,0.35)',
-    accent: '#10b981',
-    wide: true,
-  },
-  {
-    id: 'packs',
-    label: 'Abrir Packs',
-    sub: '3 tipos · 16 lendas',
-    href: '/packs',
-    icon: '📦',
-    from: '#0d0020',
-    via: '#4c1d95',
-    to: '#6d28d9',
-    glow: 'rgba(124,58,237,0.3)',
-    accent: '#a855f7',
-    badge: { text: 'NOVO', color: '#a855f7' },
-  },
-  {
-    id: 'collection',
-    label: 'Coleção',
-    sub: '16 cartas',
-    href: '/collection',
-    icon: '🃏',
-    from: '#1a0a00',
-    via: '#78350f',
-    to: '#92400e',
-    glow: 'rgba(180,83,9,0.3)',
-    accent: '#f59e0b',
-  },
-  {
-    id: 'squad',
-    label: 'Squad',
-    sub: '4-3-3 · 89 OVR',
-    href: '/squad',
-    icon: '⚔️',
-    from: '#000d2a',
-    via: '#1e3a5f',
-    to: '#1e40af',
-    glow: 'rgba(37,99,235,0.3)',
-    accent: '#3b82f6',
-  },
-  {
-    id: 'events',
-    label: 'Eventos',
-    sub: '2 ativos agora',
-    href: '/match',
-    icon: '⚡',
-    from: '#1a0000',
-    via: '#7f1d1d',
-    to: '#991b1b',
-    glow: 'rgba(220,38,38,0.3)',
-    accent: '#ef4444',
-    badge: { text: 'AO VIVO', color: '#ef4444' },
-  },
-  {
-    id: 'market',
-    label: 'Mercado',
-    sub: 'Em breve...',
-    href: '#',
-    icon: '🏪',
-    from: '#0d0f12',
-    via: '#1f2937',
-    to: '#374151',
-    glow: 'rgba(75,85,99,0.15)',
-    accent: '#6b7280',
-    disabled: true,
-  },
-];
+type Props = {
+  collectionCount?: number;
+  squadFormation?: FormationKey | null | undefined;
+};
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function GameGrid() {
+export function GameGrid({ collectionCount = 0, squadFormation }: Props) {
+  const collectionSub = collectionCount === 1 ? '1 carta' : `${collectionCount} cartas`;
+  const squadSub = squadFormation ? squadFormation : 'Montar time';
+
+  const CARDS: GameCard[] = [
+    {
+      id: 'play',
+      label: 'Jogar',
+      sub: 'Partida rápida',
+      href: '/match',
+      icon: '⚽',
+      from: '#001a0f',
+      via: '#064e3b',
+      to: '#065f46',
+      glow: 'rgba(16,185,129,0.35)',
+      accent: '#10b981',
+      wide: true,
+    },
+    {
+      id: 'packs',
+      label: 'Abrir Packs',
+      sub: '3 tipos · 16 lendas',
+      href: '/packs',
+      icon: '📦',
+      from: '#0d0020',
+      via: '#4c1d95',
+      to: '#6d28d9',
+      glow: 'rgba(124,58,237,0.3)',
+      accent: '#a855f7',
+      badge: { text: 'NOVO', color: '#a855f7' },
+    },
+    {
+      id: 'collection',
+      label: 'Coleção',
+      sub: collectionSub,
+      href: '/collection',
+      icon: '🃏',
+      from: '#1a0a00',
+      via: '#78350f',
+      to: '#92400e',
+      glow: 'rgba(180,83,9,0.3)',
+      accent: '#f59e0b',
+    },
+    {
+      id: 'squad',
+      label: 'Squad',
+      sub: squadSub,
+      href: '/squad',
+      icon: '⚔️',
+      from: '#000d2a',
+      via: '#1e3a5f',
+      to: '#1e40af',
+      glow: 'rgba(37,99,235,0.3)',
+      accent: '#3b82f6',
+    },
+    {
+      id: 'events',
+      label: 'Eventos',
+      sub: '2 ativos agora',
+      href: '/events',
+      icon: '⚡',
+      from: '#1a0000',
+      via: '#7f1d1d',
+      to: '#991b1b',
+      glow: 'rgba(220,38,38,0.3)',
+      accent: '#ef4444',
+      badge: { text: 'AO VIVO', color: '#ef4444' },
+    },
+    {
+      id: 'market',
+      label: 'Mercado',
+      sub: 'Em breve...',
+      href: '#',
+      icon: '🏪',
+      from: '#0d0f12',
+      via: '#1f2937',
+      to: '#374151',
+      glow: 'rgba(75,85,99,0.15)',
+      accent: '#6b7280',
+      disabled: true,
+    },
+  ];
+
   const mainCard = CARDS.find((c) => c.wide)!;
   const gridCards = CARDS.filter((c) => !c.wide);
 

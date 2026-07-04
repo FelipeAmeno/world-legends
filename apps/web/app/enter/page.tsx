@@ -1,5 +1,6 @@
 'use client';
 
+import { useAuth } from '@/lib/auth-context';
 import { useGame } from '@/lib/game-context';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -8,7 +9,13 @@ export default function EnterPage() {
   const [name, setName] = useState('');
   const [phase, setPhase] = useState<'landing' | 'name'>('landing');
   const { state, onboard } = useGame();
+  const { user } = useAuth();
   const router = useRouter();
+
+  // Usuários autenticados usam o fluxo da home (NewUserWelcome)
+  useEffect(() => {
+    if (user) router.replace('/');
+  }, [user, router]);
 
   // Se já onboardado, ir para home
   useEffect(() => {

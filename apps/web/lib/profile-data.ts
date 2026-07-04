@@ -10,7 +10,6 @@
  */
 
 import type { CollectionCard } from './collection-data';
-import type { MatchRecord }    from './mock-data';
 
 // ─── Títulos ──────────────────────────────────────────────────────────────────
 
