@@ -20,6 +20,7 @@ type Props = {
 export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
   const [flipped, setFlipped] = useState<Set<number>>(new Set());
   const [showRevAll, setShowRevAll] = useState(false);
+  const [showCards, setShowCards] = useState(false);
   const [goatIndex, setGoatIndex] = useState<number | null>(null);
   const [goatDone, setGoatDone] = useState(false);
   const [confettiRarity, setConfettiRarity] = useState<RevealEffect | null>(null);
@@ -28,10 +29,11 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
   const goatCard = cards.find((c) => c.effect === 'world_cup_hero');
   const goatIdx = goatCard ? cards.indexOf(goatCard) : null;
 
-  // Mostrar botão "Revelar tudo" após 1.5s
+  // Suspense beat: 0.6s de escuridão antes das cartas entrarem
   useEffect(() => {
-    const t = setTimeout(() => setShowRevAll(true), 1500);
-    return () => clearTimeout(t);
+    const tCards = setTimeout(() => setShowCards(true), 600);
+    const tRevAll = setTimeout(() => setShowRevAll(true), 2200);
+    return () => { clearTimeout(tCards); clearTimeout(tRevAll); };
   }, []);
 
   // Detectar conclusão
@@ -127,18 +129,34 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
           }}
         />
 
+        {/* Suspense flash antes das cartas — pulso de glow */}
+        <AnimatePresence>
+          {!showCards && (
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 0.35, 0] }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, ease: 'easeInOut' }}
+              style={{
+                background: `radial-gradient(ellipse 50% 30% at 50% 50%, ${pack.glowColor}, transparent)`,
+              }}
+            />
+          )}
+        </AnimatePresence>
+
         {/* Grade de cartas */}
         <div className="flex flex-wrap justify-center gap-4 max-w-sm">
           {cards.map((drawn, i) => (
             <motion.div
               key={drawn.card.cardId + i}
-              initial={{ opacity: 0, y: 80, scale: 0.6, rotateX: 30 }}
-              animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+              initial={{ opacity: 0, y: 90, scale: 0.55, rotateX: 25 }}
+              animate={showCards ? { opacity: 1, y: 0, scale: 1, rotateX: 0 } : { opacity: 0, y: 90, scale: 0.55, rotateX: 25 }}
               transition={{
                 type: 'spring',
-                stiffness: 200,
+                stiffness: 220,
                 damping: 18,
-                delay: 0.3 + i * 0.12,
+                delay: showCards ? 0.05 + i * 0.10 : 0,
               }}
             >
               <RevealedCard
@@ -168,21 +186,37 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
           />
         </motion.div>
 
-        {/* Botão Revelar Tudo */}
-        <AnimatePresence>
-          {showRevAll && remaining > 1 && (
+        {/* Botão Revelar Tudo / celebração final */}
+        <AnimatePresence mode="wait">
+          {remaining === 0 ? (
+            <motion.div
+              key="done"
+              className="flex flex-col items-center gap-1"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+            >
+              <span style={{ fontSize: 22 }}>✨</span>
+              <p className="font-display text-sm tracking-widest text-gold">PACK REVELADO</p>
+            </motion.div>
+          ) : showRevAll && remaining > 1 ? (
             <motion.button
+              key="revall"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               onClick={handleRevealAll}
-              className="glass rounded-xl px-6 py-2.5 text-xs font-bold text-parchment
-                         hover:text-gold transition-colors border border-white/10
-                         hover:border-gold/30"
+              className="px-6 py-2.5 rounded-xl text-xs font-bold transition-all"
+              style={{
+                background: `linear-gradient(135deg,${pack.glowColor.replace(/[\d.]+\)$/,'0.15)')},${pack.glowColor.replace(/[\d.]+\)$/,'0.08)')})`,
+                border: `1px solid ${pack.borderColor.replace(/[\d.]+\)$/,'0.5)')}`,
+                color: pack.borderColor.replace(/[\d.]+\)$/,'1)'),
+                boxShadow: `0 0 12px ${pack.glowColor.replace(/[\d.]+\)$/,'0.2)')}`,
+              }}
             >
-              Revelar todas →
+              Revelar todas ({remaining}) →
             </motion.button>
-          )}
+          ) : null}
         </AnimatePresence>
       </div>
     </>

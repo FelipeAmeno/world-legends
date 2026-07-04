@@ -34,6 +34,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 
 import { toast } from '@/lib/wl-toast';
+import { Particles, useBurst } from '@/components/fx/Particles';
 import Link from 'next/link';
 import { BenchStrip } from './BenchStrip';
 import { CardPoolSheet } from './CardPoolSheet';
@@ -112,6 +113,7 @@ export function PitchBuilder({ allCards, initialState }: Props) {
       if (result.ok) {
         lastSavedRef.current = key;
         setSaveStatus('saved');
+        fireSaveBurst();
         toast.success('Squad salvo!', '⚽');
         setTimeout(() => setSaveStatus('idle'), 2000);
       } else {
@@ -133,6 +135,7 @@ export function PitchBuilder({ allCards, initialState }: Props) {
   );
 
   const [activeDragCard, setActiveDragCard] = useState<CollectionCard | null>(null);
+  const { trigger: saveBurst, fire: fireSaveBurst } = useBurst();
 
   const handleDragStart = useCallback(
     ({ active }: DragStartEvent) => {
@@ -255,7 +258,7 @@ export function PitchBuilder({ allCards, initialState }: Props) {
     >
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: dismiss on outside click */}
       <div
-        className="flex flex-col h-full bg-[#060810] overflow-hidden"
+        className="flex flex-col h-full bg-[#060810] overflow-hidden relative"
         onClick={(e) => {
           if ((e.target as HTMLElement).closest('[data-squad-slot]') === null &&
               (e.target as HTMLElement).closest('[data-squad-pool]') === null) {
@@ -263,6 +266,9 @@ export function PitchBuilder({ allCards, initialState }: Props) {
           }
         }}
       >
+        {/* Save celebration particles */}
+        <Particles preset="confetti" count={28} origin={{ x: 50, y: 8 }} trigger={saveBurst} />
+
         {/* ── Top bar ─── */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 gap-2 flex-wrap">
           <FormationSelect

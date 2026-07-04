@@ -23,6 +23,7 @@ import {
   loadFavorites,
   saveFavorites,
 } from '@/lib/collection-filters';
+import { SPRING } from '@/lib/motion-tokens';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useDeferredValue, useEffect, useMemo, useReducer, useState } from 'react';
 
@@ -124,6 +125,87 @@ const INITIAL: State = {
   favorites: new Set(),
 };
 
+// ─── Collection progress header ───────────────────────────────────────────────
+
+const RARITY_META: Array<{ key: string; label: string; color: string }> = [
+  { key: 'world_cup_hero', label: 'WCH',       color: '#e2e8f0' },
+  { key: 'ultra',          label: 'Ultra',      color: '#ec4899' },
+  { key: 'legendary',      label: 'Lendária',   color: '#c9a84c' },
+  { key: 'elite',          label: 'Elite',      color: '#3b82f6' },
+  { key: 'rare',           label: 'Rara',       color: '#a855f7' },
+  { key: 'common',         label: 'Comum',      color: '#6b7280' },
+];
+
+function CollectionProgressHeader({ allCards, filteredCount }: { allCards: CollectionCard[]; filteredCount: number }) {
+  const total = allCards.length;
+  const byRarity = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const c of allCards) map[c.rarityCode] = (map[c.rarityCode] ?? 0) + 1;
+    return map;
+  }, [allCards]);
+
+  return (
+    <motion.div
+      className="px-4 pt-4 pb-3 border-b shrink-0"
+      style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+      initial={{ opacity: 0, y: -12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={SPRING.smooth}
+    >
+      {/* Page title + count */}
+      <div className="flex items-end justify-between mb-3">
+        <div>
+          <p className="text-[9px] font-bold uppercase tracking-[0.22em] mb-1" style={{ color: '#6a7090' }}>
+            World Legends
+          </p>
+          <h1 className="font-display text-4xl gold-text tracking-wider leading-none">COLEÇÃO</h1>
+        </div>
+        <div className="text-right">
+          <motion.p
+            className="font-display text-3xl gold-text leading-none"
+            key={total}
+            initial={{ scale: 1.15, opacity: 0.6 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={SPRING.snappy}
+          >
+            {filteredCount < total ? filteredCount : total}
+          </motion.p>
+          <p className="text-muted text-[9px]">{filteredCount < total ? `de ${total} cartas` : 'cartas'}</p>
+        </div>
+      </div>
+
+      {/* Rarity breakdown pills */}
+      <div className="flex flex-wrap gap-1.5">
+        {RARITY_META.map(({ key, label, color }) => {
+          const count = byRarity[key] ?? 0;
+          if (count === 0) return null;
+          return (
+            <motion.div
+              key={key}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full"
+              style={{
+                background: `${color}12`,
+                border: `1px solid ${color}30`,
+              }}
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={SPRING.snappy}
+            >
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color }} />
+              <span className="text-[9px] font-bold" style={{ color }}>
+                {count}
+              </span>
+              <span className="text-[8px]" style={{ color: `${color}80` }}>
+                {label}
+              </span>
+            </motion.div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 type Props = {
@@ -198,6 +280,9 @@ export function CollectionExperience({ allCards }: Props) {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Progress header */}
+      <CollectionProgressHeader allCards={allCards} filteredCount={filteredCards.length} />
+
       {/* Barra de filtros superior (sempre visível) */}
       <FilterBar
         search={state.filters.search}

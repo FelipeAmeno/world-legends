@@ -269,20 +269,34 @@ export function PackFloatScene({ pack, phase, onTap, onBack }: Props) {
         </motion.button>
       </div>
 
-      {/* Instrução */}
+      {/* Instrução / charge text */}
       <motion.div
-        className="text-center"
-        animate={isCharging ? { opacity: 0, y: -10 } : { opacity: [0.5, 1, 0.5] }}
-        transition={
-          isCharging ? { duration: 0.2 } : { duration: 2, repeat: Number.POSITIVE_INFINITY }
-        }
+        className="text-center min-h-[48px] flex flex-col items-center justify-center"
+        animate={isCharging ? { opacity: 1 } : { opacity: [0.5, 1, 0.5] }}
+        transition={isCharging ? { duration: 0.1 } : { duration: 2, repeat: Number.POSITIVE_INFINITY }}
       >
-        <p className="text-parchment text-sm font-medium">
-          {isCharging ? '✨ Carregando…' : '▼  Toque no pack para abrir'}
-        </p>
-        <p className="text-muted text-[10px] mt-1">
-          {pack.guarantee} · {pack.cardCount} cartas
-        </p>
+        {isCharging ? (
+          <motion.p
+            className="font-display text-xl tracking-widest"
+            style={{
+              background: `linear-gradient(90deg,${pack.borderColor},#fff,${pack.borderColor})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              filter: `drop-shadow(0 0 12px ${pack.glowColor})`,
+            }}
+            animate={{ opacity: [0.6, 1, 0.6], scale: [1, 1.06, 1] }}
+            transition={{ duration: 0.45, repeat: Number.POSITIVE_INFINITY }}
+          >
+            ABRINDO...
+          </motion.p>
+        ) : (
+          <>
+            <p className="text-parchment text-sm font-medium">▼  Toque no pack para abrir</p>
+            <p className="text-muted text-[10px] mt-1">
+              {pack.guarantee} · {pack.cardCount} cartas
+            </p>
+          </>
+        )}
       </motion.div>
 
       {/* Preço */}
