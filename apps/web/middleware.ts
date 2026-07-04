@@ -20,7 +20,7 @@ import type { NextRequest }    from 'next/server';
 
 // ─── Rotas públicas (sem auth) ────────────────────────────────────────────────
 
-const PUBLIC_PATHS = ['/', '/enter', '/login', '/auth'];
+const PUBLIC_PATHS = ['/enter', '/login', '/auth'];
 const PUBLIC_PREFIXES = ['/auth/', '/api/public/', '/_next/', '/favicon'];
 
 function isPublic(pathname: string): boolean {

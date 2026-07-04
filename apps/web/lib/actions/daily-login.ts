@@ -35,7 +35,7 @@ export async function getDailyLoginAction(): Promise<DailyLoginView> {
 
   if (!userId) {
     const state = svc.computeState(null, 1, 0, new Date());
-    return { state, schedule: DAILY_SCHEDULE };
+    return { state: { ...state, canClaimToday: false }, schedule: DAILY_SCHEDULE };
   }
 
   const db = getServiceDb();
