@@ -232,6 +232,119 @@ export const COPA_HERO_PACK: Pack = Object.freeze({
   }),
 });
 
+// ─── Pacote Iniciante ─────────────────────────────────────────────────────────
+/**
+ * 5 cartas. Slot 0 = garantido Rare-ou-melhor (pesos levemente elevados).
+ * Projetado para jogadores novos, preço acessível (75c).
+ * Sem WCH — foco nas raridades básicas.
+ */
+export const STARTER_PACK: Pack = Object.freeze({
+  id: packId('starter'),
+  name: 'Pacote Iniciante',
+  description: 'Pack de entrada. 5 cartas, com pelo menos 1 Rare garantida.',
+  cardsPerPack: 5,
+  dropTable: Object.freeze({
+    slots: [
+      guaranteedSlot('rare', { common: 30, rare: 45, elite: 20, legendary: 4, ultra: 1, world_cup_hero: 0 }),
+      freeSlot({ common: 65, rare: 28, elite: 6, legendary: 1, ultra: 0, world_cup_hero: 0 }),
+      freeSlot({ common: 65, rare: 28, elite: 6, legendary: 1, ultra: 0, world_cup_hero: 0 }),
+      freeSlot({ common: 65, rare: 28, elite: 6, legendary: 1, ultra: 0, world_cup_hero: 0 }),
+      freeSlot({ common: 65, rare: 28, elite: 6, legendary: 1, ultra: 0, world_cup_hero: 0 }),
+    ],
+  }),
+});
+
+// ─── Pacote Nacional ──────────────────────────────────────────────────────────
+/**
+ * 5 cartas. Slot 0 = garantido Elite-ou-melhor.
+ * Filtro de seleção (ex: Brasil) aplicado pela camada de aplicação via cardResolver.
+ * WCH sem peso — herói da copa não entra neste pool.
+ */
+export const NATIONAL_PACK: Pack = Object.freeze({
+  id: packId('national'),
+  name: 'Pacote Nacional',
+  description: 'Pack temático de seleção. 5 cartas, com pelo menos 1 Elite garantida.',
+  cardsPerPack: 5,
+  dropTable: Object.freeze({
+    slots: [
+      guaranteedSlot('elite', { common: 0, rare: 0, elite: 70, legendary: 25, ultra: 5, world_cup_hero: 0 }),
+      freeSlot({ common: 40, rare: 35, elite: 18, legendary: 6, ultra: 1, world_cup_hero: 0 }),
+      freeSlot({ common: 40, rare: 35, elite: 18, legendary: 6, ultra: 1, world_cup_hero: 0 }),
+      freeSlot({ common: 40, rare: 35, elite: 18, legendary: 6, ultra: 1, world_cup_hero: 0 }),
+      freeSlot({ common: 40, rare: 35, elite: 18, legendary: 6, ultra: 1, world_cup_hero: 0 }),
+    ],
+  }),
+});
+
+// ─── Pacote Herói ─────────────────────────────────────────────────────────────
+/**
+ * 3 cartas. Slot 0 = garantido Legendary-ou-melhor (sem WCH nos slots livres).
+ * Diferente do Lenda: pesos de slot 0 mais equilibrados (mais chance de Ultra).
+ * Slots livres têm weights elevados de Elite+.
+ */
+export const HERO_PACK: Pack = Object.freeze({
+  id: packId('hero'),
+  name: 'Pacote Herói',
+  description: 'Pack premium. 3 cartas, com 1 Legendary garantida e chances elevadas de Elite.',
+  cardsPerPack: 3,
+  dropTable: Object.freeze({
+    slots: [
+      Object.freeze({
+        rarityWeights: Object.freeze({
+          common: 0,
+          rare: 0,
+          elite: 0,
+          legendary: 60,
+          ultra: 35,
+          world_cup_hero: 5,
+        }),
+        guaranteedMinRarity: 'legendary' as const,
+      }),
+      freeSlot({ common: 0, rare: 20, elite: 55, legendary: 20, ultra: 5, world_cup_hero: 0 }),
+      freeSlot({ common: 20, rare: 40, elite: 30, legendary: 9, ultra: 1, world_cup_hero: 0 }),
+    ],
+  }),
+});
+
+// ─── Pacote GOAT ─────────────────────────────────────────────────────────────
+/**
+ * 2 cartas de altíssima raridade. Slot 0 = Ultra-ou-melhor garantido.
+ * Slot 1 = Legendary-ou-melhor garantido.
+ * O pack mais exclusivo e caro (2500c).
+ */
+export const GOAT_PACK: Pack = Object.freeze({
+  id: packId('goat'),
+  name: 'Pacote GOAT',
+  description: 'Pack de lendas máximas. 2 cartas, ambas garantidas Legendary ou superior.',
+  cardsPerPack: 2,
+  dropTable: Object.freeze({
+    slots: [
+      Object.freeze({
+        rarityWeights: Object.freeze({
+          common: 0,
+          rare: 0,
+          elite: 0,
+          legendary: 0,
+          ultra: 60,
+          world_cup_hero: 40,
+        }),
+        guaranteedMinRarity: 'ultra' as const,
+      }),
+      Object.freeze({
+        rarityWeights: Object.freeze({
+          common: 0,
+          rare: 0,
+          elite: 0,
+          legendary: 75,
+          ultra: 20,
+          world_cup_hero: 5,
+        }),
+        guaranteedMinRarity: 'legendary' as const,
+      }),
+    ],
+  }),
+});
+
 /** Mapa de todos os packs disponíveis por ID. */
 export const ALL_PACKS: Readonly<Record<string, Pack>> = Object.freeze({
   classic: CLASSIC_PACK,
@@ -239,4 +352,8 @@ export const ALL_PACKS: Readonly<Record<string, Pack>> = Object.freeze({
   legend: LEGEND_PACK,
   prime: PRIME_PACK,
   'copa-hero': COPA_HERO_PACK,
+  starter: STARTER_PACK,
+  national: NATIONAL_PACK,
+  hero: HERO_PACK,
+  goat: GOAT_PACK,
 });

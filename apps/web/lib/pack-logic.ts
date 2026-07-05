@@ -12,7 +12,16 @@
  */
 
 import { createUserPityState, openPack } from '@world-legends/packs';
-import { CLASSIC_PACK, ELITE_PACK, LEGEND_PACK, type Pack } from '@world-legends/packs';
+import {
+  CLASSIC_PACK,
+  ELITE_PACK,
+  GOAT_PACK,
+  HERO_PACK,
+  LEGEND_PACK,
+  NATIONAL_PACK,
+  type Pack,
+  STARTER_PACK,
+} from '@world-legends/packs';
 import type { UserPityState } from '@world-legends/packs';
 import type { RarityCode } from '@world-legends/types';
 import { type CollectionCard, RARITY_VISUAL, getCollection } from './collection-data';
@@ -32,18 +41,22 @@ export type DrawnCard = {
   card: CollectionCard;
   effect: RevealEffect;
   wasForced: boolean; // foi garantia de pity?
+  isDuplicate?: boolean; // carta já possuída → convertida em fragmentos
+  fragmentsGained?: number; // fragmentos recebidos pela duplicata
   glowColor: string; // CSS color para drop-shadow
   particleColor: string; // CSS color para partículas
 };
 
 export type PackDefinitionUI = {
-  id: 'classic' | 'elite' | 'legend';
+  id: 'classic' | 'elite' | 'legend' | 'starter' | 'national' | 'hero' | 'goat';
   pack: Pack;
   name: string;
   tagline: string;
   price: number;
   cardCount: number;
   guarantee: string;
+  /** Filtro de nacionalidade para cardResolver (ex: 'BR') */
+  nationalityFilter?: string;
   /** Cor dominante do pack para gradiente de fundo */
   gradientFrom: string;
   gradientTo: string;
@@ -55,6 +68,20 @@ export type PackDefinitionUI = {
 // ─── Definições visuais dos packs ─────────────────────────────────────────────
 
 export const PACK_DEFS: readonly PackDefinitionUI[] = [
+  {
+    id: 'starter',
+    pack: STARTER_PACK,
+    name: 'Starter Pack',
+    tagline: 'Perfeito para começar sua jornada',
+    price: 75,
+    cardCount: 5,
+    guarantee: 'Mínimo 1 Rara',
+    gradientFrom: '#0c1a10',
+    gradientTo: '#152b1a',
+    borderColor: 'rgba(74,222,128,0.35)',
+    glowColor: 'rgba(74,222,128,0.28)',
+    icon: '🌟',
+  },
   {
     id: 'classic',
     pack: CLASSIC_PACK,
@@ -68,6 +95,21 @@ export const PACK_DEFS: readonly PackDefinitionUI[] = [
     borderColor: 'rgba(147,51,234,0.4)',
     glowColor: 'rgba(147,51,234,0.35)',
     icon: '📦',
+  },
+  {
+    id: 'national',
+    pack: NATIONAL_PACK,
+    name: 'Brazil Pack',
+    tagline: 'Lendas da Seleção Brasileira',
+    price: 250,
+    cardCount: 5,
+    guarantee: 'Mínimo 1 Elite',
+    nationalityFilter: 'BR',
+    gradientFrom: '#071c07',
+    gradientTo: '#0c280c',
+    borderColor: 'rgba(34,197,94,0.45)',
+    glowColor: 'rgba(34,197,94,0.35)',
+    icon: '🌍',
   },
   {
     id: 'elite',
@@ -84,6 +126,20 @@ export const PACK_DEFS: readonly PackDefinitionUI[] = [
     icon: '⚡',
   },
   {
+    id: 'hero',
+    pack: HERO_PACK,
+    name: 'Hero Pack',
+    tagline: 'Heróis imortais do futebol',
+    price: 700,
+    cardCount: 3,
+    guarantee: 'Mínimo 1 Lendária',
+    gradientFrom: '#150020',
+    gradientTo: '#220032',
+    borderColor: 'rgba(192,38,211,0.38)',
+    glowColor: 'rgba(192,38,211,0.28)',
+    icon: '🦸',
+  },
+  {
     id: 'legend',
     pack: LEGEND_PACK,
     name: 'Legend Pack',
@@ -96,6 +152,20 @@ export const PACK_DEFS: readonly PackDefinitionUI[] = [
     borderColor: 'rgba(201,168,76,0.6)',
     glowColor: 'rgba(201,168,76,0.5)',
     icon: '👑',
+  },
+  {
+    id: 'goat',
+    pack: GOAT_PACK,
+    name: 'GOAT Pack',
+    tagline: 'Os maiores de todos os tempos',
+    price: 2500,
+    cardCount: 2,
+    guarantee: 'Ultra ou WCH garantido',
+    gradientFrom: '#1a1200',
+    gradientTo: '#2c1e00',
+    borderColor: 'rgba(251,191,36,0.55)',
+    glowColor: 'rgba(251,191,36,0.45)',
+    icon: '🐐',
   },
 ];
 
@@ -144,54 +214,10 @@ export type ComingSoonPack = {
 
 export const COMING_SOON_DEFS: readonly ComingSoonPack[] = [
   {
-    id: 'starter',
-    name: 'Starter Pack',
-    tagline: 'Perfeito para começar sua jornada',
-    priceLabel: '75c',
-    icon: '🌟',
-    gradientFrom: '#0c1a10',
-    gradientTo: '#152b1a',
-    borderColor: 'rgba(74,222,128,0.35)',
-    glowColor: 'rgba(74,222,128,0.28)',
-  },
-  {
-    id: 'national',
-    name: 'National Pack',
-    tagline: 'Lendas de uma única seleção',
-    priceLabel: '250c',
-    icon: '🌍',
-    gradientFrom: '#070f1c',
-    gradientTo: '#0e1e36',
-    borderColor: 'rgba(96,165,250,0.38)',
-    glowColor: 'rgba(96,165,250,0.28)',
-  },
-  {
-    id: 'hero',
-    name: 'Hero Pack',
-    tagline: 'Os heróis imortais da Copa',
-    priceLabel: '700c',
-    icon: '🦸',
-    gradientFrom: '#150020',
-    gradientTo: '#220032',
-    borderColor: 'rgba(192,38,211,0.38)',
-    glowColor: 'rgba(192,38,211,0.28)',
-  },
-  {
-    id: 'goat',
-    name: 'GOAT Pack',
-    tagline: 'Os maiores de todos os tempos',
-    priceLabel: '2.500c',
-    icon: '🐐',
-    gradientFrom: '#1a1200',
-    gradientTo: '#2c1e00',
-    borderColor: 'rgba(251,191,36,0.45)',
-    glowColor: 'rgba(251,191,36,0.35)',
-  },
-  {
     id: 'event',
     name: 'Event Pack',
     tagline: 'Exclusivo da temporada atual',
-    priceLabel: 'Gems',
+    priceLabel: 'Gemas',
     icon: '⚡',
     gradientFrom: '#1a0808',
     gradientTo: '#2c1010',

@@ -3,17 +3,26 @@ import { RarityBadge } from '@/components/ui/RarityBadge';
 import { RARITY_VISUAL } from '@/lib/collection-data';
 import type { DrawnCard } from '@/lib/pack-logic';
 import type { PackDefinitionUI } from '@/lib/pack-logic';
+import type { RarityCode } from '@world-legends/types';
 import Link from 'next/link';
 
 type Props = {
   cards: DrawnCard[];
   pack: PackDefinitionUI;
+  fragmentsGained?: number;
   onOpenAnother: () => void;
   onBack: () => void;
   isWelcome?: boolean;
 };
 
-export function RevealSummary({ cards, pack, onOpenAnother, onBack, isWelcome }: Props) {
+export function RevealSummary({
+  cards,
+  pack,
+  fragmentsGained = 0,
+  onOpenAnother,
+  onBack,
+  isWelcome,
+}: Props) {
   const best = [...cards].sort((a, b) => b.card.overall - a.card.overall)[0]!;
   const avgOvr = Math.round(cards.reduce((s, c) => s + c.card.overall, 0) / cards.length);
   const rarities = cards.map((c) => c.card.rarityCode);
@@ -37,6 +46,25 @@ export function RevealSummary({ cards, pack, onOpenAnother, onBack, isWelcome }:
           </>
         )}
       </div>
+
+      {/* Fragmentos ganhos com duplicatas */}
+      {fragmentsGained > 0 && (
+        <div
+          className="flex items-center gap-3 px-4 py-2.5 rounded-xl border text-sm"
+          style={{
+            background: 'rgba(168,85,247,0.08)',
+            borderColor: 'rgba(168,85,247,0.25)',
+          }}
+        >
+          <span className="text-lg">💜</span>
+          <div>
+            <p className="text-purple-400 font-bold text-xs">+{fragmentsGained} Fragmentos</p>
+            <p className="text-white/40 text-[10px]">
+              Cartas repetidas convertidas automaticamente
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Best card em destaque */}
       <div
@@ -75,6 +103,9 @@ export function RevealSummary({ cards, pack, onOpenAnother, onBack, isWelcome }:
         </div>
       </div>
 
+      {/* Raridade breakdown */}
+      <RarityBreakdown cards={cards} />
+
       {/* Grade completa das cartas */}
       <div className="bg-surface border border-border rounded-xl p-4">
         <p className="text-muted text-[10px] uppercase tracking-wider mb-3">Todas as cartas</p>
@@ -86,6 +117,7 @@ export function RevealSummary({ cards, pack, onOpenAnother, onBack, isWelcome }:
                 key={i}
                 className={[
                   'flex items-center gap-2 px-2.5 py-1.5 rounded-lg border',
+                  drawn.isDuplicate ? 'opacity-60' : '',
                   v.bgClass,
                   v.borderClass,
                 ].join(' ')}
@@ -100,6 +132,7 @@ export function RevealSummary({ cards, pack, onOpenAnother, onBack, isWelcome }:
                   <p className={`text-[8px] font-bold ${v.textClass}`}>
                     {drawn.card.rarityCode === 'world_cup_hero' ? 'WCH' : drawn.card.rarityLabel}
                     {drawn.wasForced && ' ★'}
+                    {drawn.isDuplicate && ` → +${drawn.fragmentsGained ?? 0}💜`}
                   </p>
                 </div>
               </div>
@@ -168,6 +201,62 @@ export function RevealSummary({ cards, pack, onOpenAnother, onBack, isWelcome }:
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Rarity Breakdown ────────────────────────────────────────────────────────
+
+const RARITY_META: Record<RarityCode, { label: string; color: string; bg: string }> = {
+  world_cup_hero: { label: 'WCH', color: '#e2e8f0', bg: 'rgba(226,232,240,0.12)' },
+  ultra: { label: 'Ultra', color: '#ec4899', bg: 'rgba(236,72,153,0.12)' },
+  legendary: { label: 'Lendária', color: '#c9a84c', bg: 'rgba(201,168,76,0.12)' },
+  elite: { label: 'Elite', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
+  rare: { label: 'Rara', color: '#a855f7', bg: 'rgba(168,85,247,0.12)' },
+  common: { label: 'Comum', color: '#6b7280', bg: 'rgba(107,114,128,0.12)' },
+};
+
+const RARITY_ORDER: RarityCode[] = [
+  'world_cup_hero',
+  'ultra',
+  'legendary',
+  'elite',
+  'rare',
+  'common',
+];
+
+function RarityBreakdown({ cards }: { cards: DrawnCard[] }) {
+  const counts = new Map<RarityCode, number>();
+  for (const c of cards) {
+    counts.set(c.card.rarityCode, (counts.get(c.card.rarityCode) ?? 0) + 1);
+  }
+
+  const present = RARITY_ORDER.filter((r) => (counts.get(r) ?? 0) > 0);
+  if (present.length === 0) return null;
+
+  return (
+    <div className="bg-surface border border-border rounded-xl p-4">
+      <p className="text-muted text-[10px] uppercase tracking-wider mb-3">Por raridade</p>
+      <div className="flex flex-wrap gap-2">
+        {present.map((rarity) => {
+          const meta = RARITY_META[rarity];
+          const count = counts.get(rarity) ?? 0;
+          return (
+            <div
+              key={rarity}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[10px] font-bold"
+              style={{
+                background: meta.bg,
+                borderColor: `${meta.color}40`,
+                color: meta.color,
+              }}
+            >
+              <span>{count}×</span>
+              <span>{meta.label}</span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -22,13 +22,14 @@ import { getCollection } from '@/lib/collection-data';
 import { vibrate } from '@/lib/haptics';
 import { type DrawnCard, PACK_DEFS, type PackDefinitionUI, drawPack } from '@/lib/pack-logic';
 import { SFX } from '@/lib/sound-manager';
+import { toast } from '@/lib/wl-toast';
 import type { RarityCode } from '@world-legends/types';
-import { useCameraShake } from './hooks/useCameraShake';
 import { CardRevealScene } from './CardRevealScene';
 import { ExplosionOverlay } from './ExplosionOverlay';
 import { PackFloatScene } from './PackFloatScene';
 import { PackSelector } from './PackSelector';
 import { RevealSummary } from './RevealSummary';
+import { useCameraShake } from './hooks/useCameraShake';
 
 // ─── Phase types ──────────────────────────────────────────────────────────────
 
@@ -85,6 +86,8 @@ function buildDrawnCardsFromServer(
       card: { ...card, userCardId: d.userCardId },
       effect: EFFECT_MAP[d.rarityCode],
       wasForced: false,
+      isDuplicate: d.isDuplicate,
+      fragmentsGained: d.fragmentsGained,
       glowColor: GLOW_MAP[d.rarityCode],
       particleColor: PARTICLE_MAP[d.rarityCode],
     };
@@ -95,14 +98,21 @@ function buildDrawnCardsFromServer(
 
 type Props = {
   initialBalance?: number;
+  initialFragments?: number;
   isWelcome?: boolean;
 };
 
-export function PackExperience({ initialBalance = 500, isWelcome = false }: Props) {
+export function PackExperience({
+  initialBalance = 500,
+  initialFragments = 0,
+  isWelcome = false,
+}: Props) {
   const [phase, setPhase] = useState<Phase>('SELECT');
   const [pack, setPack] = useState<PackDefinitionUI | null>(null);
   const [cards, setCards] = useState<DrawnCard[]>([]);
   const [balance, setBalance] = useState(initialBalance);
+  const [fragments, setFragments] = useState(initialFragments);
+  const [totalFragmentsGained, setTotalFragmentsGained] = useState(0);
   const [seed, setSeed] = useState(Date.now());
   const [selected, setSelected] = useState<PackDefinitionUI | null>(null);
   const [insufficientFunds, setInsufficientFunds] = useState(false);
@@ -178,24 +188,28 @@ export function PackExperience({ initialBalance = 500, isWelcome = false }: Prop
     pending
       .then((result) => {
         if (result.ok) {
-          // Usar saldo autoritativo do servidor
           setBalance(result.newBalance);
+          if (result.totalFragments > 0) {
+            setFragments((f) => f + result.totalFragments);
+            setTotalFragmentsGained(result.totalFragments);
+          } else {
+            setTotalFragmentsGained(0);
+          }
           const allCards = getCollection();
           const drawn = buildDrawnCardsFromServer(result.drawn, allCards);
           setCards(drawn);
           setPhase('REVEAL');
         } else {
-          // Estornar debit otimista
           setBalance((b) => b + pack.price);
-          console.error('Erro ao abrir pack:', result.error);
-          fallback();
+          toast.error(result.error ?? 'Erro ao abrir pack. Tente novamente.');
+          setPhase('SELECT');
         }
       })
       .catch((e: unknown) => {
-        // Estornar debit otimista
         setBalance((b) => b + pack.price);
-        console.error('Exceção ao abrir pack:', e);
-        fallback();
+        const msg = e instanceof Error ? e.message : 'Erro inesperado. Tente novamente.';
+        toast.error(msg);
+        setPhase('SELECT');
       });
   }, [pack, seed]);
 
@@ -266,7 +280,16 @@ export function PackExperience({ initialBalance = 500, isWelcome = false }: Prop
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-white/35 hover:text-white/65 transition-colors"
                   style={{ border: '1px solid rgba(255,255,255,0.07)' }}
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                     <polyline points="9 22 9 12 15 12 15 22" />
                   </svg>
@@ -275,9 +298,18 @@ export function PackExperience({ initialBalance = 500, isWelcome = false }: Prop
               </div>
               <div className="flex items-center justify-between mt-1">
                 <p className="text-muted text-xs">Escolha seu pack e descubra as lendas</p>
-                <div className="glass rounded-lg px-3 py-1.5 text-xs">
-                  <span className="gold-text font-bold">{balance.toLocaleString('pt-BR')}c</span>
-                  <span className="text-muted ml-1">saldo</span>
+                <div className="glass rounded-lg px-3 py-1.5 text-xs flex items-center gap-3">
+                  <span>
+                    <span className="gold-text font-bold">{balance.toLocaleString('pt-BR')}c</span>
+                  </span>
+                  {fragments > 0 && (
+                    <span>
+                      <span className="text-purple-400 font-bold">
+                        {fragments.toLocaleString('pt-BR')}
+                      </span>
+                      <span className="text-muted ml-0.5">frags</span>
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -333,7 +365,12 @@ export function PackExperience({ initialBalance = 500, isWelcome = false }: Prop
             transition={{ duration: 0.5 }}
             className="absolute inset-0"
           >
-            <CardRevealScene cards={cards} pack={pack} onAllFlipped={handleAllFlipped} onShake={shake} />
+            <CardRevealScene
+              cards={cards}
+              pack={pack}
+              onAllFlipped={handleAllFlipped}
+              onShake={shake}
+            />
           </motion.div>
         )}
 
@@ -348,6 +385,7 @@ export function PackExperience({ initialBalance = 500, isWelcome = false }: Prop
             <RevealSummary
               cards={cards}
               pack={pack}
+              fragmentsGained={totalFragmentsGained}
               onOpenAnother={handleOpenAnother}
               onBack={handleBack}
               isWelcome={isWelcome}

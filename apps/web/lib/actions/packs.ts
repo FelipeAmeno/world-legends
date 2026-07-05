@@ -1,9 +1,9 @@
 'use server';
 
-import { getCollectionMap } from '@/lib/collection-data';
-import { incrementMissionProgressInternal } from '@/lib/actions/missions';
-import { checkAndMarkCompletedSetsInternal } from '@/lib/actions/collections';
 import { checkAndUnlockAchievementsInternal } from '@/lib/actions/achievements';
+import { checkAndMarkCompletedSetsInternal } from '@/lib/actions/collections';
+import { incrementMissionProgressInternal } from '@/lib/actions/missions';
+import { getCollectionMap } from '@/lib/collection-data';
 import { crash } from '@/lib/crash/sentry';
 import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
 import {
@@ -14,33 +14,52 @@ import {
 import {
   CLASSIC_PACK,
   ELITE_PACK,
+  GOAT_PACK,
+  HERO_PACK,
   LEGEND_PACK,
+  NATIONAL_PACK,
+  STARTER_PACK,
   createPityCounter,
   createUserPityState,
+  fragmentsForDuplicate,
   openPack,
   updatePityAfterOpening,
 } from '@world-legends/packs';
 import type { Pack, UserPityState } from '@world-legends/packs';
 import type { RarityCode } from '@world-legends/types';
+import { revalidatePath } from 'next/cache';
 
-const PACK_DEFS: Record<string, { pack: Pack; price: number }> = {
+type PackDef = { pack: Pack; price: number; nationalityFilter?: string };
+
+const PACK_DEFS: Record<string, PackDef> = {
+  starter: { pack: STARTER_PACK, price: 75 },
   classic: { pack: CLASSIC_PACK, price: 150 },
-  elite:   { pack: ELITE_PACK,   price: 400 },
-  legend:  { pack: LEGEND_PACK,  price: 1000 },
+  national: { pack: NATIONAL_PACK, price: 250, nationalityFilter: 'BR' },
+  elite: { pack: ELITE_PACK, price: 400 },
+  hero: { pack: HERO_PACK, price: 700 },
+  legend: { pack: LEGEND_PACK, price: 1000 },
+  goat: { pack: GOAT_PACK, price: 2500 },
 };
 
 const RARITY_ORDER: Record<RarityCode, number> = {
-  common: 0, rare: 1, elite: 2, legendary: 3, ultra: 4, world_cup_hero: 5,
+  common: 0,
+  rare: 1,
+  elite: 2,
+  legendary: 3,
+  ultra: 4,
+  world_cup_hero: 5,
 };
 
 export type DrawnCardInfo = {
-  cardId:     string;
+  cardId: string;
   userCardId: string;
   rarityCode: RarityCode;
+  isDuplicate: boolean;
+  fragmentsGained: number;
 };
 
 export type OpenPackResult =
-  | { ok: true;  drawn: DrawnCardInfo[]; newBalance: number }
+  | { ok: true; drawn: DrawnCardInfo[]; newBalance: number; totalFragments: number }
   | { ok: false; error: string };
 
 // ─── Pity state helpers ───────────────────────────────────────────────────────
@@ -56,7 +75,7 @@ async function loadPityState(
   ]);
   return {
     legendaryPlus: createPityCounter('legendary_plus', legResult.ok ? legResult.value : 0),
-    ultraPlus:     createPityCounter('ultra_plus',     ultraResult.ok ? ultraResult.value : 0),
+    ultraPlus: createPityCounter('ultra_plus', ultraResult.ok ? ultraResult.value : 0),
   };
 }
 
@@ -68,8 +87,12 @@ async function savePityState(
   newState: UserPityState,
 ): Promise<void> {
   const updates: Array<['legendary_plus' | 'ultra_plus', number, number]> = [
-    ['legendary_plus', oldState.legendaryPlus.packsSinceLastHit, newState.legendaryPlus.packsSinceLastHit],
-    ['ultra_plus',     oldState.ultraPlus.packsSinceLastHit,     newState.ultraPlus.packsSinceLastHit],
+    [
+      'legendary_plus',
+      oldState.legendaryPlus.packsSinceLastHit,
+      newState.legendaryPlus.packsSinceLastHit,
+    ],
+    ['ultra_plus', oldState.ultraPlus.packsSinceLastHit, newState.ultraPlus.packsSinceLastHit],
   ];
 
   for (const [pityType, oldCount, newCount] of updates) {
@@ -93,8 +116,8 @@ export async function openPackAction(packId: string): Promise<OpenPackResult> {
 
   const db = getServiceDb();
   const profileRepo = new SupabaseProfileRepository(db);
-  const cardRepo    = new SupabaseUserCardRepository(db);
-  const packRepo    = new SupabasePackRepository(db);
+  const cardRepo = new SupabaseUserCardRepository(db);
+  const packRepo = new SupabasePackRepository(db);
 
   // ── P7: verificar saldo antes de qualquer mutação ─────────────────────────
 
@@ -110,35 +133,51 @@ export async function openPackAction(packId: string): Promise<OpenPackResult> {
 
   const pityState = await loadPityState(packRepo, userId);
 
-  // ── Preparar catálogo de cartas ───────────────────────────────────────────
+  // ── Preparar catálogo + coleção existente do usuário ─────────────────────
 
   const catalogMap = getCollectionMap();
-  const byRarity   = new Map<RarityCode, string[]>();
+  const byRarity = new Map<RarityCode, string[]>();
   for (const [cardId, card] of catalogMap) {
+    // Filtro de nacionalidade para National Pack e similares
+    if (packDef.nationalityFilter && card.nationality !== packDef.nationalityFilter) continue;
     const pool = byRarity.get(card.rarityCode) ?? [];
     pool.push(cardId);
     byRarity.set(card.rarityCode, pool);
   }
 
+  // Carregar coleção existente para detecção de duplicatas
+  const existingCards = await cardRepo.findByProfile(userId);
+  const ownedCardIds = new Set<string>(
+    existingCards.ok ? existingCards.value.map((c) => c.cardId) : [],
+  );
+
   // ── Simular abertura (puro, sem efeitos colaterais) ───────────────────────
 
   const seed = String(Date.now() ^ Math.trunc(Math.random() * 0xffffffff));
-  const usedCardIds   = new Set<string>();
-  const usedPlayerIds = new Set<string>(); // previne mesmo jogador em editions diferentes
+  const usedCardIds = new Set<string>();
+  const usedPlayerIds = new Set<string>();
   const packResult = openPack({
     packOpeningId: `opening-${userId}-${Date.now()}`,
-    pack:  packDef.pack,
+    pack: packDef.pack,
     seed,
     pityState,
     cardResolver: (rarityCode) => {
-      const notUsed = (id: string) => {
+      // Preferir cartas que o usuário não possui (evitar duplicatas quando possível)
+      const notUsedThisPack = (id: string) => {
         if (usedCardIds.has(id)) return false;
         const pid = catalogMap.get(id)?.playerId;
         return !pid || !usedPlayerIds.has(pid);
       };
-      const pool        = (byRarity.get(rarityCode as RarityCode) ?? []).filter(notUsed);
-      const fallbackPool = [...catalogMap.keys()].filter(notUsed);
-      const source = pool.length > 0 ? pool : fallbackPool;
+      const notOwned = (id: string) => !ownedCardIds.has(id) && notUsedThisPack(id);
+
+      const rarityPool = byRarity.get(rarityCode as RarityCode) ?? [];
+      // Primeiro tenta não-duplicatas; se não houver, aceita qualquer carta
+      const preferred = rarityPool.filter(notOwned);
+      const fallback = rarityPool.filter(notUsedThisPack);
+      const globalFallback = [...catalogMap.keys()].filter(notUsedThisPack);
+
+      const source =
+        preferred.length > 0 ? preferred : fallback.length > 0 ? fallback : globalFallback;
       if (source.length === 0) return null;
       const picked = source[Math.floor(Math.random() * source.length)] ?? null;
       if (picked) {
@@ -150,42 +189,80 @@ export async function openPackAction(packId: string): Promise<OpenPackResult> {
     },
   });
 
-  // ── P2: criar cartas ANTES de debitar ────────────────────────────────────
-  // Se o débito falhar, as cartas criadas são deletadas (compensação).
+  // ── Processar slots: classificar novo vs. duplicata ──────────────────────
 
-  const created: DrawnCardInfo[] = [];
+  type SlotInfo = { cardId: string; rarityCode: RarityCode; isDuplicate: boolean; frags: number };
+  const slots: SlotInfo[] = [];
+  let pendingFragments = 0;
+
   for (const slot of packResult.slots) {
     const cardId = slot.cardId;
     if (!cardId) continue;
+    const rarityCode = slot.rarityCode as RarityCode;
+    const isDuplicate = ownedCardIds.has(cardId);
+    const frags = isDuplicate ? fragmentsForDuplicate(rarityCode) : 0;
+    if (isDuplicate) pendingFragments += frags;
+    slots.push({ cardId, rarityCode, isDuplicate, frags });
+  }
+
+  // ── P2: criar user_cards apenas para cartas novas ─────────────────────────
+
+  const createdUserCardIds = new Map<string, string>(); // cardId → userCardId
+  for (const { cardId, isDuplicate } of slots) {
+    if (isDuplicate) continue;
     const createResult = await cardRepo.create({ profileId: userId, cardId, acquiredVia: 'pack' });
     if (createResult.ok) {
-      created.push({
-        cardId,
-        userCardId: createResult.value.id,
-        rarityCode: slot.rarityCode as RarityCode,
-      });
+      createdUserCardIds.set(cardId, createResult.value.id);
+      ownedCardIds.add(cardId); // previne duplicata dentro do mesmo pack
     }
   }
+
+  const drawn: DrawnCardInfo[] = slots.map(({ cardId, rarityCode, isDuplicate, frags }) => ({
+    cardId,
+    userCardId: isDuplicate ? '' : (createdUserCardIds.get(cardId) ?? ''),
+    rarityCode,
+    isDuplicate,
+    fragmentsGained: frags,
+  }));
 
   // ── Debitar créditos ──────────────────────────────────────────────────────
 
   const debitResult = await profileRepo.debitSoftCurrency(userId, packDef.price);
   if (!debitResult.ok) {
-    // Compensação: remover cartas criadas antes de retornar erro
-    await Promise.allSettled(created.map((d) => cardRepo.delete(d.userCardId)));
+    // Compensação: remover user_cards criados
+    await Promise.allSettled([...createdUserCardIds.values()].map((id) => cardRepo.delete(id)));
     return { ok: false, error: debitResult.error.message };
+  }
+
+  // ── Creditar fragmentos de duplicatas (fire-and-forget) ───────────────────
+
+  const newBalance = debitResult.value;
+  if (pendingFragments > 0) {
+    profileRepo.creditFragments(userId, pendingFragments).catch((e) => {
+      crash.captureError(e, {
+        context: 'pack_fragment_credit',
+        userId,
+        extras: { packId, pendingFragments },
+        level: 'warning',
+      });
+    });
   }
 
   // ── P4: atualizar pity state no banco ─────────────────────────────────────
 
-  const highestRarity = created.reduce<RarityCode>(
-    (best, d) => (RARITY_ORDER[d.rarityCode] ?? 0) > (RARITY_ORDER[best] ?? 0) ? d.rarityCode : best,
+  const highestRarity = drawn.reduce<RarityCode>(
+    (best, d) =>
+      (RARITY_ORDER[d.rarityCode] ?? 0) > (RARITY_ORDER[best] ?? 0) ? d.rarityCode : best,
     'common',
   );
   const newPityState = updatePityAfterOpening(pityState, highestRarity);
-  // Fire-and-forget: falha de pity não deve bloquear o retorno ao usuário
   savePityState(packRepo, userId, pityState, newPityState).catch((e) => {
-    crash.captureError(e, { context: 'pack_pity_save', userId, extras: { packId }, level: 'warning' });
+    crash.captureError(e, {
+      context: 'pack_pity_save',
+      userId,
+      extras: { packId },
+      level: 'warning',
+    });
   });
 
   // ── Registrar abertura no banco ───────────────────────────────────────────
@@ -194,26 +271,32 @@ export async function openPackAction(packId: string): Promise<OpenPackResult> {
     profileId: userId,
     packId,
     rngSeed: Number.parseInt(seed, 10) || 0,
-    cardIds: created.map((d) => d.cardId),
+    cardIds: drawn.map((d) => d.cardId),
   });
 
   // ── Atualizar progresso de missões (background, não bloqueia) ────────────
 
   const LEGENDARY_RARITIES = new Set<string>(['legendary', 'ultra', 'world_cup_hero']);
-  const brazilianCount = created.filter((d) => catalogMap.get(d.cardId)?.nationality === 'BR').length;
-  const legendaryCount = created.filter((d) => LEGENDARY_RARITIES.has(d.rarityCode)).length;
+  const newCards = drawn.filter((d) => !d.isDuplicate);
+  const brazilianCount = newCards.filter(
+    (d) => catalogMap.get(d.cardId)?.nationality === 'BR',
+  ).length;
+  const legendaryCount = drawn.filter((d) => LEGENDARY_RARITIES.has(d.rarityCode)).length;
 
   void (async () => {
     try {
       await incrementMissionProgressInternal(userId, 'packsOpened', 1);
-      await incrementMissionProgressInternal(userId, 'cardsOwned', created.length);
+      await incrementMissionProgressInternal(userId, 'cardsOwned', newCards.length);
       if (legendaryCount > 0) {
         await incrementMissionProgressInternal(userId, 'legendaryCards', legendaryCount);
       }
       if (brazilianCount > 0) {
         await incrementMissionProgressInternal(userId, 'brazilianCards', brazilianCount);
       }
-      await checkAndMarkCompletedSetsInternal(userId, created.map((d) => d.cardId));
+      await checkAndMarkCompletedSetsInternal(
+        userId,
+        newCards.map((d) => d.cardId),
+      );
       await checkAndUnlockAchievementsInternal(userId);
     } catch (e) {
       crash.captureError(e, {
@@ -225,5 +308,7 @@ export async function openPackAction(packId: string): Promise<OpenPackResult> {
     }
   })();
 
-  return { ok: true, drawn: created, newBalance: debitResult.value };
+  revalidatePath('/', 'layout');
+
+  return { ok: true, drawn, newBalance, totalFragments: pendingFragments };
 }

@@ -2,9 +2,9 @@
 
 import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
 import {
+  type ClaimDayPayload,
   DAILY_SCHEDULE,
   DailyLoginService,
-  type ClaimDayPayload,
   type DailyLoginState,
   type DayConfig,
 } from '@world-legends/daily-login';
@@ -90,15 +90,30 @@ export async function claimDailyLoginAction(): Promise<ClaimDailyLoginResult> {
   });
   if (!upsertResult.ok) return { ok: false, error: 'Erro ao salvar progresso.' };
 
-  // Credit all monetary rewards
+  // Credit all monetary rewards — pack rewards converted to credit equivalent
+  const PACK_CREDIT_VALUE: Record<string, number> = {
+    starter: 75,
+    classic: 150,
+    national: 250,
+    elite: 400,
+    hero: 700,
+    legend: 1000,
+    goat: 2500,
+  };
+
   let totalCredits = 0;
   let newBalance = 0;
 
-  for (const reward of payload.rewards) {
-    if (reward.kind === 'credits') totalCredits += reward.amount;
-  }
-  if (payload.streakBonus?.kind === 'credits') {
-    totalCredits += payload.streakBonus.amount;
+  const allRewards = [...payload.rewards];
+  if (payload.streakBonus) allRewards.push(payload.streakBonus);
+
+  for (const reward of allRewards) {
+    if (reward.kind === 'credits') {
+      totalCredits += reward.amount;
+    } else if (reward.kind === 'pack' && reward.packId) {
+      // Pack rewards credited as their credit equivalent until pack inventory is implemented
+      totalCredits += (PACK_CREDIT_VALUE[reward.packId] ?? 150) * reward.amount;
+    }
   }
 
   if (totalCredits > 0) {

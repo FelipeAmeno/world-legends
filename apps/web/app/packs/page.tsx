@@ -16,6 +16,7 @@ export default async function PacksPage({ searchParams }: Props) {
   return (
     <PackExperience
       initialBalance={profile?.softCurrency ?? 500}
+      initialFragments={profile?.fragmentBalance ?? 0}
       isWelcome={params.welcome === '1'}
     />
   );
