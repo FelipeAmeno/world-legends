@@ -13,9 +13,10 @@ type Props = {
 export function GameGrid({ collectionCount = 0, squadFormation, activeEventCount = 0 }: Props) {
   const collectionSub = collectionCount === 1 ? '1 carta' : `${collectionCount} cartas`;
   const squadSub = squadFormation ? squadFormation : 'Construir squad';
-  const eventsSub = activeEventCount > 0
-    ? `${activeEventCount} ativo${activeEventCount > 1 ? 's' : ''} agora`
-    : 'Ver temporada';
+  const eventsSub =
+    activeEventCount > 0
+      ? `${activeEventCount} ativo${activeEventCount > 1 ? 's' : ''} agora`
+      : 'Ver temporada';
 
   return (
     <section className="px-4 space-y-3">
@@ -28,12 +29,11 @@ export function GameGrid({ collectionCount = 0, squadFormation, activeEventCount
           href="/packs"
           icon="📦"
           label="ABRIR PACK"
-          sub="Founder Pack · Grátis"
+          sub="Classic · Elite · Legend"
           from="#0d0020"
           via="#4c1d95"
           to="#6d28d9"
           accent="#a855f7"
-          badge="NOVO"
         />
         <SecondaryCard
           href="/squad"
@@ -97,7 +97,12 @@ function JogarHero() {
           className="absolute -inset-1.5 rounded-[28px] pointer-events-none"
           style={{ border: '1px solid rgba(52,211,153,0.18)' }}
           animate={{ opacity: [0, 0.7, 0] }}
-          transition={{ duration: 2.4, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut', delay: 0.6 }}
+          transition={{
+            duration: 2.4,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: 'easeInOut',
+            delay: 0.6,
+          }}
         />
 
         {/* Noise texture */}
@@ -149,10 +154,7 @@ function JogarHero() {
             >
               JOGAR
             </h2>
-            <p
-              className="text-[11px] mt-1.5"
-              style={{ color: 'rgba(255,255,255,0.38)' }}
-            >
+            <p className="text-[11px] mt-1.5" style={{ color: 'rgba(255,255,255,0.38)' }}>
               Partida rápida · Arena das Lendas
             </p>
           </div>
@@ -233,10 +235,7 @@ function SecondaryCard({
 
         {/* Content */}
         <div className="absolute bottom-0 left-0 right-0 p-3.5">
-          <div
-            className="text-3xl mb-1.5"
-            style={{ filter: `drop-shadow(0 0 12px ${accent}70)` }}
-          >
+          <div className="text-3xl mb-1.5" style={{ filter: `drop-shadow(0 0 12px ${accent}70)` }}>
             {icon}
           </div>
           <h3
@@ -278,7 +277,7 @@ function TertiaryCard({
       <motion.div
         className="relative h-[64px] rounded-2xl flex items-center gap-3 px-3.5 overflow-hidden"
         style={{
-          background: `rgba(255,255,255,0.025)`,
+          background: 'rgba(255,255,255,0.025)',
           border: `1px solid ${accent}22`,
           boxShadow: `0 2px 14px ${accent}10`,
         }}
@@ -286,10 +285,7 @@ function TertiaryCard({
         whileTap={{ scale: 0.96 }}
         transition={{ type: 'spring', stiffness: 400, damping: 22 }}
       >
-        <span
-          className="text-2xl shrink-0"
-          style={{ filter: `drop-shadow(0 0 8px ${accent}60)` }}
-        >
+        <span className="text-2xl shrink-0" style={{ filter: `drop-shadow(0 0 8px ${accent}60)` }}>
           {icon}
         </span>
         <div className="flex-1 min-w-0">

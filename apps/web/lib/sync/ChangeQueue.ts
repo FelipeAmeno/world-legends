@@ -11,17 +11,10 @@
  *   - Thread-safe dentro do mesmo tab (operações síncronas sobre array)
  */
 
-import {
-  type QueuedChange,
-  type ChangeType,
-  SYNC_QUEUE_LS_KEY,
-} from './types';
+import { type ChangeType, type QueuedChange, SYNC_QUEUE_LS_KEY } from './types';
 
 // Tipos de mudança que sofrem merge (última versão prevalece)
-const DEDUPE_BY_TYPE = new Set<ChangeType>([
-  'user_progress',
-  'squad',
-]);
+const DEDUPE_BY_TYPE = new Set<ChangeType>(['user_progress', 'squad']);
 
 // Tipos que se acumulam (não deduplica)
 const APPEND_TYPES = new Set<ChangeType>([
@@ -74,25 +67,27 @@ export class ChangeQueue {
 
   clear(): void {
     this.items = [];
-    try { localStorage.removeItem(SYNC_QUEUE_LS_KEY); } catch {}
+    try {
+      localStorage.removeItem(SYNC_QUEUE_LS_KEY);
+    } catch {}
   }
 
   // ── Operações ───────────────────────────────────────────────────────────────
 
   enqueue(userId: string, type: ChangeType, payload: unknown): QueuedChange {
     const change: QueuedChange = {
-      id:          genId(),
+      id: genId(),
       type,
       payload,
       userId,
-      timestamp:   Date.now(),
-      attempts:    0,
+      timestamp: Date.now(),
+      attempts: 0,
       lastAttempt: 0,
     };
 
     if (DEDUPE_BY_TYPE.has(type)) {
       // Substituir item existente do mesmo tipo/userId
-      const idx = this.items.findIndex(i => i.type === type && i.userId === userId);
+      const idx = this.items.findIndex((i) => i.type === type && i.userId === userId);
       if (idx >= 0) {
         this.items[idx] = { ...change, id: this.items[idx]!.id };
       } else {
@@ -109,13 +104,13 @@ export class ChangeQueue {
 
   /** Remove um item por ID (após salvar com sucesso) */
   remove(id: string): void {
-    this.items = this.items.filter(i => i.id !== id);
+    this.items = this.items.filter((i) => i.id !== id);
     this.save();
   }
 
   /** Atualiza tentativas de um item */
   markAttempt(id: string): void {
-    const item = this.items.find(i => i.id === id);
+    const item = this.items.find((i) => i.id === id);
     if (item) {
       item.attempts++;
       item.lastAttempt = Date.now();
@@ -128,7 +123,11 @@ export class ChangeQueue {
     return [...this.items];
   }
 
-  get size(): number { return this.items.length; }
+  get size(): number {
+    return this.items.length;
+  }
 
-  get isEmpty(): boolean { return this.items.length === 0; }
+  get isEmpty(): boolean {
+    return this.items.length === 0;
+  }
 }

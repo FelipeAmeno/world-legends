@@ -42,15 +42,7 @@ export function AlbumSetPanel({ def, ownedSet, cardMap }: Props) {
       {def.requiredCardIds.map((cardId, i) => {
         const owned = ownedSet.has(cardId);
         const card = cardMap.get(cardId);
-        return (
-          <AlbumSlot
-            key={cardId}
-            cardId={cardId}
-            card={card}
-            owned={owned}
-            index={i}
-          />
-        );
+        return <AlbumSlot key={cardId} cardId={cardId} card={card} owned={owned} index={i} />;
       })}
     </div>
   );
@@ -93,7 +85,9 @@ function AlbumSlot({ cardId, card, owned, index }: SlotProps) {
             className="absolute top-1 right-1 text-[7px] font-black px-1 py-0.5 rounded-full text-white"
             style={{ background: RARITY_BADGE_BG[card.rarityCode] ?? '#334155' }}
           >
-            {card.rarityCode === 'world_cup_hero' ? 'WCH' : card.rarityCode.toUpperCase().slice(0, 3)}
+            {card.rarityCode === 'world_cup_hero'
+              ? 'WCH'
+              : card.rarityCode.toUpperCase().slice(0, 3)}
           </div>
 
           {/* Overall */}
@@ -118,14 +112,21 @@ function AlbumSlot({ cardId, card, owned, index }: SlotProps) {
         <div className="w-full h-full flex flex-col items-center justify-center p-1.5">
           {/* Silhouette */}
           <div className="flex-1 flex items-center justify-center opacity-15">
-            <svg viewBox="0 0 40 60" fill="currentColor" className="w-8 h-12 text-white">
+            <svg
+              viewBox="0 0 40 60"
+              fill="currentColor"
+              className="w-8 h-12 text-white"
+              aria-hidden="true"
+            >
               <circle cx="20" cy="13" r="7" />
               <path d="M6 55 Q8 34 20 32 Q32 34 34 55 Z" />
             </svg>
           </div>
 
           {/* Slot number */}
-          <p className="text-[8px] text-white/20 font-bold">#{(index + 1).toString().padStart(2, '0')}</p>
+          <p className="text-[8px] text-white/20 font-bold">
+            #{(index + 1).toString().padStart(2, '0')}
+          </p>
         </div>
       )}
     </motion.div>

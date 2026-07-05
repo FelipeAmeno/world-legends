@@ -5,13 +5,13 @@
  * No DB, no Server Actions — pure domain logic.
  */
 
-import { describe, expect, it } from 'vitest';
 import {
   CardMasteryService,
-  getLevelForXp,
   MASTERY_LEVELS,
   type XpGainSource,
+  getLevelForXp,
 } from '@world-legends/card-mastery';
+import { describe, expect, it } from 'vitest';
 
 const svc = new CardMasteryService();
 
@@ -23,13 +23,13 @@ describe('MASTERY_LEVELS catalog', () => {
   });
 
   it('first is Bronze at 0 XP', () => {
-    expect(MASTERY_LEVELS[0]!.name).toBe('Bronze');
-    expect(MASTERY_LEVELS[0]!.xpRequired).toBe(0);
+    expect(MASTERY_LEVELS[0]?.name).toBe('Bronze');
+    expect(MASTERY_LEVELS[0]?.xpRequired).toBe(0);
   });
 
   it('last is World Class at 1500 XP', () => {
-    expect(MASTERY_LEVELS[5]!.name).toBe('World Class');
-    expect(MASTERY_LEVELS[5]!.xpRequired).toBe(1500);
+    expect(MASTERY_LEVELS[5]?.name).toBe('World Class');
+    expect(MASTERY_LEVELS[5]?.xpRequired).toBe(1500);
   });
 
   it('XP thresholds are strictly increasing', () => {
@@ -39,7 +39,7 @@ describe('MASTERY_LEVELS catalog', () => {
   });
 
   it('level 4 (Diamond) unlocks diamond_aura effect', () => {
-    expect(MASTERY_LEVELS[4]!.effectUnlock).toBe('diamond_aura');
+    expect(MASTERY_LEVELS[4]?.effectUnlock).toBe('diamond_aura');
   });
 });
 
@@ -120,8 +120,8 @@ describe('CardMasteryService.computeXpGain', () => {
   it('entries match sources', () => {
     const result = svc.computeXpGain(['match_played', 'mvp']);
     expect(result.entries.length).toBe(2);
-    expect(result.entries[0]!.source).toBe('match_played');
-    expect(result.entries[1]!.source).toBe('mvp');
+    expect(result.entries[0]?.source).toBe('match_played');
+    expect(result.entries[1]?.source).toBe('mvp');
   });
 });
 

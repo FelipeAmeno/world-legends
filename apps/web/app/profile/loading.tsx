@@ -8,10 +8,12 @@ export default function ProfileLoading() {
       </div>
 
       {Array.from({ length: 4 }, (_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
         <div key={i} className="px-5 py-5 glass rounded-3xl border border-white/5 space-y-3">
           <div className="h-4 w-32 bg-white/8 rounded" />
           <div className="grid grid-cols-3 gap-3">
             {Array.from({ length: 3 }, (_, j) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
               <div key={j} className="h-16 bg-white/5 rounded-xl" />
             ))}
           </div>

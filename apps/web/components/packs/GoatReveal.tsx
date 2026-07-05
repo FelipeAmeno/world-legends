@@ -1,7 +1,7 @@
 'use client';
 
-import type { DrawnCard } from '@/lib/pack-logic';
 import { vibrate } from '@/lib/haptics';
+import type { DrawnCard } from '@/lib/pack-logic';
 import { SFX } from '@/lib/sound-manager';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -27,30 +27,39 @@ function BurstCanvas() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const W = canvas.width  = canvas.offsetWidth;
-    const H = canvas.height = canvas.offsetHeight;
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    const W = canvas.width;
+    const H = canvas.height;
     const cx = W / 2;
     const cy = H / 2;
 
     const COLORS = ['#c9a84c', '#e6c85a', '#f5e098', '#ffffff', '#e2e8f0', '#a855f7', '#818cf8'];
-    const COUNT  = 150;
+    const COUNT = 150;
 
     type Particle = {
-      x: number; y: number; vx: number; vy: number;
-      size: number; color: string; alpha: number; life: number;
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      size: number;
+      color: string;
+      alpha: number;
+      life: number;
     };
 
     const particles: Particle[] = Array.from({ length: COUNT }, (_, i) => {
       const angle = (i / COUNT) * Math.PI * 2 + Math.random() * 0.35;
       const speed = 3 + Math.random() * 9;
       return {
-        x: cx, y: cy,
+        x: cx,
+        y: cy,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
-        size:  2 + Math.random() * 7,
+        size: 2 + Math.random() * 7,
         color: COLORS[Math.floor(Math.random() * COLORS.length)]!,
         alpha: 1,
-        life:  0.8 + Math.random() * 0.7,
+        life: 0.8 + Math.random() * 0.7,
       };
     });
 
@@ -66,8 +75,8 @@ function BurstCanvas() {
       let any = false;
 
       for (const p of particles) {
-        p.x  += p.vx;
-        p.y  += p.vy;
+        p.x += p.vx;
+        p.y += p.vy;
         p.vy += 0.18;
         p.vx *= 0.97;
         p.alpha = Math.max(0, 1 - elapsed / p.life);
@@ -75,8 +84,8 @@ function BurstCanvas() {
         any = true;
         ctx.save();
         ctx.globalAlpha = p.alpha;
-        ctx.fillStyle   = p.color;
-        ctx.shadowBlur  = p.size * 2.5;
+        ctx.fillStyle = p.color;
+        ctx.shadowBlur = p.size * 2.5;
         ctx.shadowColor = p.color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
@@ -89,7 +98,10 @@ function BurstCanvas() {
     };
 
     raf = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(raf); ctx.clearRect(0, 0, W, H); };
+    return () => {
+      cancelAnimationFrame(raf);
+      ctx.clearRect(0, 0, W, H);
+    };
   }, []);
 
   return (
@@ -106,7 +118,7 @@ function BurstCanvas() {
 export function GoatReveal({ card, onComplete }: Props) {
   const [phase, setPhase] = useState<GoatPhase>('dark');
   const timerRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const phaseRef  = useRef<GoatPhase>('dark');
+  const phaseRef = useRef<GoatPhase>('dark');
 
   const advancePhase = useCallback(() => {
     const current = phaseRef.current;
@@ -130,7 +142,7 @@ export function GoatReveal({ card, onComplete }: Props) {
   // ── Sequência automática ──────────────────────────────────────────────────
   useEffect(() => {
     const delays: [number, GoatPhase][] = [
-      [900,  'text'],
+      [900, 'text'],
       [2100, 'card'],
       [3300, 'burst'],
       [4300, 'hold'],
@@ -172,7 +184,7 @@ export function GoatReveal({ card, onComplete }: Props) {
 
     const currentIdx = PHASE_ORDER.indexOf(phaseRef.current);
     const remaining: [number, GoatPhase][] = [
-      [600,  'card'],
+      [600, 'card'],
       [1400, 'burst'],
       [2200, 'hold'],
     ].slice(Math.max(0, currentIdx - 1)) as [number, GoatPhase][];
@@ -226,9 +238,7 @@ export function GoatReveal({ card, onComplete }: Props) {
       </AnimatePresence>
 
       {/* Burst canvas */}
-      <AnimatePresence>
-        {phase === 'burst' && <BurstCanvas key="burst" />}
-      </AnimatePresence>
+      <AnimatePresence>{phase === 'burst' && <BurstCanvas key="burst" />}</AnimatePresence>
 
       {/* Aura dourada de fundo */}
       <AnimatePresence>
@@ -238,7 +248,11 @@ export function GoatReveal({ card, onComplete }: Props) {
             initial={{ opacity: 0, scale: 0.4 }}
             animate={{ opacity: [0.2, 0.7, 0.45], scale: [1, 2.2, 1.7] }}
             transition={{ duration: 2.2, ease: 'easeOut' }}
-            style={{ width: 540, height: 540, background: 'radial-gradient(circle, rgba(201,168,76,0.22), rgba(240,244,255,0.06))' }}
+            style={{
+              width: 540,
+              height: 540,
+              background: 'radial-gradient(circle, rgba(201,168,76,0.22), rgba(240,244,255,0.06))',
+            }}
           />
         )}
       </AnimatePresence>
@@ -270,10 +284,13 @@ export function GoatReveal({ card, onComplete }: Props) {
             {/* Ponto de luz pulsante */}
             <motion.div
               className="w-3 h-3 rounded-full mb-6"
-              style={{ background: 'rgba(201,168,76,0.9)', boxShadow: '0 0 24px rgba(201,168,76,0.7)' }}
+              style={{
+                background: 'rgba(201,168,76,0.9)',
+                boxShadow: '0 0 24px rgba(201,168,76,0.7)',
+              }}
               animate={{
-                scale:  [1, 2.4, 1, 2.2, 1],
-                opacity:[0.8, 1, 0.6, 1, 0.8],
+                scale: [1, 2.4, 1, 2.2, 1],
+                opacity: [0.8, 1, 0.6, 1, 0.8],
               }}
               transition={{ duration: 0.85, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
             />
@@ -319,18 +336,18 @@ export function GoatReveal({ card, onComplete }: Props) {
                     fontSize: 80,
                     display: 'inline-block',
                     background: 'linear-gradient(160deg, #fff 0%, #c9a84c 55%, #e6c85a 100%)',
-                    WebkitBackgroundClip:   'text',
-                    WebkitTextFillColor:    'transparent',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
                     filter: 'drop-shadow(0 0 22px rgba(201,168,76,0.7))',
                     textShadow: 'none',
                   }}
                   initial={{ opacity: 0, y: 48, rotateX: -90, scale: 0.6 }}
                   animate={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
                   transition={{
-                    delay:     0.22 + i * 0.10,
-                    type:      'spring',
+                    delay: 0.22 + i * 0.1,
+                    type: 'spring',
                     stiffness: 260,
-                    damping:   16,
+                    damping: 16,
                   }}
                 >
                   {letter}
@@ -341,7 +358,11 @@ export function GoatReveal({ card, onComplete }: Props) {
             {/* Linha decorativa */}
             <motion.div
               className="mt-5 h-px"
-              style={{ background: 'linear-gradient(90deg, transparent, #c9a84c, rgba(240,244,255,0.8), #c9a84c, transparent)', width: 160 }}
+              style={{
+                background:
+                  'linear-gradient(90deg, transparent, #c9a84c, rgba(240,244,255,0.8), #c9a84c, transparent)',
+                width: 160,
+              }}
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
               transition={{ delay: 0.65, duration: 0.6, ease: 'easeOut' }}
@@ -374,8 +395,9 @@ export function GoatReveal({ card, onComplete }: Props) {
               className="relative w-52 h-72 rounded-2xl overflow-hidden"
               style={{
                 background: 'linear-gradient(145deg, #04040a, #0a0812, #110e1a)',
-                border:     '2px solid rgba(240,244,255,0.85)',
-                boxShadow:  '0 0 50px rgba(240,244,255,0.35), 0 0 120px rgba(201,168,76,0.2), 0 30px 80px rgba(0,0,0,0.8)',
+                border: '2px solid rgba(240,244,255,0.85)',
+                boxShadow:
+                  '0 0 50px rgba(240,244,255,0.35), 0 0 120px rgba(201,168,76,0.2), 0 30px 80px rgba(0,0,0,0.8)',
               }}
             >
               {/* Platinum shimmer */}
@@ -408,8 +430,8 @@ export function GoatReveal({ card, onComplete }: Props) {
                   style={{
                     fontSize: 70,
                     background: 'linear-gradient(180deg, #fff 0%, #c9a84c 55%, #e6c85a 100%)',
-                    WebkitBackgroundClip:   'text',
-                    WebkitTextFillColor:    'transparent',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
                     filter: 'drop-shadow(0 0 18px rgba(201,168,76,0.9))',
                   }}
                   animate={{ scale: [1, 1.04, 1] }}
@@ -420,7 +442,10 @@ export function GoatReveal({ card, onComplete }: Props) {
 
                 <div
                   className="mt-2 mb-4 h-px w-24"
-                  style={{ background: 'linear-gradient(90deg, transparent, rgba(240,244,255,0.6), transparent)' }}
+                  style={{
+                    background:
+                      'linear-gradient(90deg, transparent, rgba(240,244,255,0.6), transparent)',
+                  }}
                 />
 
                 {/* Nome do jogador (hold: letra por letra) */}
@@ -433,9 +458,9 @@ export function GoatReveal({ card, onComplete }: Props) {
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{
-                          delay:    0.3 + i * 0.045,
+                          delay: 0.3 + i * 0.045,
                           duration: 0.25,
-                          ease:     'easeOut',
+                          ease: 'easeOut',
                         }}
                       >
                         {letter === ' ' ? ' ' : letter}
@@ -460,8 +485,8 @@ export function GoatReveal({ card, onComplete }: Props) {
                 className="font-display text-2xl tracking-[0.3em]"
                 style={{
                   background: 'linear-gradient(90deg, #c9a84c, #fff, #c9a84c)',
-                  WebkitBackgroundClip:   'text',
-                  WebkitTextFillColor:    'transparent',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
                 }}
                 animate={{ opacity: [0.7, 1, 0.7] }}
                 transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
@@ -507,9 +532,9 @@ export function GoatReveal({ card, onComplete }: Props) {
             animate={{ width: 800, height: 800, opacity: 0 }}
             transition={{
               duration: 2.2,
-              delay:    i * 0.5,
-              repeat:   Number.POSITIVE_INFINITY,
-              ease:     'easeOut',
+              delay: i * 0.5,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: 'easeOut',
             }}
           />
         ))}

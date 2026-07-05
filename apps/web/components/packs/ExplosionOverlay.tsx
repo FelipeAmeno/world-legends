@@ -20,26 +20,37 @@ function BurstCanvas({ glowColor }: { glowColor: string }) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const W = canvas.width  = canvas.offsetWidth;
-    const H = canvas.height = canvas.offsetHeight;
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    const W = canvas.width;
+    const H = canvas.height;
     const cx = W / 2;
     const cy = H / 2;
 
     const COUNT = 72;
-    type P = { x: number; y: number; vx: number; vy: number; size: number; color: string; alpha: number };
+    type P = {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      size: number;
+      color: string;
+      alpha: number;
+    };
 
     const particles: P[] = Array.from({ length: COUNT }, (_, i) => {
-      const angle  = (i / COUNT) * Math.PI * 2 + Math.random() * 0.1;
+      const angle = (i / COUNT) * Math.PI * 2 + Math.random() * 0.1;
       const spread = 80 + (i % 5) * 40;
-      const speed  = spread / 18;
-      const isGold  = i % 3 === 0;
+      const speed = spread / 18;
+      const isGold = i % 3 === 0;
       const isWhite = i % 7 === 0;
-      const color   = isWhite ? '#ffffff' : isGold ? '#c9a84c' : glowColor;
+      const color = isWhite ? '#ffffff' : isGold ? '#c9a84c' : glowColor;
       return {
-        x: cx, y: cy,
+        x: cx,
+        y: cy,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
-        size:  3 + (i % 5),
+        size: 3 + (i % 5),
         color,
         alpha: 1,
       };
@@ -63,8 +74,8 @@ function BurstCanvas({ glowColor }: { glowColor: string }) {
         any = true;
         ctx.save();
         ctx.globalAlpha = p.alpha;
-        ctx.fillStyle   = p.color;
-        ctx.shadowBlur  = p.size * 2;
+        ctx.fillStyle = p.color;
+        ctx.shadowBlur = p.size * 2;
         ctx.shadowColor = p.color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
@@ -77,7 +88,10 @@ function BurstCanvas({ glowColor }: { glowColor: string }) {
     };
 
     raf = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(raf); ctx.clearRect(0, 0, W, H); };
+    return () => {
+      cancelAnimationFrame(raf);
+      ctx.clearRect(0, 0, W, H);
+    };
   }, [glowColor]);
 
   return (

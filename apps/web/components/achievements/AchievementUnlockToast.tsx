@@ -1,8 +1,8 @@
 'use client';
 
+import type { NewTrophyNotice } from '@/lib/actions/achievements';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect } from 'react';
-import type { NewTrophyNotice } from '@/lib/actions/achievements';
 
 type Props = {
   notice: NewTrophyNotice | null;
@@ -33,6 +33,7 @@ export function AchievementUnlockToast({ notice, onDismiss }: Props) {
           exit={{ y: -80, opacity: 0, scale: 0.9 }}
           transition={{ type: 'spring', stiffness: 300, damping: 24 }}
           className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-80 max-w-[90vw]"
+          // biome-ignore lint/a11y/useSemanticElements: motion.div required for Framer Motion animation
           role="status"
           aria-live="polite"
         >
@@ -78,7 +79,12 @@ export function AchievementUnlockToast({ notice, onDismiss }: Props) {
                 <p className="text-amber-400 text-[10px] font-bold mt-0.5">+{notice.xp} XP</p>
               </div>
 
-              <button onClick={onDismiss} className="text-muted text-lg leading-none shrink-0">
+              <button
+                type="button"
+                onClick={onDismiss}
+                aria-label="Fechar"
+                className="text-muted text-lg leading-none shrink-0"
+              >
                 ×
               </button>
             </div>
