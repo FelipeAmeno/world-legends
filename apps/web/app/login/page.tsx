@@ -525,6 +525,9 @@ function LoginContent() {
       <p className="text-white/12 text-[9px] mt-8 text-center">
         Ao entrar você concorda com os Termos de Uso e Política de Privacidade.
       </p>
+      <p className="text-white/15 text-[8px] mt-2 text-center tracking-wide">
+        © Felipe Ameno · Todos os direitos reservados.
+      </p>
     </div>
   );
 }

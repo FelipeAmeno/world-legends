@@ -112,6 +112,10 @@ export function PremiumHome({
         <ProgressTracker />
         <EventBanner />
 
+        <p className="text-white/12 text-[8px] text-center tracking-wider pt-2">
+          © Felipe Ameno · World Legends · Todos os direitos reservados.
+        </p>
+
         {/* Spacer */}
         <div className="h-2" />
       </div>
