@@ -15,21 +15,21 @@
  *   3. Erro → loga, não bloqueia
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth }      from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth-context';
+import type { UserRecord } from '@world-legends/persistence';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  loadOrCreateUser,
-  persistReward,
-  persistMatchResult,
-  persistPackOpening,
-  persistSquad,
-  persistAchievementClaim,
-  loadAchievementSummary,
   type MatchResult,
   type PackOpenResult,
   type SquadState,
+  loadAchievementSummary,
+  loadOrCreateUser,
+  persistAchievementClaim,
+  persistMatchResult,
+  persistPackOpening,
+  persistReward,
+  persistSquad,
 } from './bridge';
-import type { UserRecord } from '@world-legends/persistence';
 
 // ─── useUserSync ──────────────────────────────────────────────────────────────
 
@@ -38,10 +38,10 @@ import type { UserRecord } from '@world-legends/persistence';
  * Retorna { dbUser, loading, error }.
  */
 export function useUserSync() {
-  const { user }                    = useAuth();
-  const [dbUser,   setDbUser]       = useState<UserRecord | null>(null);
-  const [loading,  setLoading]      = useState(false);
-  const [error,    setError]        = useState<string | null>(null);
+  const { user } = useAuth();
+  const [dbUser, setDbUser] = useState<UserRecord | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const syncedId = useRef<string>('');
 
   useEffect(() => {
@@ -51,9 +51,7 @@ export function useUserSync() {
       setLoading(true);
       setError(null);
       try {
-        const username = user.user_metadata?.full_name
-          ?? user.email?.split('@')[0]
-          ?? 'Jogador';
+        const username = user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'Jogador';
 
         const profile = await loadOrCreateUser(user.id, username);
         setDbUser(profile);
@@ -88,10 +86,13 @@ export function useUserSync() {
 export function useMatchPersist() {
   const { user } = useAuth();
 
-  const persistMatch = useCallback(async (result: MatchResult) => {
-    if (!user) return;
-    await persistMatchResult(user.id, result);
-  }, [user]);
+  const persistMatch = useCallback(
+    async (result: MatchResult) => {
+      if (!user) return;
+      await persistMatchResult(user.id, result);
+    },
+    [user],
+  );
 
   return { persistMatch };
 }
@@ -104,10 +105,13 @@ export function useMatchPersist() {
 export function usePackPersist() {
   const { user } = useAuth();
 
-  const persistPack = useCallback(async (result: PackOpenResult) => {
-    if (!user) return;
-    await persistPackOpening(user.id, result);
-  }, [user]);
+  const persistPack = useCallback(
+    async (result: PackOpenResult) => {
+      if (!user) return;
+      await persistPackOpening(user.id, result);
+    },
+    [user],
+  );
 
   return { persistPack };
 }
@@ -118,16 +122,19 @@ export function usePackPersist() {
  * Hook para persistir squad com debounce (evitar saves excessivos).
  */
 export function useSquadPersist() {
-  const { user }       = useAuth();
-  const debounceRef    = useRef<NodeJS.Timeout | undefined>(undefined);
+  const { user } = useAuth();
+  const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
-  const saveSquad = useCallback((squad: SquadState) => {
-    if (!user) return;
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
-      await persistSquad(user.id, squad);
-    }, 2000); // debounce 2s
-  }, [user]);
+  const saveSquad = useCallback(
+    (squad: SquadState) => {
+      if (!user) return;
+      clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(async () => {
+        await persistSquad(user.id, squad);
+      }, 2000); // debounce 2s
+    },
+    [user],
+  );
 
   return { saveSquad };
 }
@@ -138,27 +145,33 @@ export function useSquadPersist() {
  * Hook para registrar claims de conquistas + carregamento do sumário.
  */
 export function useAchievementPersist() {
-  const { user }                            = useAuth();
-  const [summary, setSummary]               = useState<Record<string, number>>({});
+  const { user } = useAuth();
+  const [summary, setSummary] = useState<Record<string, number>>({});
   const [loadingSummary, setLoadingSummary] = useState(false);
 
   // Carregar sumário ao fazer login
   useEffect(() => {
-    if (!user) { setSummary({}); return; }
+    if (!user) {
+      setSummary({});
+      return;
+    }
     setLoadingSummary(true);
     loadAchievementSummary(user.id)
       .then(setSummary)
       .finally(() => setLoadingSummary(false));
   }, [user]);
 
-  const claimAchievement = useCallback(async (achievementId: string, stage: number) => {
-    if (!user) return;
-    await persistAchievementClaim(user.id, achievementId, stage);
-    setSummary(prev => ({
-      ...prev,
-      [achievementId]: Math.max(prev[achievementId] ?? 0, stage),
-    }));
-  }, [user]);
+  const claimAchievement = useCallback(
+    async (achievementId: string, stage: number) => {
+      if (!user) return;
+      await persistAchievementClaim(user.id, achievementId, stage);
+      setSummary((prev) => ({
+        ...prev,
+        [achievementId]: Math.max(prev[achievementId] ?? 0, stage),
+      }));
+    },
+    [user],
+  );
 
   return { summary, loadingSummary, claimAchievement };
 }
@@ -171,10 +184,13 @@ export function useAchievementPersist() {
 export function useRewardPersist() {
   const { user } = useAuth();
 
-  const addReward = useCallback(async (credits: number, xp: number) => {
-    if (!user) return;
-    await persistReward(user.id, credits, xp);
-  }, [user]);
+  const addReward = useCallback(
+    async (credits: number, xp: number) => {
+      if (!user) return;
+      await persistReward(user.id, credits, xp);
+    },
+    [user],
+  );
 
   return { addReward };
 }

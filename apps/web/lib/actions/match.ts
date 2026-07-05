@@ -1,20 +1,27 @@
 'use server';
 
-import { crash } from '@/lib/crash/sentry';
-import type { MatchDisplay, MatchOpponent } from '@/lib/match-data';
-import { MATCH_OPPONENTS, runMatch } from '@/lib/match-data';
+import { checkAndUnlockAchievementsInternal } from '@/lib/actions/achievements';
+import { awardMatchXpInternal } from '@/lib/actions/card-mastery';
 import {
   incrementMissionProgressInternal,
   setAchievementValueInternal,
 } from '@/lib/actions/missions';
-import { checkAndUnlockAchievementsInternal } from '@/lib/actions/achievements';
-import { awardMatchXpInternal } from '@/lib/actions/card-mastery';
+import { crash } from '@/lib/crash/sentry';
+import type { MatchDisplay, MatchOpponent } from '@/lib/match-data';
+import { MATCH_OPPONENTS, runMatch } from '@/lib/match-data';
 import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
 import { getUserActiveSquad, getUserCollection } from '@/lib/server/game-data';
 import { SupabaseMatchRepository, SupabaseProfileRepository } from '@world-legends/db';
+import { revalidatePath } from 'next/cache';
 
 export type PlayMatchResult =
-  | { ok: true; display: MatchDisplay; opponent: MatchOpponent; matchId: string; newBalance: number }
+  | {
+      ok: true;
+      display: MatchDisplay;
+      opponent: MatchOpponent;
+      matchId: string;
+      newBalance: number;
+    }
   | { ok: false; error: string };
 
 /**
@@ -143,6 +150,8 @@ export async function playMatchAction(opponentId: string): Promise<PlayMatchResu
       });
     }
   })();
+
+  revalidatePath('/', 'layout');
 
   return { ok: true, display, opponent, matchId, newBalance };
 }

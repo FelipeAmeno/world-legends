@@ -1,13 +1,13 @@
 'use server';
 
-import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
 import {
   COLLECTION_SETS,
+  type CollectionSetDef,
   detectNewlyCompletedSets,
   getSetByCode,
   setCompletionPct,
-  type CollectionSetDef,
 } from '@/lib/collection-sets';
+import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
 import type { CollectionSetRow } from '@world-legends/db';
 import { SupabaseCollectionRepository, SupabaseProfileRepository } from '@world-legends/db';
 
@@ -91,9 +91,7 @@ export async function getCollectionsAction(): Promise<CollectionsData> {
   });
 }
 
-export async function claimCollectionRewardAction(
-  setCode: string,
-): Promise<ClaimCollectionResult> {
+export async function claimCollectionRewardAction(setCode: string): Promise<ClaimCollectionResult> {
   const userId = await getAuthenticatedUserId();
   if (!userId) return { ok: false, error: 'Não autenticado.' };
 

@@ -157,10 +157,7 @@ export function detectNewlyCompletedSets(
 }
 
 /** Percentual de conclusão de um set (0–100). */
-export function setCompletionPct(
-  set: CollectionSetDef,
-  ownedCardIds: ReadonlySet<string>,
-): number {
+export function setCompletionPct(set: CollectionSetDef, ownedCardIds: ReadonlySet<string>): number {
   if (set.requiredCardIds.length === 0) return 0;
   const owned = set.requiredCardIds.filter((id) => ownedCardIds.has(id)).length;
   return Math.round((owned / set.requiredCardIds.length) * 100);

@@ -1,11 +1,50 @@
 'use client';
 
-import { RARITY_VISUAL } from '@/lib/collection-data';
+import { PlayerCard } from '@/components/cards/PlayerCard';
 import type { MatchExperienceData } from '@/lib/match-experience';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ScoreDisplay } from './ScoreDisplay';
+
+// ─── Win confetti ─────────────────────────────────────────────────────────────
+
+const WIN_CONFETTI = Array.from({ length: 24 }, (_, i) => ({
+  x: -5 + (i / 23) * 110,
+  delay: i * 0.06,
+  color: ['#c9a84c', '#fbbf24', '#34d399', '#60a5fa', '#ec4899', '#fff'][i % 6]!,
+  rotate: -45 + (i % 5) * 22,
+  size: 6 + (i % 3) * 4,
+}));
+
+function WinConfetti() {
+  return (
+    <div className="fixed inset-0 pointer-events-none z-10 overflow-hidden">
+      {WIN_CONFETTI.map((c, i) => (
+        <motion.div
+          key={i}
+          className="absolute top-0 rounded-sm"
+          style={{
+            left: `${c.x}%`,
+            width: c.size,
+            height: c.size * 1.8,
+            background: c.color,
+            rotate: c.rotate,
+          }}
+          initial={{ y: -30, opacity: 1 }}
+          animate={{ y: '100vh', opacity: [1, 1, 0], rotate: c.rotate + 360 }}
+          transition={{
+            duration: 2.8 + (i % 4) * 0.3,
+            delay: c.delay,
+            ease: 'easeIn',
+            repeat: 2,
+            repeatDelay: 1.5,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 type Props = {
   data: MatchExperienceData;
@@ -57,6 +96,9 @@ export function MatchResultScreen({ data, onRematch, onBack }: Props) {
 
   return (
     <div className="min-h-screen flex flex-col overflow-hidden">
+      {/* Win confetti */}
+      {w === 'home' && <WinConfetti />}
+
       {/* Resultado */}
       <div className="px-4 pt-6 pb-3" style={{ background: outcomeStyle.bg }}>
         <motion.p
@@ -185,9 +227,7 @@ export function MatchResultScreen({ data, onRematch, onBack }: Props) {
                     className="text-center text-[10px] text-muted mt-3 pt-3 border-t border-white/5"
                   >
                     Saldo atual:{' '}
-                    <span className="text-gold font-bold">
-                      {data.newBalance.toLocaleString()}c
-                    </span>
+                    <span className="text-gold font-bold">{data.newBalance.toLocaleString()}c</span>
                   </motion.p>
                 )}
               </div>
@@ -264,43 +304,8 @@ export function MatchResultScreen({ data, onRematch, onBack }: Props) {
                             />
                           ))}
 
-                        {/* Card */}
-                        {(() => {
-                          const visual = RARITY_VISUAL[display.mvp.rarityCode];
-                          return (
-                            <div
-                              className={`w-40 h-52 rounded-3xl border-2 flex flex-col overflow-hidden ${visual.bgClass} ${visual.borderClass} ${visual.glowClass}`}
-                              style={{
-                                boxShadow: `0 0 40px ${RARITY_GLOW[display.mvp.rarityCode]}, 0 0 80px ${RARITY_GLOW[display.mvp.rarityCode]}`,
-                              }}
-                            >
-                              <div className="flex-1 flex items-center justify-center">
-                                <p
-                                  className={`font-display leading-none ${visual.textClass}`}
-                                  style={{
-                                    fontSize: 64,
-                                    filter: `drop-shadow(0 0 16px ${RARITY_GLOW[display.mvp.rarityCode]})`,
-                                  }}
-                                >
-                                  {display.mvp.overall}
-                                </p>
-                              </div>
-                              <div
-                                className="px-2 pb-3 text-center"
-                                style={{
-                                  background: 'linear-gradient(0deg,rgba(0,0,0,0.85),transparent)',
-                                }}
-                              >
-                                <p className="text-white font-bold text-sm">
-                                  {display.mvp.displayName}
-                                </p>
-                                <p className={`text-[9px] mt-0.5 ${visual.textClass}`}>
-                                  {display.mvp.position} · {display.mvp.rarityLabel}
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        })()}
+                        {/* PlayerCard */}
+                        <PlayerCard card={display.mvp} size="lg" glow />
                       </motion.div>
                     )}
                   </AnimatePresence>

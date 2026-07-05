@@ -1,10 +1,11 @@
 'use server';
 
+import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
 import {
   ACHIEVEMENT_CATALOG,
-  AchievementService,
   type AchievementCheckInput,
   type AchievementDef,
+  AchievementService,
   type AchievementView,
 } from '@world-legends/achievements';
 import {
@@ -15,7 +16,6 @@ import {
   SupabaseProfileRepository,
   SupabaseUserCardRepository,
 } from '@world-legends/db';
-import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
 
 const svc = new AchievementService();
 
@@ -66,9 +66,7 @@ export async function getAchievementsAction(): Promise<AchievementsData> {
 
   const views = svc.buildViews(ACHIEVEMENT_CATALOG, unlockedMap);
   const totalUnlocked = views.filter((v) => v.unlocked).length;
-  const totalXpEarned = views
-    .filter((v) => v.unlocked)
-    .reduce((sum, v) => sum + v.def.xp, 0);
+  const totalXpEarned = views.filter((v) => v.unlocked).reduce((sum, v) => sum + v.def.xp, 0);
 
   return { views, totalUnlocked, totalXpEarned };
 }
@@ -118,24 +116,17 @@ export async function checkAndUnlockAchievementsInternal(
   const db = getServiceDb();
 
   // Gather all needed data in parallel
-  const [
-    cardsResult,
-    setsResult,
-    trophiesResult,
-    missionProgressResult,
-    dailyLoginResult,
-  ] = await Promise.all([
-    new SupabaseUserCardRepository(db).findByProfile(userId),
-    new SupabaseCollectionRepository(db).getCompletedSetIds(userId),
-    new SupabaseAchievementRepository(db).findAllByProfile(userId),
-    new SupabaseMissionRepository(db).getAchievementProgress(userId),
-    new SupabaseDailyLoginRepository(db).findByProfile(userId),
-  ]);
+  const [cardsResult, setsResult, trophiesResult, missionProgressResult, dailyLoginResult] =
+    await Promise.all([
+      new SupabaseUserCardRepository(db).findByProfile(userId),
+      new SupabaseCollectionRepository(db).getCompletedSetIds(userId),
+      new SupabaseAchievementRepository(db).findAllByProfile(userId),
+      new SupabaseMissionRepository(db).getAchievementProgress(userId),
+      new SupabaseDailyLoginRepository(db).findByProfile(userId),
+    ]);
 
   // Extract owned card IDs
-  const cardsOwnedIds: string[] = cardsResult.ok
-    ? cardsResult.value.map((c) => c.cardId)
-    : [];
+  const cardsOwnedIds: string[] = cardsResult.ok ? cardsResult.value.map((c) => c.cardId) : [];
 
   // Extract completed set codes
   const completedSetCodes: string[] = setsResult.ok ? [...setsResult.value] : [];
@@ -161,9 +152,8 @@ export async function checkAndUnlockAchievementsInternal(
     goals: progressMap.get('achiev_500_goals') ?? 0,
     currentWinStreak: progressMap.get('achiev_30_unbeaten') ?? 0,
     packsOpened: progressMap.get('achiev_100_packs') ?? 0,
-    streakDays: dailyLoginResult.ok && dailyLoginResult.value
-      ? dailyLoginResult.value.streakDays
-      : 0,
+    streakDays:
+      dailyLoginResult.ok && dailyLoginResult.value ? dailyLoginResult.value.streakDays : 0,
     dailyMissionsCompleted: 0,
     starterClaimed: cardsOwnedIds.length > 0,
   };

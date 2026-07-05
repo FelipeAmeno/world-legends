@@ -52,9 +52,7 @@ export function DayCard({ config, isCurrent, isPast, isLocked }: Props) {
               ? `${theme.border} ${theme.bg} opacity-60`
               : `${theme.border} ${theme.bg}`,
       ].join(' ')}
-      {...(isCurrent
-        ? { style: { boxShadow: theme.activeGlow } }
-        : {})}
+      {...(isCurrent ? { style: { boxShadow: theme.activeGlow } } : {})}
       animate={isCurrent ? { scale: [1, 1.03, 1] } : {}}
       transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
     >

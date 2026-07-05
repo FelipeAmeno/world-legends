@@ -2,6 +2,7 @@
 
 import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
 import type { FormationKey } from '@/lib/squad-data';
+import { revalidatePath } from 'next/cache';
 
 export type SquadSlotInput = {
   slotId: string;
@@ -76,6 +77,8 @@ export async function saveSquad(input: SaveSquadInput): Promise<SaveSquadResult>
     )) as { error: { message: string } | null };
     if (insertErr) return { ok: false, error: insertErr.message };
   }
+
+  revalidatePath('/', 'layout');
 
   return { ok: true, squadId };
 }

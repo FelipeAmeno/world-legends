@@ -23,12 +23,12 @@ import { useCallback, useRef, useSyncExternalStore } from 'react';
 // ─── Níveis de prioridade ─────────────────────────────────────────────────────
 
 export const PRIORITY = {
-  AMBIENT:    0,   // loops de fundo (pulsos, floats)
-  MICRO:      1,   // hover, tap, ripple
-  UI:         2,   // toasts, badges, badges
-  TRANSITION: 3,   // transições de tela
-  REWARD:     4,   // recompensas, pack opening
-  LEVELUP:    5,   // level up (topo da hierarquia)
+  AMBIENT: 0, // loops de fundo (pulsos, floats)
+  MICRO: 1, // hover, tap, ripple
+  UI: 2, // toasts, badges, badges
+  TRANSITION: 3, // transições de tela
+  REWARD: 4, // recompensas, pack opening
+  LEVELUP: 5, // level up (topo da hierarquia)
 } as const;
 
 export type AnimPriority = (typeof PRIORITY)[keyof typeof PRIORITY];
@@ -102,8 +102,8 @@ export function useAnimationPriority() {
 // ─── Utilitário imperativo (fora de componentes React) ───────────────────────
 
 export const animPriority = {
-  lock:     (priority: AnimPriority, id: string) => store.lock(priority, id),
-  unlock:   (id: string) => store.unlock(id),
-  canPlay:  (priority: AnimPriority) => store.canPlay(priority),
+  lock: (priority: AnimPriority, id: string) => store.lock(priority, id),
+  unlock: (id: string) => store.unlock(id),
+  canPlay: (priority: AnimPriority) => store.canPlay(priority),
   maxLevel: () => store.maxPriority(),
 };

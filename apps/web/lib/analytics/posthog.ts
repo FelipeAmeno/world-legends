@@ -18,7 +18,7 @@ import posthog from 'posthog-js';
 
 // ─── Configuração ─────────────────────────────────────────────────────────────
 
-const POSTHOG_KEY  = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://app.posthog.com';
 
 let _initialized = false;
@@ -34,17 +34,17 @@ export function initPostHog(): void {
   _initialized = true;
 
   posthog.init(POSTHOG_KEY, {
-    api_host:        POSTHOG_HOST,
-    person_profiles: 'identified_only',      // não criar perfil para anônimos
+    api_host: POSTHOG_HOST,
+    person_profiles: 'identified_only', // não criar perfil para anônimos
 
     // Captura automática: desabilitada para controle total
-    autocapture:             false,
-    capture_pageview:        false,           // controlado manualmente
-    capture_pageleave:       true,            // abandono de página
-    disable_session_recording:false,
+    autocapture: false,
+    capture_pageview: false, // controlado manualmente
+    capture_pageleave: true, // abandono de página
+    disable_session_recording: false,
 
     // Performance
-    loaded: ph => {
+    loaded: (ph) => {
       // Silenciar em dev
       if (process.env.NODE_ENV === 'development') {
         ph.opt_out_capturing();
@@ -57,24 +57,24 @@ export function initPostHog(): void {
 // ─── Identify ────────────────────────────────────────────────────────────────
 
 export type UserProperties = {
-  userId:     string;
-  username?:  string;
-  level?:     number;
-  totalCards?:number;
-  wins?:      number;
-  credits?:   number;
-  plan?:      'free' | 'premium';
+  userId: string;
+  username?: string;
+  level?: number;
+  totalCards?: number;
+  wins?: number;
+  credits?: number;
+  plan?: 'free' | 'premium';
 };
 
 export function identify(props: UserProperties): void {
   if (!isAnalyticsEnabled()) return;
   posthog.identify(props.userId, {
-    $username:        props.username,
-    level:            props.level,
-    total_cards:      props.totalCards,
-    wins:             props.wins,
-    credits:          props.credits,
-    plan:             props.plan ?? 'free',
+    $username: props.username,
+    level: props.level,
+    total_cards: props.totalCards,
+    wins: props.wins,
+    credits: props.credits,
+    plan: props.plan ?? 'free',
   });
 }
 

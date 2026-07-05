@@ -9,16 +9,21 @@
  *   - Compatibilidade de posição por slot
  */
 
-import { calculateChemistry }  from '@world-legends/chemistry';
+import { calculateChemistry } from '@world-legends/chemistry';
+import type { SquadChemistry } from '@world-legends/chemistry';
 import { calculateSquadRating } from '@world-legends/squad-rating';
-import type { SquadChemistry }  from '@world-legends/chemistry';
-import type { SquadRating }     from '@world-legends/squad-rating';
-import type { CollectionCard }  from './collection-data';
+import type { SquadRating } from '@world-legends/squad-rating';
+import type { CollectionCard } from './collection-data';
 import {
-  FORMATIONS, FORMATION_LABELS, MAX_BENCH,
+  FORMATIONS,
+  FORMATION_LABELS,
+  type FormationKey,
+  MAX_BENCH,
+  type SlotDef,
+  type SquadSlots,
+  changeFormation,
+  createEmptyState,
   getPositionCompat,
-  createEmptyState, changeFormation,
-  type FormationKey, type SlotDef, type SquadSlots,
 } from './squad-data';
 
 export type { FormationKey, SlotDef, SquadSlots };
@@ -27,23 +32,23 @@ export { FORMATIONS, FORMATION_LABELS, MAX_BENCH, getPositionCompat };
 // ─── Drag source / target ─────────────────────────────────────────────────────
 
 export type DragSource =
-  | { kind:'slot';  slotId:  string;  cardId: string }
-  | { kind:'bench'; benchIdx:number;  cardId: string }
-  | { kind:'pool';  cardId:  string };
+  | { kind: 'slot'; slotId: string; cardId: string }
+  | { kind: 'bench'; benchIdx: number; cardId: string }
+  | { kind: 'pool'; cardId: string };
 
 export type DropTarget =
-  | { kind:'slot';  slotId:  string }
-  | { kind:'bench'; benchIdx:number }
-  | { kind:'pool' };
+  | { kind: 'slot'; slotId: string }
+  | { kind: 'bench'; benchIdx: number }
+  | { kind: 'pool' };
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
 export type SBState = {
-  formation:  FormationKey;
-  slots:      SquadSlots;                    // slotId → card | null
-  bench:      (CollectionCard | null)[];     // 7 posições
-  dragging:   DragSource | null;
-  dragOver:   string | null;                 // slotId | 'bench-N' | 'pool'
+  formation: FormationKey;
+  slots: SquadSlots; // slotId → card | null
+  bench: (CollectionCard | null)[]; // 7 posições
+  dragging: DragSource | null;
+  dragOver: string | null; // slotId | 'bench-N' | 'pool'
 };
 
 export function createSBState(formation: FormationKey = '4-3-3'): SBState {
@@ -54,22 +59,21 @@ export function createSBState(formation: FormationKey = '4-3-3'): SBState {
 // ─── Actions ──────────────────────────────────────────────────────────────────
 
 export type SBAction =
-  | { type:'DRAG_START';      source:  DragSource }
-  | { type:'DRAG_OVER';       targetId:string }
-  | { type:'DRAG_LEAVE' }
-  | { type:'DROP';            target:  DropTarget; allCards: CollectionCard[] }
-  | { type:'DRAG_END' }
-  | { type:'REMOVE_SLOT';     slotId:  string }
-  | { type:'REMOVE_BENCH';    idx:     number }
-  | { type:'CHANGE_FORMATION';formation:FormationKey }
-  | { type:'CLEAR_ALL' }
-  | { type:'PLACE_IN_SLOT';   cardId: string; slotId: string; allCards: CollectionCard[] }
-  | { type:'TAP_ADD';         cardId: string; allCards: CollectionCard[] }
-  | { type:'AUTO_FILL';       allCards: CollectionCard[] };
+  | { type: 'DRAG_START'; source: DragSource }
+  | { type: 'DRAG_OVER'; targetId: string }
+  | { type: 'DRAG_LEAVE' }
+  | { type: 'DROP'; target: DropTarget; allCards: CollectionCard[] }
+  | { type: 'DRAG_END' }
+  | { type: 'REMOVE_SLOT'; slotId: string }
+  | { type: 'REMOVE_BENCH'; idx: number }
+  | { type: 'CHANGE_FORMATION'; formation: FormationKey }
+  | { type: 'CLEAR_ALL' }
+  | { type: 'PLACE_IN_SLOT'; cardId: string; slotId: string; allCards: CollectionCard[] }
+  | { type: 'TAP_ADD'; cardId: string; allCards: CollectionCard[] }
+  | { type: 'AUTO_FILL'; allCards: CollectionCard[] };
 
 export function sbReducer(state: SBState, action: SBAction): SBState {
   switch (action.type) {
-
     case 'DRAG_START':
       return { ...state, dragging: action.source };
 
@@ -89,26 +93,26 @@ export function sbReducer(state: SBState, action: SBAction): SBState {
 
       const slots = { ...state.slots };
       const bench = [...state.bench];
-      const cardMap = new Map(allCards.map(c => [c.cardId, c]));
+      const cardMap = new Map(allCards.map((c) => [c.cardId, c]));
       const srcCard = cardMap.get(src.cardId) ?? null;
       if (!srcCard) return { ...state, dragging: null, dragOver: null };
 
       // Clear source
-      if (src.kind === 'slot')  slots[src.slotId]  = null;
+      if (src.kind === 'slot') slots[src.slotId] = null;
       if (src.kind === 'bench') bench[src.benchIdx] = null;
 
       if (target.kind === 'slot') {
         const displaced = slots[target.slotId] ?? null;
         slots[target.slotId] = srcCard;
         if (displaced && displaced.cardId !== srcCard.cardId) {
-          if (src.kind === 'slot')       slots[src.slotId]  = displaced;
+          if (src.kind === 'slot') slots[src.slotId] = displaced;
           else if (src.kind === 'bench') bench[src.benchIdx] = displaced;
         }
       } else if (target.kind === 'bench') {
         const displaced = bench[target.benchIdx] ?? null;
         bench[target.benchIdx] = srcCard;
         if (displaced && displaced.cardId !== srcCard.cardId) {
-          if (src.kind === 'slot')       slots[src.slotId]  = displaced;
+          if (src.kind === 'slot') slots[src.slotId] = displaced;
           else if (src.kind === 'bench') bench[src.benchIdx] = displaced;
         }
       }
@@ -130,7 +134,7 @@ export function sbReducer(state: SBState, action: SBAction): SBState {
 
     case 'CHANGE_FORMATION': {
       const base = changeFormation(
-        { formation:state.formation, slots:state.slots, bench:state.bench },
+        { formation: state.formation, slots: state.slots, bench: state.bench },
         action.formation,
       );
       return { ...state, ...base, dragging: null, dragOver: null };
@@ -176,42 +180,61 @@ export function sbReducer(state: SBState, action: SBAction): SBState {
       return { ...state, slots };
     }
 
-    default: return state;
+    default:
+      return state;
   }
 }
 
 // ─── Snapshot real-time ───────────────────────────────────────────────────────
 
 export type SBSnapshot = {
-  starterCount:    number;
-  rating:          SquadRating;
-  chemistry:       SquadChemistry;
-  chemLinkMap:     Map<string, number>;  // "cardA-cardB" → link.total
+  starterCount: number;
+  rating: SquadRating;
+  chemistry: SquadChemistry;
+  chemLinkMap: Map<string, number>; // "cardA-cardB" → link.total
 };
 
 const EMPTY_SNAPSHOT: SBSnapshot = {
   starterCount: 0,
   rating: {
-    overall:0, attack:0, midfield:0, defense:0,
-    breakdown:{ chemistryMultiplier:1, totalTraitBonus:0,
-      traitBonus:{attack:0,midfield:0,defense:0},
-      sectorCounts:{attack:0,midfield:0,defense:0},
-      baseAverage:{attack:0,midfield:0,defense:0} },
+    overall: 0,
+    attack: 0,
+    midfield: 0,
+    defense: 0,
+    breakdown: {
+      chemistryMultiplier: 1,
+      totalTraitBonus: 0,
+      traitBonus: { attack: 0, midfield: 0, defense: 0 },
+      sectorCounts: { attack: 0, midfield: 0, defense: 0 },
+      baseAverage: { attack: 0, midfield: 0, defense: 0 },
+    },
   },
   chemistry: {
-    total:0, links:[], perPlayer:{},
-    breakdown:{
-      nationalityLinks:0, competitionLinks:0, eraLinks:0,
-      perfectLinks:0, totalLinkBonus:0, totalLinks:0,
+    total: 0,
+    links: [],
+    perPlayer: {},
+    breakdown: {
+      nationalityLinks: 0,
+      competitionLinks: 0,
+      eraLinks: 0,
+      perfectLinks: 0,
+      totalLinkBonus: 0,
+      totalLinks: 0,
     },
   },
   chemLinkMap: new Map(),
 };
 
 function xpEraMap(era: string): string {
-  const map: Record<string,string> = {
-    '1950s':'1950s','1960s':'1960s','1970s':'1970s','1980s':'1980s',
-    '1990s':'1990s','2000s':'2000s','2010s':'2010s','2020s':'2020s',
+  const map: Record<string, string> = {
+    '1950s': '1950s',
+    '1960s': '1960s',
+    '1970s': '1970s',
+    '1980s': '1980s',
+    '1990s': '1990s',
+    '2000s': '2000s',
+    '2010s': '2010s',
+    '2020s': '2020s',
   };
   return map[era] ?? '1990s';
 }
@@ -220,22 +243,22 @@ export function calcSnapshot(state: SBState): SBSnapshot {
   const starters = Object.values(state.slots).filter((c): c is CollectionCard => c !== null);
   if (starters.length === 0) return EMPTY_SNAPSHOT;
 
-  const rated = starters.map(c => ({
+  const rated = starters.map((c) => ({
     userCardId: c.cardId,
-    position:   c.position as any,
-    overall:    c.overall,
-    traits:     [],
+    position: c.position as any,
+    overall: c.overall,
+    traits: [],
   }));
 
-  const chemInput = starters.map(c => ({
-    userCardId:  c.cardId,
+  const chemInput = starters.map((c) => ({
+    userCardId: c.cardId,
     nationality: c.nationality,
     competition: 'brasileirao' as any,
-    era:         xpEraMap(c.era) as any,
+    era: xpEraMap(c.era) as any,
   }));
 
-  const rating    = calculateSquadRating({ starters:rated, chemistry:75 });
-  const chemistry = calculateChemistry({ players:chemInput });
+  const rating = calculateSquadRating({ starters: rated, chemistry: 75 });
+  const chemistry = calculateChemistry({ players: chemInput });
 
   // Construir mapa de links: "aId-bId" → total (bidirecional)
   const chemLinkMap = new Map<string, number>();
@@ -255,8 +278,8 @@ const DIST_THRESHOLD = 32; // % de distância máxima para conectar
 
 function slotDist(a: SlotDef, b: SlotDef): number {
   const dx = a.left - b.left;
-  const dy = a.top  - b.top;
-  return Math.sqrt(dx*dx + dy*dy);
+  const dy = a.top - b.top;
+  return Math.sqrt(dx * dx + dy * dy);
 }
 
 export type ChemLine = {
@@ -264,18 +287,15 @@ export type ChemLine = {
   slotB: SlotDef;
   cardA: CollectionCard | null;
   cardB: CollectionCard | null;
-  total: number;   // 0–4 (chemistry link total)
+  total: number; // 0–4 (chemistry link total)
   color: string;
-  glow:  string;
+  glow: string;
 };
 
-export function buildChemLines(
-  state:    SBState,
-  snapshot: SBSnapshot,
-): ChemLine[] {
+export function buildChemLines(state: SBState, snapshot: SBSnapshot): ChemLine[] {
   const slots = FORMATIONS[state.formation];
   const lines: ChemLine[] = [];
-  const seen  = new Set<string>();
+  const seen = new Set<string>();
 
   for (let i = 0; i < slots.length; i++) {
     for (let j = i + 1; j < slots.length; j++) {
@@ -298,33 +318,41 @@ export function buildChemLines(
 
       const { color, glow } = chemLineStyle(total, cardA !== null && cardB !== null);
 
-      lines.push({ slotA:a, slotB:b, cardA, cardB, total, color, glow });
+      lines.push({ slotA: a, slotB: b, cardA, cardB, total, color, glow });
     }
   }
 
   return lines;
 }
 
-function chemLineStyle(total: number, hasBothCards: boolean): { color:string; glow:string } {
-  if (!hasBothCards)   return { color:'rgba(255,255,255,0.04)', glow:'transparent' };
-  if (total >= 4)       return { color:'rgba(201,168,76,0.9)',  glow:'rgba(201,168,76,0.6)' };
-  if (total >= 3)       return { color:'rgba(34,197,94,0.85)',  glow:'rgba(34,197,94,0.5)' };
-  if (total >= 1)       return { color:'rgba(234,179,8,0.80)',  glow:'rgba(234,179,8,0.45)' };
-  return { color:'rgba(239,68,68,0.70)',   glow:'rgba(239,68,68,0.4)' };
+function chemLineStyle(total: number, hasBothCards: boolean): { color: string; glow: string } {
+  if (!hasBothCards) return { color: 'rgba(255,255,255,0.04)', glow: 'transparent' };
+  if (total >= 4) return { color: 'rgba(201,168,76,0.9)', glow: 'rgba(201,168,76,0.6)' };
+  if (total >= 3) return { color: 'rgba(34,197,94,0.85)', glow: 'rgba(34,197,94,0.5)' };
+  if (total >= 1) return { color: 'rgba(234,179,8,0.80)', glow: 'rgba(234,179,8,0.45)' };
+  return { color: 'rgba(239,68,68,0.70)', glow: 'rgba(239,68,68,0.4)' };
 }
 
 // ─── Pool cards (não no squad/banco) ─────────────────────────────────────────
 
 export function getPoolCards(allCards: CollectionCard[], state: SBState): CollectionCard[] {
   const usedIds = new Set<string>();
-  Object.values(state.slots).forEach(c => c && usedIds.add(c.cardId));
-  state.bench.forEach(c => c && usedIds.add(c.cardId));
-  return allCards.filter(c => !usedIds.has(c.cardId));
+  Object.values(state.slots).forEach((c) => c && usedIds.add(c.cardId));
+  state.bench.forEach((c) => c && usedIds.add(c.cardId));
+  return allCards.filter((c) => !usedIds.has(c.cardId));
 }
 
-export function getAutoSuggest(position: string, pool: CollectionCard[], max = 5): CollectionCard[] {
+export function getAutoSuggest(
+  position: string,
+  pool: CollectionCard[],
+  max = 5,
+): CollectionCard[] {
   return pool
-    .filter((c) => getPositionCompat(c.position, position as Parameters<typeof getPositionCompat>[1]) !== 'awkward')
+    .filter(
+      (c) =>
+        getPositionCompat(c.position, position as Parameters<typeof getPositionCompat>[1]) !==
+        'awkward',
+    )
     .sort((a, b) => b.overall - a.overall)
     .slice(0, max);
 }

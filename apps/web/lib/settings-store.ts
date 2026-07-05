@@ -7,50 +7,50 @@
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
-export type Language   = 'pt-BR' | 'en' | 'es';
-export type FpsTarget  = 30 | 60;
-export type PerfMode   = 'low' | 'medium' | 'high';
-export type ThemeMode  = 'dark';   // sempre dark por ora
+export type Language = 'pt-BR' | 'en' | 'es';
+export type FpsTarget = 30 | 60;
+export type PerfMode = 'low' | 'medium' | 'high';
+export type ThemeMode = 'dark'; // sempre dark por ora
 
 export type GameSettings = {
   // Áudio
-  sound:        boolean;
-  musicVolume:  number;   // 0–100
-  sfxVolume:    number;   // 0–100
-  muteMusic:    boolean;
-  muteSfx:      boolean;
+  sound: boolean;
+  musicVolume: number; // 0–100
+  sfxVolume: number; // 0–100
+  muteMusic: boolean;
+  muteSfx: boolean;
 
   // Experiência
-  vibration:    boolean;
-  animations:   boolean;  // desabilitar animações p/ dispositivos lentos
+  vibration: boolean;
+  animations: boolean; // desabilitar animações p/ dispositivos lentos
 
   // Performance
-  fps:          FpsTarget;
-  performance:  PerfMode;
+  fps: FpsTarget;
+  performance: PerfMode;
 
   // Interface
-  language:     Language;
-  compactMode:  boolean;  // UI mais densa
+  language: Language;
+  compactMode: boolean; // UI mais densa
 
   // Privacidade
-  analytics:    boolean;
+  analytics: boolean;
   crashReports: boolean;
   personalData: boolean;
 };
 
 export const DEFAULT_SETTINGS: GameSettings = {
-  sound:        true,
-  musicVolume:  70,
-  sfxVolume:    80,
-  muteMusic:    false,
-  muteSfx:      false,
-  vibration:    true,
-  animations:   true,
-  fps:          60,
-  performance:  'high',
-  language:     'pt-BR',
-  compactMode:  false,
-  analytics:    true,
+  sound: true,
+  musicVolume: 70,
+  sfxVolume: 80,
+  muteMusic: false,
+  muteSfx: false,
+  vibration: true,
+  animations: true,
+  fps: 60,
+  performance: 'high',
+  language: 'pt-BR',
+  compactMode: false,
+  analytics: true,
   crashReports: true,
   personalData: false,
 };
@@ -70,11 +70,15 @@ export function loadSettings(): GameSettings {
 }
 
 export function saveSettings(s: GameSettings): void {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch {}
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(s));
+  } catch {}
 }
 
 export function resetSettings(): GameSettings {
-  try { localStorage.removeItem(LS_KEY); } catch {}
+  try {
+    localStorage.removeItem(LS_KEY);
+  } catch {}
   return DEFAULT_SETTINGS;
 }
 
@@ -82,8 +86,8 @@ export function resetSettings(): GameSettings {
 
 export const LANG_LABELS: Record<Language, string> = {
   'pt-BR': '🇧🇷 Português',
-  'en':    '🇺🇸 English',
-  'es':    '🇪🇸 Español',
+  en: '🇺🇸 English',
+  es: '🇪🇸 Español',
 };
 
 export const FPS_LABELS: Record<FpsTarget, string> = {
@@ -92,7 +96,7 @@ export const FPS_LABELS: Record<FpsTarget, string> = {
 };
 
 export const PERF_LABELS: Record<PerfMode, string> = {
-  low:    '⚡ Baixo · Máxima Bateria',
+  low: '⚡ Baixo · Máxima Bateria',
   medium: '⚖️ Médio · Equilibrado',
-  high:   '✨ Alto · Melhor Visual',
+  high: '✨ Alto · Melhor Visual',
 };

@@ -1,43 +1,43 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import type { CollectionCard } from '@/lib/collection-data';
 import {
-  buildHallData,
-  type CountryGroup,
   type AlbumSlotData,
-  type RarityProgress,
+  type CountryGroup,
   RARITY_META,
+  type RarityProgress,
+  buildHallData,
 } from '@/lib/hall-of-legends-data';
-import { AnimatePresence, motion } from 'framer-motion';
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import type { RarityCode } from '@world-legends/types';
+import { AnimatePresence, motion } from 'framer-motion';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 
 // ─── Glow / bg por raridade ───────────────────────────────────────────────────
 
 const RARITY_GLOW: Record<string, string> = {
-  common:         'rgba(107,114,128,0.4)',
-  rare:           'rgba(168,85,247,0.55)',
-  elite:          'rgba(59,130,246,0.6)',
-  legendary:      '#c9a84c',
-  ultra:          '#ec4899',
+  common: 'rgba(107,114,128,0.4)',
+  rare: 'rgba(168,85,247,0.55)',
+  elite: 'rgba(59,130,246,0.6)',
+  legendary: '#c9a84c',
+  ultra: '#ec4899',
   world_cup_hero: '#e2e8f0',
 };
 
 const RARITY_BG: Record<string, string> = {
-  common:         'from-[#0f1017] to-[#1a1b24]',
-  rare:           'from-[#0d0021] to-[#1a0038]',
-  elite:          'from-[#000d1a] to-[#001a2e]',
-  legendary:      'from-[#1a1000] to-[#2a1c00]',
-  ultra:          'from-[#1a0020] to-[#001a30]',
+  common: 'from-[#0f1017] to-[#1a1b24]',
+  rare: 'from-[#0d0021] to-[#1a0038]',
+  elite: 'from-[#000d1a] to-[#001a2e]',
+  legendary: 'from-[#1a1000] to-[#2a1c00]',
+  ultra: 'from-[#1a0020] to-[#001a30]',
   world_cup_hero: 'from-[#1a1820] to-[#0d0b12]',
 };
 
 // ─── Filtro de posição ────────────────────────────────────────────────────────
 
 const POS_GROUPS: Record<string, string[]> = {
-  GK:  ['GK'],
+  GK: ['GK'],
   DEF: ['CB', 'LB', 'RB', 'LWB', 'RWB', 'SW'],
   MID: ['CDM', 'CM', 'CAM', 'LM', 'RM', 'DM', 'AM'],
   FWD: ['LW', 'RW', 'CF', 'ST', 'SS'],
@@ -46,40 +46,46 @@ const POS_GROUPS: Record<string, string[]> = {
 type PosFilter = 'all' | 'GK' | 'DEF' | 'MID' | 'FWD' | 'favorites';
 
 const POS_COLORS: Record<string, string> = {
-  GK:        '#f59e0b',
-  DEF:       '#3b82f6',
-  MID:       '#10b981',
-  FWD:       '#ef4444',
+  GK: '#f59e0b',
+  DEF: '#3b82f6',
+  MID: '#10b981',
+  FWD: '#ef4444',
   favorites: '#ec4899',
 };
 
 // ─── Tab type ─────────────────────────────────────────────────────────────────
 
-type ActiveTab = 'album' | 'hall' | 'dream';
+type ActiveTab = 'museu' | 'album' | 'hall' | 'dream';
 
 // ─── localStorage ─────────────────────────────────────────────────────────────
 
-const FAV_KEY       = 'wl:collection:favorites';
-const DREAM_KEY     = 'wl:dream-team';
-const DREAM_MAX     = 11;
+const FAV_KEY = 'wl:collection:favorites';
+const DREAM_KEY = 'wl:dream-team';
+const DREAM_MAX = 11;
 
 function loadSet(key: string): Set<string> {
   if (typeof window === 'undefined') return new Set();
   try {
     const raw = localStorage.getItem(key);
     return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
-  } catch { return new Set(); }
+  } catch {
+    return new Set();
+  }
 }
 
 function saveSet(key: string, s: Set<string>) {
-  try { localStorage.setItem(key, JSON.stringify([...s])); } catch { /* noop */ }
+  try {
+    localStorage.setItem(key, JSON.stringify([...s]));
+  } catch {
+    /* noop */
+  }
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 type Props = {
-  catalogCards:  CollectionCard[];
-  ownedCardIds:  ReadonlySet<string>;
+  catalogCards: CollectionCard[];
+  ownedCardIds: ReadonlySet<string>;
   isAuthenticated: boolean;
 };
 
@@ -89,15 +95,15 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
   const router = useRouter();
 
   // UI state
-  const [activeTab,   setActiveTab]   = useState<ActiveTab>('album');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('museu');
   const [showMissing, setShowMissing] = useState(false);
-  const [search,      setSearch]      = useState('');
+  const [search, setSearch] = useState('');
   const [rarityFilter, setRarityFilter] = useState<RarityCode | 'all'>('all');
-  const [posFilter,   setPosFilter]   = useState<PosFilter>('all');
+  const [posFilter, setPosFilter] = useState<PosFilter>('all');
   const [openCountry, setOpenCountry] = useState<string | null>(null);
 
   // Favorites + Dream Team (client-only)
-  const [favorites,    setFavorites]    = useState<Set<string>>(new Set());
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [dreamTeamIds, setDreamTeamIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -108,7 +114,8 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
   const toggleFavorite = useCallback((cardId: string) => {
     setFavorites((prev) => {
       const next = new Set(prev);
-      if (next.has(cardId)) next.delete(cardId); else next.add(cardId);
+      if (next.has(cardId)) next.delete(cardId);
+      else next.add(cardId);
       saveSet(FAV_KEY, next);
       return next;
     });
@@ -138,9 +145,191 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
     [catalogCards, ownedCardIds],
   );
 
+  // Category collections (Museu tab)
+  const categoryData = useMemo(() => {
+    const makeCategory = (
+      id: string,
+      name: string,
+      subtitle: string,
+      icon: string,
+      color: string,
+      filter: (c: CollectionCard) => boolean,
+    ) => {
+      const cards = catalogCards.filter(filter);
+      const slots = cards.map((c) => ({ card: c, owned: ownedCardIds.has(c.cardId) }));
+      const ownedCount = slots.filter((s) => s.owned).length;
+      return {
+        id,
+        name,
+        subtitle,
+        icon,
+        color,
+        slots,
+        ownedCount,
+        completionPct: slots.length > 0 ? Math.round((ownedCount / slots.length) * 100) : 0,
+      };
+    };
+    return [
+      makeCategory(
+        'copa',
+        'Copa do Mundo',
+        'Heróis que fizeram história',
+        '🏆',
+        '#c9a84c',
+        (c) => c.rarityCode === 'world_cup_hero',
+      ),
+      makeCategory(
+        '50s60s',
+        'Anos 50-60',
+        'Os pioneiros do futebol',
+        '⏳',
+        '#94a3b8',
+        (c) => c.era === '1950s' || c.era === '1960s',
+      ),
+      makeCategory(
+        '70s',
+        'Anos 70',
+        'A era dos campeões',
+        '🌟',
+        '#10b981',
+        (c) => c.era === '1970s',
+      ),
+      makeCategory(
+        '80s',
+        'Anos 80',
+        'A geração dourada',
+        '⭐',
+        '#f59e0b',
+        (c) => c.era === '1980s',
+      ),
+      makeCategory(
+        '90s',
+        'Anos 90',
+        'O futebol moderno nasce',
+        '🔥',
+        '#ef4444',
+        (c) => c.era === '1990s',
+      ),
+      makeCategory(
+        'gk',
+        'Goleiros',
+        'Os guardiões das traves',
+        '🧤',
+        '#6366f1',
+        (c) => c.position === 'GK',
+      ),
+      makeCategory('def', 'Defensores', 'A muralha do futebol', '🛡️', '#3b82f6', (c) =>
+        (POS_GROUPS.DEF ?? []).includes(c.position),
+      ),
+      makeCategory('mid', 'Meias', 'Os maestros do jogo', '🎵', '#10b981', (c) =>
+        (POS_GROUPS.MID ?? []).includes(c.position),
+      ),
+      makeCategory('fwd', 'Atacantes', 'Os artilheiros eternos', '⚽', '#ef4444', (c) =>
+        (POS_GROUPS.FWD ?? []).includes(c.position),
+      ),
+    ].filter((cat) => cat.slots.length > 0);
+  }, [catalogCards, ownedCardIds]);
+
+  // Conquistas/badges
+  const conquistas = useMemo(() => {
+    const own = hallData.ownedCards;
+    const countryComplete = hallData.countryGroups.filter((g) => g.isComplete).length;
+    const hasWCH = catalogCards.some(
+      (c) => c.rarityCode === 'world_cup_hero' && ownedCardIds.has(c.cardId),
+    );
+    const hasLeg = catalogCards.some(
+      (c) => c.rarityCode === 'legendary' && ownedCardIds.has(c.cardId),
+    );
+    const hasUltra = catalogCards.some(
+      (c) => c.rarityCode === 'ultra' && ownedCardIds.has(c.cardId),
+    );
+    return [
+      {
+        id: 'first',
+        name: 'Primeira Carta',
+        desc: 'Obtenha sua primeira carta',
+        icon: '🃏',
+        color: '#94a3b8',
+        unlocked: own >= 1,
+      },
+      {
+        id: 'c10',
+        name: 'Colecionador',
+        desc: '10 cartas na coleção',
+        icon: '📦',
+        color: '#3b82f6',
+        unlocked: own >= 10,
+      },
+      {
+        id: 'c50',
+        name: 'Veterano',
+        desc: '50 cartas na coleção',
+        icon: '🎖️',
+        color: '#8b5cf6',
+        unlocked: own >= 50,
+      },
+      {
+        id: 'c100',
+        name: 'Hall das Lendas',
+        desc: '100 cartas na coleção',
+        icon: '🏟️',
+        color: '#c9a84c',
+        unlocked: own >= 100,
+      },
+      {
+        id: 'legendary',
+        name: 'Lendário',
+        desc: 'Obtenha uma carta Lendária',
+        icon: '✨',
+        color: '#c9a84c',
+        unlocked: hasLeg,
+      },
+      {
+        id: 'ultra',
+        name: 'Ultra Raro',
+        desc: 'Obtenha uma carta Ultra',
+        icon: '💎',
+        color: '#ec4899',
+        unlocked: hasUltra,
+      },
+      {
+        id: 'wch',
+        name: 'Herói da Copa',
+        desc: 'Obtenha um World Cup Hero',
+        icon: '🏆',
+        color: '#e2e8f0',
+        unlocked: hasWCH,
+      },
+      {
+        id: 'dream',
+        name: 'Dream Team',
+        desc: 'Complete o Dream Team com 11',
+        icon: '⭐',
+        color: '#f59e0b',
+        unlocked: dreamTeamIds.size === 11,
+      },
+      {
+        id: 'country1',
+        name: 'Coleção Completa',
+        desc: 'Complete a coleção de um país',
+        icon: '🌍',
+        color: '#10b981',
+        unlocked: countryComplete >= 1,
+      },
+      {
+        id: 'country3',
+        name: 'Multi-Nacional',
+        desc: 'Complete 3 coleções de países',
+        icon: '🌐',
+        color: '#c9a84c',
+        unlocked: countryComplete >= 3,
+      },
+    ];
+  }, [hallData, catalogCards, ownedCardIds, dreamTeamIds]);
+
   const deferredSearch = useDeferredValue(search);
-  const isSearching    = deferredSearch.trim().length > 0;
-  const favCount       = favorites.size;
+  const isSearching = deferredSearch.trim().length > 0;
+  const favCount = favorites.size;
 
   // Posição stats (owned only)
   const posStats = useMemo(() => {
@@ -148,7 +337,7 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
     const counts: Record<string, number> = { GK: 0, DEF: 0, MID: 0, FWD: 0 };
     for (const slot of owned) {
       const pos = slot.card.position;
-      if (POS_GROUPS.GK?.includes(pos))  counts.GK  = (counts.GK  ?? 0) + 1;
+      if (POS_GROUPS.GK?.includes(pos)) counts.GK = (counts.GK ?? 0) + 1;
       else if (POS_GROUPS.DEF?.includes(pos)) counts.DEF = (counts.DEF ?? 0) + 1;
       else if (POS_GROUPS.MID?.includes(pos)) counts.MID = (counts.MID ?? 0) + 1;
       else if (POS_GROUPS.FWD?.includes(pos)) counts.FWD = (counts.FWD ?? 0) + 1;
@@ -162,7 +351,7 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
       .map((group) => {
         let slots = group.slots;
 
-        if (showMissing)           slots = slots.filter((s) => !s.owned);
+        if (showMissing) slots = slots.filter((s) => !s.owned);
         if (rarityFilter !== 'all') slots = slots.filter((s) => s.card.rarityCode === rarityFilter);
 
         if (posFilter === 'favorites') {
@@ -200,8 +389,8 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
         .sort((a, b) => b.overall - a.overall)
         .map((card) => ({ card, owned: ownedCardIds.has(card.cardId) }));
     return {
-      goat:      makeSlots('world_cup_hero'),
-      ultra:     makeSlots('ultra'),
+      goat: makeSlots('world_cup_hero'),
+      ultra: makeSlots('ultra'),
       legendary: makeSlots('legendary'),
     };
   }, [catalogCards, ownedCardIds]);
@@ -209,9 +398,7 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
   // Dream Team cards (preserving insertion order)
   const dreamTeamCards = useMemo(() => {
     const cardMap = new Map(catalogCards.map((c) => [c.cardId, c]));
-    return [...dreamTeamIds]
-      .map((id) => cardMap.get(id))
-      .filter((c): c is CollectionCard => !!c);
+    return [...dreamTeamIds].map((id) => cardMap.get(id)).filter((c): c is CollectionCard => !!c);
   }, [catalogCards, dreamTeamIds]);
 
   const missingCount = hallData.totalCards - hallData.ownedCards;
@@ -240,6 +427,19 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
       {/* ── Tab bar ── */}
       <TabBar activeTab={activeTab} onTab={setActiveTab} />
 
+      {/* ── Tab: MUSEU ── */}
+      {activeTab === 'museu' && (
+        <MuseuTab
+          categories={categoryData}
+          conquistas={conquistas}
+          favorites={favorites}
+          dreamTeamIds={dreamTeamIds}
+          onToggleFavorite={toggleFavorite}
+          onToggleDreamTeam={toggleDreamTeam}
+          onSelectCard={handleSelectCard}
+        />
+      )}
+
       {/* ── Tab: ÁLBUM ── */}
       {activeTab === 'album' && (
         <>
@@ -255,7 +455,13 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
           {/* Filtros de posição + faltando */}
           <div className="px-4 pt-2 shrink-0">
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              <PosFilterPill label="Todos"   color="#6a7090" isActive={posFilter === 'all'}       count={hallData.ownedCards}    onPress={() => setPosFilter('all')} />
+              <PosFilterPill
+                label="Todos"
+                color="#6a7090"
+                isActive={posFilter === 'all'}
+                count={hallData.ownedCards}
+                onPress={() => setPosFilter('all')}
+              />
               {(['GK', 'DEF', 'MID', 'FWD'] as const).map((p) => (
                 <PosFilterPill
                   key={p}
@@ -272,7 +478,9 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
                   color={POS_COLORS.favorites!}
                   isActive={posFilter === 'favorites'}
                   count={favCount}
-                  onPress={() => setPosFilter((prev) => (prev === 'favorites' ? 'all' : 'favorites'))}
+                  onPress={() =>
+                    setPosFilter((prev) => (prev === 'favorites' ? 'all' : 'favorites'))
+                  }
                 />
               )}
               {/* Faltando toggle */}
@@ -290,8 +498,17 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
           <div className="px-4 pt-2.5 pb-2 shrink-0">
             <div className="relative">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" />
                 </svg>
               </div>
               <input
@@ -302,7 +519,10 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
                 className="w-full rounded-xl border border-border bg-surface/60 pl-9 pr-9 py-2.5 text-sm text-parchment placeholder:text-muted outline-none focus:border-gold/40 transition-colors"
               />
               {search && (
-                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-parchment text-xs">
+                <button
+                  onClick={() => setSearch('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-parchment text-xs"
+                >
                   ✕
                 </button>
               )}
@@ -311,14 +531,30 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
 
           {/* Banner novo usuário */}
           {isAuthenticated && hallData.ownedCards === 0 && !showMissing && (
-            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mx-4 mb-3 shrink-0">
-              <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.18)' }}>
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mx-4 mb-3 shrink-0"
+            >
+              <div
+                className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                style={{
+                  background: 'rgba(201,168,76,0.06)',
+                  border: '1px solid rgba(201,168,76,0.18)',
+                }}
+              >
                 <span className="text-2xl shrink-0">📦</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-gold text-xs font-bold leading-tight">Nenhuma carta ainda</p>
-                  <p className="text-muted text-[10px] mt-0.5 leading-tight">Abra packs para descobrir lendas e preencher o álbum.</p>
+                  <p className="text-muted text-[10px] mt-0.5 leading-tight">
+                    Abra packs para descobrir lendas e preencher o álbum.
+                  </p>
                 </div>
-                <Link href="/packs" className="shrink-0 px-3 py-1.5 rounded-lg text-obsidian text-[10px] font-bold transition-all hover:opacity-90" style={{ background: 'linear-gradient(135deg, #8c6f27, #c9a84c)' }}>
+                <Link
+                  href="/packs"
+                  className="shrink-0 px-3 py-1.5 rounded-lg text-obsidian text-[10px] font-bold transition-all hover:opacity-90"
+                  style={{ background: 'linear-gradient(135deg, #8c6f27, #c9a84c)' }}
+                >
                   Abrir Pack
                 </Link>
               </div>
@@ -330,18 +566,27 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
             <div className="px-4 space-y-2">
               <AnimatePresence initial={false}>
                 {filteredGroups.length === 0 ? (
-                  <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-16 text-center">
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="py-16 text-center"
+                  >
                     {showMissing ? (
                       <>
                         <p className="text-4xl mb-3">✅</p>
                         <p className="text-parchment text-sm font-bold">Coleção completa!</p>
-                        <p className="text-muted text-xs mt-1">Você possui todas as cartas neste filtro.</p>
+                        <p className="text-muted text-xs mt-1">
+                          Você possui todas as cartas neste filtro.
+                        </p>
                       </>
                     ) : posFilter === 'favorites' ? (
                       <>
                         <p className="text-4xl mb-3">❤️</p>
                         <p className="text-muted text-sm">Nenhum favorito ainda</p>
-                        <p className="text-muted/50 text-xs mt-1">Toque ❤️ em uma carta para favoritar</p>
+                        <p className="text-muted/50 text-xs mt-1">
+                          Toque ❤️ em uma carta para favoritar
+                        </p>
                       </>
                     ) : (
                       <>
@@ -356,7 +601,12 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
                       key={group.nationality}
                       group={group}
                       index={i}
-                      isOpen={isSearching || posFilter !== 'all' || showMissing || openCountry === group.nationality}
+                      isOpen={
+                        isSearching ||
+                        posFilter !== 'all' ||
+                        showMissing ||
+                        openCountry === group.nationality
+                      }
                       onToggle={() => toggleCountry(group.nationality)}
                       isSearching={isSearching || posFilter !== 'all' || showMissing}
                       favorites={favorites}
@@ -426,7 +676,10 @@ function PremiumHeader({
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
       {/* Eyebrow */}
-      <p className="text-[9px] font-black uppercase tracking-[0.25em] mb-1.5" style={{ color: 'rgba(201,168,76,0.55)' }}>
+      <p
+        className="text-[9px] font-black uppercase tracking-[0.25em] mb-1.5"
+        style={{ color: 'rgba(201,168,76,0.55)' }}
+      >
         World Legends
       </p>
 
@@ -479,7 +732,12 @@ function PremiumHeader({
   );
 }
 
-function StatPill({ icon, value, label, color }: { icon: string; value: string; label?: string; color: string }) {
+function StatPill({
+  icon,
+  value,
+  label,
+  color,
+}: { icon: string; value: string; label?: string; color: string }) {
   return (
     <div
       className="flex items-center gap-1 px-2 py-1 rounded-full"
@@ -498,9 +756,10 @@ function StatPill({ icon, value, label, color }: { icon: string; value: string; 
 
 function TabBar({ activeTab, onTab }: { activeTab: ActiveTab; onTab: (t: ActiveTab) => void }) {
   const tabs: { key: ActiveTab; label: string; icon: string }[] = [
-    { key: 'album', label: 'ÁLBUM',       icon: '📖' },
-    { key: 'hall',  label: 'HALL OF FAME',icon: '🏆' },
-    { key: 'dream', label: 'DREAM TEAM',  icon: '⭐' },
+    { key: 'museu', label: 'MUSEU', icon: '🏛️' },
+    { key: 'album', label: 'ÁLBUM', icon: '📖' },
+    { key: 'hall', label: 'HALL', icon: '🏆' },
+    { key: 'dream', label: 'DREAM', icon: '⭐' },
   ];
 
   return (
@@ -537,9 +796,17 @@ function TabBar({ activeTab, onTab }: { activeTab: ActiveTab; onTab: (t: ActiveT
 // ─── Filtro de posição pill ───────────────────────────────────────────────────
 
 function PosFilterPill({
-  label, color, isActive, onPress, count,
+  label,
+  color,
+  isActive,
+  onPress,
+  count,
 }: {
-  label: string; color: string; isActive: boolean; onPress: () => void; count: number;
+  label: string;
+  color: string;
+  isActive: boolean;
+  onPress: () => void;
+  count: number;
 }) {
   return (
     <motion.button
@@ -548,9 +815,9 @@ function PosFilterPill({
       className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-wide transition-all"
       style={{
         borderColor: isActive ? color : 'rgba(255,255,255,0.08)',
-        background:  isActive ? `${color}18` : 'rgba(255,255,255,0.025)',
-        color:       isActive ? color : 'rgba(255,255,255,0.35)',
-        boxShadow:   isActive ? `0 0 12px ${color}30` : 'none',
+        background: isActive ? `${color}18` : 'rgba(255,255,255,0.025)',
+        color: isActive ? color : 'rgba(255,255,255,0.35)',
+        boxShadow: isActive ? `0 0 12px ${color}30` : 'none',
       }}
     >
       {label}
@@ -559,7 +826,7 @@ function PosFilterPill({
           className="text-[8px] font-black px-1 py-0.5 rounded-full leading-none"
           style={{
             background: isActive ? `${color}30` : 'rgba(255,255,255,0.06)',
-            color:      isActive ? color : 'rgba(255,255,255,0.3)',
+            color: isActive ? color : 'rgba(255,255,255,0.3)',
           }}
         >
           {count}
@@ -572,7 +839,9 @@ function PosFilterPill({
 // ─── Progresso por raridade ───────────────────────────────────────────────────
 
 function RarityProgressRow({
-  progress, activeFilter, onFilter,
+  progress,
+  activeFilter,
+  onFilter,
 }: {
   progress: RarityProgress[];
   activeFilter: RarityCode | 'all';
@@ -590,15 +859,21 @@ function RarityProgressRow({
             className="shrink-0 flex flex-col gap-1 min-w-[68px] rounded-xl border px-2.5 py-2 transition-all"
             style={{
               borderColor: isActive ? r.color : 'rgba(255,255,255,0.07)',
-              background:  isActive ? `${r.color}18` : 'rgba(255,255,255,0.02)',
-              boxShadow:   isActive ? `0 0 14px ${r.color}30` : 'none',
+              background: isActive ? `${r.color}18` : 'rgba(255,255,255,0.02)',
+              boxShadow: isActive ? `0 0 14px ${r.color}30` : 'none',
             }}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[8px] font-black uppercase tracking-wide" style={{ color: r.color }}>
+              <span
+                className="text-[8px] font-black uppercase tracking-wide"
+                style={{ color: r.color }}
+              >
                 {r.label}
               </span>
-              <span className="text-[8px]" style={{ color: isActive ? r.color : 'rgba(255,255,255,0.3)' }}>
+              <span
+                className="text-[8px]"
+                style={{ color: isActive ? r.color : 'rgba(255,255,255,0.3)' }}
+              >
                 {r.pct}%
               </span>
             </div>
@@ -612,8 +887,16 @@ function RarityProgressRow({
               />
             </div>
             <div className="flex justify-between items-center">
-              <p className="text-[8px] text-muted">{r.owned}<span className="opacity-50">/{r.total}</span></p>
-              <p className="text-[7px]" style={{ color: r.owned === r.total && r.total > 0 ? '#c9a84c' : 'transparent' }}>✓</p>
+              <p className="text-[8px] text-muted">
+                {r.owned}
+                <span className="opacity-50">/{r.total}</span>
+              </p>
+              <p
+                className="text-[7px]"
+                style={{ color: r.owned === r.total && r.total > 0 ? '#c9a84c' : 'transparent' }}
+              >
+                ✓
+              </p>
             </div>
           </motion.button>
         );
@@ -625,19 +908,27 @@ function RarityProgressRow({
 // ─── Country section ──────────────────────────────────────────────────────────
 
 function CountrySection({
-  group, index, isOpen, onToggle, isSearching,
-  favorites, dreamTeamIds, onToggleFavorite, onToggleDreamTeam, onSelectCard,
+  group,
+  index,
+  isOpen,
+  onToggle,
+  isSearching,
+  favorites,
+  dreamTeamIds,
+  onToggleFavorite,
+  onToggleDreamTeam,
+  onSelectCard,
 }: {
-  group:              CountryGroup;
-  index:              number;
-  isOpen:             boolean;
-  onToggle:           () => void;
-  isSearching:        boolean;
-  favorites:          Set<string>;
-  dreamTeamIds:       Set<string>;
-  onToggleFavorite:   (cardId: string) => void;
-  onToggleDreamTeam:  (cardId: string) => void;
-  onSelectCard:       (card: CollectionCard) => void;
+  group: CountryGroup;
+  index: number;
+  isOpen: boolean;
+  onToggle: () => void;
+  isSearching: boolean;
+  favorites: Set<string>;
+  dreamTeamIds: Set<string>;
+  onToggleFavorite: (cardId: string) => void;
+  onToggleDreamTeam: (cardId: string) => void;
+  onSelectCard: (card: CollectionCard) => void;
 }) {
   const wasPreviouslyComplete = useRef(false);
   const [showBurst, setShowBurst] = useState(false);
@@ -677,7 +968,11 @@ function CountrySection({
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 className="shrink-0 text-[8px] font-black px-1.5 py-0.5 rounded-full"
-                style={{ background: 'rgba(201,168,76,0.2)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.4)' }}
+                style={{
+                  background: 'rgba(201,168,76,0.2)',
+                  color: '#c9a84c',
+                  border: '1px solid rgba(201,168,76,0.4)',
+                }}
               >
                 ✓ COMPLETO
               </motion.span>
@@ -701,7 +996,8 @@ function CountrySection({
 
         <div className="shrink-0 text-right">
           <p className="text-parchment text-xs font-bold font-display">
-            {group.ownedCount}<span className="text-muted text-[10px]">/{group.totalCount}</span>
+            {group.ownedCount}
+            <span className="text-muted text-[10px]">/{group.totalCount}</span>
           </p>
           <p className="text-muted text-[9px]">{group.completionPct}%</p>
         </div>
@@ -754,20 +1050,25 @@ function CountrySection({
 // ─── Album Slot ───────────────────────────────────────────────────────────────
 
 function AlbumSlot({
-  slot, index, isFavorite, isDreamTeam,
-  onToggleFavorite, onToggleDreamTeam, onSelect,
+  slot,
+  index,
+  isFavorite,
+  isDreamTeam,
+  onToggleFavorite,
+  onToggleDreamTeam,
+  onSelect,
 }: {
-  slot:             AlbumSlotData;
-  index:            number;
-  isFavorite:       boolean;
-  isDreamTeam:      boolean;
+  slot: AlbumSlotData;
+  index: number;
+  isFavorite: boolean;
+  isDreamTeam: boolean;
   onToggleFavorite: () => void;
   onToggleDreamTeam: () => void;
-  onSelect:         () => void;
+  onSelect: () => void;
 }) {
   const { card, owned } = slot;
   const glow = RARITY_GLOW[card.rarityCode] ?? 'rgba(255,255,255,0.2)';
-  const bg   = RARITY_BG[card.rarityCode] ?? RARITY_BG.common!;
+  const bg = RARITY_BG[card.rarityCode] ?? RARITY_BG.common!;
   const meta = RARITY_META[card.rarityCode];
 
   return (
@@ -791,11 +1092,13 @@ function AlbumSlot({
               className="text-[6px] font-black px-0.5 rounded"
               style={{
                 background: `${meta?.color ?? '#fff'}25`,
-                color:      meta?.color ?? '#fff',
-                border:     `1px solid ${meta?.color ?? '#fff'}50`,
+                color: meta?.color ?? '#fff',
+                border: `1px solid ${meta?.color ?? '#fff'}50`,
               }}
             >
-              {card.rarityCode === 'world_cup_hero' ? 'WCH' : (meta?.label ?? '').slice(0, 3).toUpperCase()}
+              {card.rarityCode === 'world_cup_hero'
+                ? 'WCH'
+                : (meta?.label ?? '').slice(0, 3).toUpperCase()}
             </span>
           </div>
 
@@ -828,7 +1131,10 @@ function AlbumSlot({
           <div className="absolute bottom-0.5 right-0.5 flex gap-0.5">
             {/* Dream Team star */}
             <motion.button
-              onClick={(e) => { e.stopPropagation(); onToggleDreamTeam(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleDreamTeam();
+              }}
               className="w-4 h-4 flex items-center justify-center rounded-full"
               style={{ background: isDreamTeam ? 'rgba(245,158,11,0.3)' : 'rgba(0,0,0,0.4)' }}
               whileTap={{ scale: 0.8 }}
@@ -845,7 +1151,10 @@ function AlbumSlot({
 
             {/* Favorite heart */}
             <motion.button
-              onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite();
+              }}
               className="w-4 h-4 flex items-center justify-center rounded-full"
               style={{ background: isFavorite ? 'rgba(236,72,153,0.25)' : 'rgba(0,0,0,0.4)' }}
               whileTap={{ scale: 0.85 }}
@@ -870,9 +1179,7 @@ function AlbumSlot({
               <path d="M6 55 Q8 34 20 32 Q32 34 34 55 Z" />
             </svg>
           </div>
-          <p className="text-[7px] text-white/15 font-bold">
-            {String(index + 1).padStart(2, '0')}
-          </p>
+          <p className="text-[7px] text-white/15 font-bold">{String(index + 1).padStart(2, '0')}</p>
         </div>
       )}
     </motion.div>
@@ -882,17 +1189,23 @@ function AlbumSlot({
 // ─── Hall of Fame Tab ─────────────────────────────────────────────────────────
 
 function HallOfFameTab({
-  goat, ultra, legendary, favorites, dreamTeamIds,
-  onToggleFavorite, onToggleDreamTeam, onSelectCard,
+  goat,
+  ultra,
+  legendary,
+  favorites,
+  dreamTeamIds,
+  onToggleFavorite,
+  onToggleDreamTeam,
+  onSelectCard,
 }: {
-  goat:              AlbumSlotData[];
-  ultra:             AlbumSlotData[];
-  legendary:         AlbumSlotData[];
-  favorites:         Set<string>;
-  dreamTeamIds:      Set<string>;
-  onToggleFavorite:  (cardId: string) => void;
+  goat: AlbumSlotData[];
+  ultra: AlbumSlotData[];
+  legendary: AlbumSlotData[];
+  favorites: Set<string>;
+  dreamTeamIds: Set<string>;
+  onToggleFavorite: (cardId: string) => void;
   onToggleDreamTeam: (cardId: string) => void;
-  onSelectCard:      (card: CollectionCard) => void;
+  onSelectCard: (card: CollectionCard) => void;
 }) {
   return (
     <div className="flex-1 overflow-y-auto pb-28">
@@ -953,20 +1266,29 @@ function HallOfFameTab({
 }
 
 function HallSection({
-  title, subtitle, color, glow, slots, size,
-  favorites, dreamTeamIds, onToggleFavorite, onToggleDreamTeam, onSelectCard,
+  title,
+  subtitle,
+  color,
+  glow,
+  slots,
+  size,
+  favorites,
+  dreamTeamIds,
+  onToggleFavorite,
+  onToggleDreamTeam,
+  onSelectCard,
 }: {
-  title:             string;
-  subtitle:          string;
-  color:             string;
-  glow:              string;
-  slots:             AlbumSlotData[];
-  size:              'xl' | 'lg' | 'md';
-  favorites:         Set<string>;
-  dreamTeamIds:      Set<string>;
-  onToggleFavorite:  (cardId: string) => void;
+  title: string;
+  subtitle: string;
+  color: string;
+  glow: string;
+  slots: AlbumSlotData[];
+  size: 'xl' | 'lg' | 'md';
+  favorites: Set<string>;
+  dreamTeamIds: Set<string>;
+  onToggleFavorite: (cardId: string) => void;
   onToggleDreamTeam: (cardId: string) => void;
-  onSelectCard:      (card: CollectionCard) => void;
+  onSelectCard: (card: CollectionCard) => void;
 }) {
   const cols = size === 'xl' ? 'grid-cols-2' : size === 'lg' ? 'grid-cols-3' : 'grid-cols-4';
   const ownedCount = slots.filter((s) => s.owned).length;
@@ -995,7 +1317,8 @@ function HallSection({
         </div>
         <div className="text-right">
           <p className="font-display text-base leading-none" style={{ color }}>
-            {ownedCount}<span className="text-muted text-xs">/{slots.length}</span>
+            {ownedCount}
+            <span className="text-muted text-xs">/{slots.length}</span>
           </p>
           <p className="text-[9px] text-muted">
             {slots.length > 0 ? Math.round((ownedCount / slots.length) * 100) : 0}%
@@ -1032,19 +1355,27 @@ function HallSection({
 }
 
 function MuseumCard({
-  slot, index, accentColor, accentGlow, size, isFavorite, isDreamTeam,
-  onToggleFavorite, onToggleDreamTeam, onSelect,
+  slot,
+  index,
+  accentColor,
+  accentGlow,
+  size,
+  isFavorite,
+  isDreamTeam,
+  onToggleFavorite,
+  onToggleDreamTeam,
+  onSelect,
 }: {
-  slot:              AlbumSlotData;
-  index:             number;
-  accentColor:       string;
-  accentGlow:        string;
-  size:              'xl' | 'lg' | 'md';
-  isFavorite:        boolean;
-  isDreamTeam:       boolean;
-  onToggleFavorite:  () => void;
+  slot: AlbumSlotData;
+  index: number;
+  accentColor: string;
+  accentGlow: string;
+  size: 'xl' | 'lg' | 'md';
+  isFavorite: boolean;
+  isDreamTeam: boolean;
+  onToggleFavorite: () => void;
   onToggleDreamTeam: () => void;
-  onSelect:          () => void;
+  onSelect: () => void;
 }) {
   const { card, owned } = slot;
   const aspect = size === 'xl' ? 'aspect-[3/4]' : 'aspect-[2/3]';
@@ -1057,8 +1388,10 @@ function MuseumCard({
       whileTap={{ scale: 0.96 }}
       className={`relative ${aspect} rounded-2xl overflow-hidden cursor-pointer`}
       style={{
-        border:     `1px solid ${owned ? `${accentColor}40` : 'rgba(255,255,255,0.06)'}`,
-        boxShadow:  owned ? `0 0 24px ${accentGlow}, 0 4px 16px rgba(0,0,0,0.6)` : '0 4px 16px rgba(0,0,0,0.5)',
+        border: `1px solid ${owned ? `${accentColor}40` : 'rgba(255,255,255,0.06)'}`,
+        boxShadow: owned
+          ? `0 0 24px ${accentGlow}, 0 4px 16px rgba(0,0,0,0.6)`
+          : '0 4px 16px rgba(0,0,0,0.5)',
         background: owned
           ? `linear-gradient(145deg, ${accentColor}08 0%, rgba(0,0,0,0.9) 100%)`
           : 'rgba(0,0,0,0.5)',
@@ -1091,13 +1424,21 @@ function MuseumCard({
 
           {/* Flag — center */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <span style={{ fontSize: size === 'xl' ? 52 : size === 'lg' ? 40 : 32, filter: `drop-shadow(0 0 12px ${accentColor}60)` }}>
+            <span
+              style={{
+                fontSize: size === 'xl' ? 52 : size === 'lg' ? 40 : 32,
+                filter: `drop-shadow(0 0 12px ${accentColor}60)`,
+              }}
+            >
               {card.flagEmoji}
             </span>
           </div>
 
           {/* Name + position */}
-          <div className="absolute bottom-0 left-0 right-0 p-2" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)' }}>
+          <div
+            className="absolute bottom-0 left-0 right-0 p-2"
+            style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)' }}
+          >
             <p
               className="font-display text-white leading-tight tracking-wide truncate"
               style={{ fontSize: size === 'xl' ? 14 : size === 'lg' ? 11 : 9 }}
@@ -1105,7 +1446,9 @@ function MuseumCard({
               {card.displayName.toUpperCase()}
             </p>
             <div className="flex items-center justify-between mt-0.5">
-              <span className="text-[8px]" style={{ color: `${accentColor}90` }}>{card.position}</span>
+              <span className="text-[8px]" style={{ color: `${accentColor}90` }}>
+                {card.position}
+              </span>
               <span className="text-[8px] text-muted">{card.era}</span>
             </div>
           </div>
@@ -1113,18 +1456,34 @@ function MuseumCard({
           {/* Action buttons */}
           <div className="absolute top-2 right-2 flex flex-col gap-1">
             <motion.button
-              onClick={(e) => { e.stopPropagation(); onToggleDreamTeam(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleDreamTeam();
+              }}
               whileTap={{ scale: 0.8 }}
               className="w-6 h-6 rounded-full flex items-center justify-center"
-              style={{ background: isDreamTeam ? 'rgba(245,158,11,0.35)' : 'rgba(0,0,0,0.5)', border: isDreamTeam ? '1px solid rgba(245,158,11,0.5)' : '1px solid rgba(255,255,255,0.1)' }}
+              style={{
+                background: isDreamTeam ? 'rgba(245,158,11,0.35)' : 'rgba(0,0,0,0.5)',
+                border: isDreamTeam
+                  ? '1px solid rgba(245,158,11,0.5)'
+                  : '1px solid rgba(255,255,255,0.1)',
+              }}
             >
               <span style={{ fontSize: 11 }}>{isDreamTeam ? '⭐' : '☆'}</span>
             </motion.button>
             <motion.button
-              onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite();
+              }}
               whileTap={{ scale: 0.8 }}
               className="w-6 h-6 rounded-full flex items-center justify-center"
-              style={{ background: isFavorite ? 'rgba(236,72,153,0.3)' : 'rgba(0,0,0,0.5)', border: isFavorite ? '1px solid rgba(236,72,153,0.5)' : '1px solid rgba(255,255,255,0.1)' }}
+              style={{
+                background: isFavorite ? 'rgba(236,72,153,0.3)' : 'rgba(0,0,0,0.5)',
+                border: isFavorite
+                  ? '1px solid rgba(236,72,153,0.5)'
+                  : '1px solid rgba(255,255,255,0.1)',
+              }}
             >
               <span style={{ fontSize: 11 }}>{isFavorite ? '❤️' : '🤍'}</span>
             </motion.button>
@@ -1140,11 +1499,17 @@ function MuseumCard({
             animate={{ opacity: [0.3, 0.7, 0.3] }}
             transition={{ duration: 2.5, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
           >
-            <span className="text-xl" style={{ filter: 'grayscale(1)', opacity: 0.2 }}>?</span>
+            <span className="text-xl" style={{ filter: 'grayscale(1)', opacity: 0.2 }}>
+              ?
+            </span>
           </motion.div>
           <div className="text-center">
-            <p className="text-[8px] font-bold" style={{ color: `${accentColor}40` }}>NÃO POSSUI</p>
-            <p className="text-[7px] text-muted/40 mt-0.5 truncate max-w-full px-1">{card.displayName}</p>
+            <p className="text-[8px] font-bold" style={{ color: `${accentColor}40` }}>
+              NÃO POSSUI
+            </p>
+            <p className="text-[7px] text-muted/40 mt-0.5 truncate max-w-full px-1">
+              {card.displayName}
+            </p>
           </div>
         </div>
       )}
@@ -1155,18 +1520,20 @@ function MuseumCard({
 // ─── Dream Team Tab ───────────────────────────────────────────────────────────
 
 function DreamTeamTab({
-  dreamTeamCards, maxSlots, onSelectCard, onRemove,
+  dreamTeamCards,
+  maxSlots,
+  onSelectCard,
+  onRemove,
 }: {
   dreamTeamCards: CollectionCard[];
-  maxSlots:       number;
-  onSelectCard:   (card: CollectionCard) => void;
-  onRemove:       (cardId: string) => void;
+  maxSlots: number;
+  onSelectCard: (card: CollectionCard) => void;
+  onRemove: (cardId: string) => void;
 }) {
   const filled = dreamTeamCards.length;
-  const empty  = maxSlots - filled;
-  const avgOvr = filled > 0
-    ? Math.round(dreamTeamCards.reduce((s, c) => s + c.overall, 0) / filled)
-    : 0;
+  const empty = maxSlots - filled;
+  const avgOvr =
+    filled > 0 ? Math.round(dreamTeamCards.reduce((s, c) => s + c.overall, 0) / filled) : 0;
 
   return (
     <div className="flex-1 overflow-y-auto pb-28">
@@ -1177,7 +1544,10 @@ function DreamTeamTab({
           animate={{ opacity: 1, y: 0 }}
           className="mb-6"
         >
-          <p className="text-[9px] font-black uppercase tracking-[0.22em] mb-1" style={{ color: 'rgba(245,158,11,0.6)' }}>
+          <p
+            className="text-[9px] font-black uppercase tracking-[0.22em] mb-1"
+            style={{ color: 'rgba(245,158,11,0.6)' }}
+          >
             Meu
           </p>
           <div className="flex items-end justify-between">
@@ -1193,7 +1563,9 @@ function DreamTeamTab({
             </h2>
             {filled > 0 && (
               <div className="text-right">
-                <p className="font-display text-xl" style={{ color: '#f59e0b' }}>{avgOvr}</p>
+                <p className="font-display text-xl" style={{ color: '#f59e0b' }}>
+                  {avgOvr}
+                </p>
                 <p className="text-muted text-[9px]">OVR médio</p>
               </div>
             )}
@@ -1249,8 +1621,8 @@ function DreamTeamTab({
                 className="relative aspect-[2/3] rounded-2xl overflow-hidden cursor-pointer"
                 style={{
                   background: `linear-gradient(145deg, ${RARITY_GLOW[card.rarityCode] ?? 'rgba(255,255,255,0.1)'}15, #070709)`,
-                  border:     `1px solid ${RARITY_GLOW[card.rarityCode] ?? 'rgba(255,255,255,0.12)'}50`,
-                  boxShadow:  `0 0 20px ${RARITY_GLOW[card.rarityCode] ?? 'rgba(255,255,255,0.1)'}40`,
+                  border: `1px solid ${RARITY_GLOW[card.rarityCode] ?? 'rgba(255,255,255,0.12)'}50`,
+                  boxShadow: `0 0 20px ${RARITY_GLOW[card.rarityCode] ?? 'rgba(255,255,255,0.1)'}40`,
                 }}
                 onClick={() => onSelectCard(card)}
               >
@@ -1280,7 +1652,7 @@ function DreamTeamTab({
                     className="text-[7px] font-black px-1 py-0.5 rounded"
                     style={{
                       background: `${RARITY_GLOW[card.rarityCode] ?? '#fff'}25`,
-                      color:      RARITY_GLOW[card.rarityCode] ?? '#fff',
+                      color: RARITY_GLOW[card.rarityCode] ?? '#fff',
                     }}
                   >
                     {card.position}
@@ -1308,11 +1680,17 @@ function DreamTeamTab({
                     {card.displayName.toUpperCase()}
                   </p>
                   <div className="flex items-center justify-between mt-0.5">
-                    <span className="text-[7px]" style={{ color: RARITY_META[card.rarityCode]?.color }}>
+                    <span
+                      className="text-[7px]"
+                      style={{ color: RARITY_META[card.rarityCode]?.color }}
+                    >
                       {RARITY_META[card.rarityCode]?.label}
                     </span>
                     <motion.button
-                      onClick={(e) => { e.stopPropagation(); onRemove(card.cardId); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemove(card.cardId);
+                      }}
                       whileTap={{ scale: 0.8 }}
                       className="text-[8px] text-muted/60 hover:text-red-400 transition-colors"
                     >
@@ -1332,11 +1710,13 @@ function DreamTeamTab({
                 transition={{ delay: (filled + i) * 0.04 }}
                 className="aspect-[2/3] rounded-2xl flex flex-col items-center justify-center gap-1"
                 style={{
-                  border:     '1px dashed rgba(245,158,11,0.15)',
+                  border: '1px dashed rgba(245,158,11,0.15)',
                   background: 'rgba(245,158,11,0.02)',
                 }}
               >
-                <span className="text-xl" style={{ color: 'rgba(245,158,11,0.15)' }}>⭐</span>
+                <span className="text-xl" style={{ color: 'rgba(245,158,11,0.15)' }}>
+                  ⭐
+                </span>
                 <p className="text-[7px] font-bold" style={{ color: 'rgba(245,158,11,0.2)' }}>
                   {String(filled + i + 1).padStart(2, '0')}
                 </p>
@@ -1353,7 +1733,8 @@ function DreamTeamTab({
             transition={{ delay: 0.5 }}
             className="text-center text-muted text-[10px] mt-6"
           >
-            Toque <span style={{ color: '#f59e0b' }}>⭐</span> em qualquer carta no Álbum para completar seu Dream Team
+            Toque <span style={{ color: '#f59e0b' }}>⭐</span> em qualquer carta no Álbum para
+            completar seu Dream Team
           </motion.p>
         )}
 
@@ -1365,14 +1746,16 @@ function DreamTeamTab({
             className="mt-6 text-center px-4 py-4 rounded-2xl"
             style={{
               background: 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(251,191,36,0.04))',
-              border:     '1px solid rgba(245,158,11,0.2)',
+              border: '1px solid rgba(245,158,11,0.2)',
             }}
           >
             <p className="text-lg mb-1">⭐</p>
             <p className="font-display text-sm tracking-wider" style={{ color: '#f59e0b' }}>
               DREAM TEAM COMPLETO
             </p>
-            <p className="text-muted text-xs mt-1">OVR médio: <span style={{ color: '#fbbf24' }}>{avgOvr}</span></p>
+            <p className="text-muted text-xs mt-1">
+              OVR médio: <span style={{ color: '#fbbf24' }}>{avgOvr}</span>
+            </p>
           </motion.div>
         )}
       </div>
@@ -1382,30 +1765,92 @@ function DreamTeamTab({
 
 // ─── Completion burst ─────────────────────────────────────────────────────────
 
-const BURST_PARTICLES = Array.from({ length: 20 }, (_, i) => ({
-  angle:    (i / 20) * 360,
-  distance: 40 + (i % 4) * 18,
-  size:     3 + (i % 3) * 2,
-  color:    ['#c9a84c', '#fbbf24', '#e6c85a', '#fff', '#f0c040'][i % 5]!,
-  delay:    i * 0.025,
+function playCompletionChime() {
+  try {
+    const ctx = new AudioContext();
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      const t = ctx.currentTime + i * 0.12;
+      gain.gain.setValueAtTime(0.18, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+      osc.start(t);
+      osc.stop(t + 0.28);
+    });
+  } catch {
+    /* noop */
+  }
+}
+
+const BURST_PARTICLES = Array.from({ length: 36 }, (_, i) => ({
+  angle: (i / 36) * 360,
+  distance: 45 + (i % 5) * 20,
+  size: 3 + (i % 4) * 2,
+  color: ['#c9a84c', '#fbbf24', '#e6c85a', '#fff', '#f0c040', '#ec4899', '#60a5fa'][i % 7]!,
+  delay: i * 0.018,
+  shape: i % 4 === 0 ? '20%' : '50%',
+}));
+
+const CONFETTI_STRIPS = Array.from({ length: 14 }, (_, i) => ({
+  x: -10 + (i / 13) * 120,
+  delay: i * 0.07,
+  color: ['#c9a84c', '#fbbf24', '#ec4899', '#60a5fa', '#34d399'][i % 5]!,
+  rotate: -30 + (i % 3) * 30,
 }));
 
 function CompletionBurst({ onDone }: { onDone: () => void }) {
+  useEffect(() => {
+    playCompletionChime();
+  }, []);
+
   return (
     <div className="absolute inset-0 pointer-events-none z-20 flex items-center justify-center overflow-hidden">
+      {/* Radial flash */}
       <motion.div
         className="absolute inset-0"
-        style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.35), transparent 70%)' }}
+        style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.40), transparent 65%)' }}
         initial={{ opacity: 0 }}
         animate={{ opacity: [0, 1, 0] }}
-        transition={{ duration: 0.8 }}
+        transition={{ duration: 1.0 }}
         onAnimationComplete={onDone}
       />
+
+      {/* Falling confetti strips */}
+      {CONFETTI_STRIPS.map((s, i) => (
+        <motion.div
+          key={`strip-${i}`}
+          className="absolute top-0 rounded-sm"
+          style={{
+            left: `${s.x}%`,
+            width: 6,
+            height: 14,
+            background: s.color,
+            rotate: s.rotate,
+          }}
+          initial={{ y: -20, opacity: 1 }}
+          animate={{ y: 260, opacity: [1, 1, 0], rotate: s.rotate + 180 }}
+          transition={{ duration: 1.4, delay: s.delay, ease: 'easeIn' }}
+        />
+      ))}
+
+      {/* Burst particles */}
       {BURST_PARTICLES.map((p, i) => (
         <motion.div
           key={i}
-          className="absolute rounded-full"
-          style={{ width: p.size, height: p.size, background: p.color, top: '50%', left: '50%' }}
+          className="absolute"
+          style={{
+            width: p.size,
+            height: p.size,
+            background: p.color,
+            top: '50%',
+            left: '50%',
+            borderRadius: p.shape,
+          }}
           initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
           animate={{
             x: Math.cos((p.angle * Math.PI) / 180) * p.distance,
@@ -1413,18 +1858,313 @@ function CompletionBurst({ onDone }: { onDone: () => void }) {
             opacity: 0,
             scale: 0,
           }}
-          transition={{ duration: 0.9, delay: p.delay, ease: 'easeOut' }}
+          transition={{ duration: 1.0, delay: p.delay, ease: 'easeOut' }}
         />
       ))}
+
+      {/* COMPLETO text */}
       <motion.div
         initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: [0, 1.2, 1], opacity: [0, 1, 1, 0] }}
-        transition={{ duration: 1.2, times: [0, 0.3, 0.5, 1] }}
-        className="font-display text-base tracking-widest"
-        style={{ color: '#c9a84c', textShadow: '0 0 20px rgba(201,168,76,0.8)' }}
+        animate={{ scale: [0, 1.25, 1], opacity: [0, 1, 1, 0] }}
+        transition={{ duration: 1.4, times: [0, 0.25, 0.55, 1] }}
+        className="font-display text-xl tracking-widest"
+        style={{ color: '#c9a84c', textShadow: '0 0 24px rgba(201,168,76,0.9)', zIndex: 30 }}
       >
         ✓ COMPLETO!
       </motion.div>
     </div>
+  );
+}
+
+// ─── Museu Tab ────────────────────────────────────────────────────────────────
+
+type CategoryItem = {
+  id: string;
+  name: string;
+  subtitle: string;
+  icon: string;
+  color: string;
+  slots: AlbumSlotData[];
+  ownedCount: number;
+  completionPct: number;
+};
+
+type ConquistaItem = {
+  id: string;
+  name: string;
+  desc: string;
+  icon: string;
+  color: string;
+  unlocked: boolean;
+};
+
+function MuseuTab({
+  categories,
+  conquistas,
+  favorites,
+  dreamTeamIds,
+  onToggleFavorite,
+  onToggleDreamTeam,
+  onSelectCard,
+}: {
+  categories: CategoryItem[];
+  conquistas: ConquistaItem[];
+  favorites: Set<string>;
+  dreamTeamIds: Set<string>;
+  onToggleFavorite: (id: string) => void;
+  onToggleDreamTeam: (id: string) => void;
+  onSelectCard: (card: CollectionCard) => void;
+}) {
+  const [openSection, setOpenSection] = useState<string | null>('copa');
+  const unlockedCount = conquistas.filter((c) => c.unlocked).length;
+
+  return (
+    <div className="flex-1 overflow-y-auto pb-28">
+      {/* Header */}
+      <motion.div
+        className="px-4 pt-4 pb-3"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <p
+          className="text-[9px] font-black uppercase tracking-[0.25em] mb-0.5"
+          style={{ color: 'rgba(201,168,76,0.55)' }}
+        >
+          World Legends
+        </p>
+        <div className="flex items-end justify-between">
+          <h2
+            className="font-display text-2xl tracking-widest leading-none"
+            style={{
+              background: 'linear-gradient(135deg, #ffffff 0%, #c9a84c 55%, #8c6f27 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            MUSEU
+          </h2>
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+            style={{
+              background: 'rgba(201,168,76,0.12)',
+              border: '1px solid rgba(201,168,76,0.25)',
+            }}
+          >
+            <span style={{ fontSize: 10 }}>🏅</span>
+            <span className="text-[9px] font-bold" style={{ color: '#c9a84c' }}>
+              {unlockedCount}/{conquistas.length} conquistas
+            </span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Collections */}
+      <div className="px-4 space-y-2 mb-6">
+        <p
+          className="text-[8px] font-black uppercase tracking-[0.25em] mb-2"
+          style={{ color: 'rgba(255,255,255,0.2)' }}
+        >
+          Coleções Temáticas
+        </p>
+        {categories.map((cat, i) => (
+          <CategorySection
+            key={cat.id}
+            cat={cat}
+            index={i}
+            isOpen={openSection === cat.id}
+            onToggle={() => setOpenSection((prev) => (prev === cat.id ? null : cat.id))}
+            favorites={favorites}
+            dreamTeamIds={dreamTeamIds}
+            onToggleFavorite={onToggleFavorite}
+            onToggleDreamTeam={onToggleDreamTeam}
+            onSelectCard={onSelectCard}
+          />
+        ))}
+      </div>
+
+      {/* Conquistas */}
+      <div className="px-4 pb-4">
+        <p
+          className="text-[8px] font-black uppercase tracking-[0.25em] mb-3"
+          style={{ color: 'rgba(255,255,255,0.2)' }}
+        >
+          Conquistas
+        </p>
+        <div className="grid grid-cols-2 gap-2.5">
+          {conquistas.map((badge, i) => (
+            <BadgeCard key={badge.id} badge={badge} index={i} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CategorySection({
+  cat,
+  index,
+  isOpen,
+  onToggle,
+  favorites,
+  dreamTeamIds,
+  onToggleFavorite,
+  onToggleDreamTeam,
+  onSelectCard,
+}: {
+  cat: CategoryItem;
+  index: number;
+  isOpen: boolean;
+  onToggle: () => void;
+  favorites: Set<string>;
+  dreamTeamIds: Set<string>;
+  onToggleFavorite: (id: string) => void;
+  onToggleDreamTeam: (id: string) => void;
+  onSelectCard: (card: CollectionCard) => void;
+}) {
+  const isComplete = cat.completionPct === 100 && cat.slots.length > 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, delay: Math.min(index * 0.04, 0.3) }}
+      className="rounded-2xl border overflow-hidden"
+      style={{
+        borderColor: isComplete
+          ? 'rgba(201,168,76,0.4)'
+          : cat.ownedCount > 0
+            ? 'rgba(255,255,255,0.1)'
+            : 'rgba(255,255,255,0.05)',
+        boxShadow: isComplete ? '0 0 18px rgba(201,168,76,0.18)' : 'none',
+      }}
+    >
+      <motion.button
+        onClick={onToggle}
+        whileTap={{ scale: 0.99 }}
+        className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-white/[0.025] transition-colors"
+      >
+        <span className="text-xl shrink-0 leading-none">{cat.icon}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-parchment text-sm font-bold leading-tight truncate">{cat.name}</p>
+            {isComplete && (
+              <span
+                className="shrink-0 text-[8px] font-black px-1.5 py-0.5 rounded-full"
+                style={{
+                  background: 'rgba(201,168,76,0.2)',
+                  color: '#c9a84c',
+                  border: '1px solid rgba(201,168,76,0.4)',
+                }}
+              >
+                ✓ COMPLETO
+              </span>
+            )}
+          </div>
+          <div className="h-1 bg-black/30 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full rounded-full"
+              style={{
+                background: isComplete
+                  ? 'linear-gradient(90deg,#8c6f27,#c9a84c)'
+                  : `linear-gradient(90deg,${cat.color}60,${cat.color})`,
+              }}
+              initial={{ width: '0%' }}
+              animate={{ width: `${cat.completionPct}%` }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+            />
+          </div>
+          <p className="text-[8px] text-muted mt-0.5">{cat.subtitle}</p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-parchment text-xs font-bold font-display">
+            {cat.ownedCount}
+            <span className="text-muted text-[10px]">/{cat.slots.length}</span>
+          </p>
+          <p className="text-[8px]" style={{ color: cat.color }}>
+            {cat.completionPct}%
+          </p>
+        </div>
+        <motion.span
+          className="text-muted text-xs shrink-0 ml-1"
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          ▼
+        </motion.span>
+      </motion.button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="px-3 pb-4 pt-1">
+              <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5">
+                {cat.slots.map((slot, i) => (
+                  <AlbumSlot
+                    key={slot.card.cardId}
+                    slot={slot}
+                    index={i}
+                    isFavorite={favorites.has(slot.card.cardId)}
+                    isDreamTeam={dreamTeamIds.has(slot.card.cardId)}
+                    onToggleFavorite={() => onToggleFavorite(slot.card.cardId)}
+                    onToggleDreamTeam={() => onToggleDreamTeam(slot.card.cardId)}
+                    onSelect={() => onSelectCard(slot.card)}
+                  />
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+function BadgeCard({ badge, index }: { badge: ConquistaItem; index: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: index * 0.04, duration: 0.2 }}
+      className="rounded-xl p-3 relative overflow-hidden"
+      style={{
+        background: badge.unlocked ? `${badge.color}12` : 'rgba(0,0,0,0.25)',
+        border: `1px solid ${badge.unlocked ? `${badge.color}35` : 'rgba(255,255,255,0.05)'}`,
+        opacity: badge.unlocked ? 1 : 0.5,
+      }}
+    >
+      {badge.unlocked && (
+        <div
+          className="absolute -top-3 -right-3 w-12 h-12 rounded-full blur-xl"
+          style={{ background: `${badge.color}25` }}
+        />
+      )}
+      <div className="flex items-start gap-2">
+        <span
+          style={{ fontSize: 22, lineHeight: 1, filter: badge.unlocked ? 'none' : 'grayscale(1)' }}
+        >
+          {badge.icon}
+        </span>
+        <div className="flex-1 min-w-0">
+          <p
+            className="text-[10px] font-bold leading-tight truncate"
+            style={{ color: badge.unlocked ? badge.color : 'rgba(255,255,255,0.3)' }}
+          >
+            {badge.name}
+          </p>
+          <p className="text-[8px] text-muted/60 leading-tight mt-0.5 line-clamp-2">{badge.desc}</p>
+          {badge.unlocked && (
+            <p className="text-[7px] font-black mt-1" style={{ color: badge.color, opacity: 0.7 }}>
+              ✓ DESBLOQUEADO
+            </p>
+          )}
+        </div>
+      </div>
+    </motion.div>
   );
 }

@@ -1,11 +1,11 @@
 'use client';
 
 import {
-  claimDailyLoginAction,
-  getDailyLoginAction,
   type ClaimDailyLoginResult,
   type ClaimDayPayload,
   type DailyLoginView,
+  claimDailyLoginAction,
+  getDailyLoginAction,
 } from '@/lib/actions/daily-login';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 
@@ -41,7 +41,9 @@ export function useDailyLogin(): UseDailyLoginReturn {
       // Auto-open if there's a reward waiting
       if (v.state.canClaimToday) setIsOpen(true);
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const claim = useCallback(() => {

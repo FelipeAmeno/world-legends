@@ -8,7 +8,7 @@
  * Claims creditam créditos/fragmentos diretamente no banco.
  */
 
-import { getMissionsAction, claimMissionRewardAction } from '@/lib/actions/missions';
+import { claimMissionRewardAction, getMissionsAction } from '@/lib/actions/missions';
 import type { MissionReward, MissionType, MissionView } from '@/lib/mission-system';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
@@ -41,7 +41,9 @@ export function MissionsPage() {
       setPeriodKeys(data.periodKeys);
       setLoading(false);
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Views filtradas pela aba
@@ -123,7 +125,7 @@ export function MissionsPage() {
         setCountdown(`${h}h ${m}m`);
       } else if (tab === 'weekly') {
         const day = now.getDay();
-        const daysLeft = ((8 - (day || 7)) % 7) || 7;
+        const daysLeft = (8 - (day || 7)) % 7 || 7;
         setCountdown(`${daysLeft}d`);
       } else {
         setCountdown('');
@@ -261,7 +263,11 @@ export function MissionsPage() {
             {[
               { label: 'Completas', value: tabStats.done, icon: '✅' },
               { label: 'Em andamento', value: tabStats.total - tabStats.done, icon: '⏳' },
-              { label: 'Para coletar', value: tabViews.filter((v) => v.claimable).length, icon: '🎁' },
+              {
+                label: 'Para coletar',
+                value: tabViews.filter((v) => v.claimable).length,
+                icon: '🎁',
+              },
             ].map((s) => (
               <div key={s.label} className="bg-black/20 rounded-xl p-2.5 text-center">
                 <span className="text-lg">{s.icon}</span>

@@ -2,6 +2,7 @@
 
 import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
 import { SupabaseProfileRepository, SupabaseUserCardRepository } from '@world-legends/db';
+import { revalidatePath } from 'next/cache';
 
 // ─── claimStarterPack ─────────────────────────────────────────────────────────
 
@@ -42,6 +43,8 @@ export async function claimStarterPack(): Promise<ClaimStarterResult> {
     const result = await cardRepo.create({ profileId: userId, cardId, acquiredVia: 'starter' });
     if (result.ok) inserted.push(cardId);
   }
+
+  revalidatePath('/', 'layout');
 
   return { ok: true, cardIds: inserted };
 }

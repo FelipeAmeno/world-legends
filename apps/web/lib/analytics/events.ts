@@ -27,21 +27,21 @@ import { track, trackPageView } from './posthog';
 export const sessionEvents = {
   /** Sessão iniciada (tab aberta, app aberto) */
   start(props: {
-    userId?:         string;
-    level?:          number;
+    userId?: string;
+    level?: number;
     daysSinceFirst?: number;
-    dayStreak?:      number;
-    platform?:       'web' | 'pwa' | 'mobile';
+    dayStreak?: number;
+    platform?: 'web' | 'pwa' | 'mobile';
   }) {
     track('session_started', props);
   },
 
   /** Usuário retorna em outro dia (DAU/WAU tracking) */
   dailyReturn(props: {
-    dayStreak:   number;
-    level:       number;
-    totalCards:  number;
-    lastSeenDays:number;
+    dayStreak: number;
+    level: number;
+    totalCards: number;
+    lastSeenDays: number;
   }) {
     track('session_daily_return', props);
   },
@@ -62,17 +62,17 @@ export const onboardingEvents = {
 
   /** Usuário completou uma etapa */
   stepCompleted(props: {
-    step:      number;
-    stepName:  'enter_name' | 'choose_squad' | 'open_first_pack' | 'play_tutorial';
-    durationMs:number;
+    step: number;
+    stepName: 'enter_name' | 'choose_squad' | 'open_first_pack' | 'play_tutorial';
+    durationMs: number;
   }) {
     track('onboarding_step_completed', props);
   },
 
   /** Onboarding completo */
   completed(props: {
-    username:   string;
-    totalTimeMs:number;
+    username: string;
+    totalTimeMs: number;
     stepsCount: number;
   }) {
     track('onboarding_completed', props);
@@ -80,9 +80,9 @@ export const onboardingEvents = {
 
   /** Usuário abandonou antes de concluir */
   abandoned(props: {
-    atStep:    number;
-    stepName:  string;
-    timeSpentMs:number;
+    atStep: number;
+    stepName: string;
+    timeSpentMs: number;
   }) {
     track('onboarding_abandoned', props);
   },
@@ -93,48 +93,48 @@ export const onboardingEvents = {
 export const matchEvents = {
   /** Partida iniciada */
   started(props: {
-    opponentId:  string;
+    opponentId: string;
     opponentOvr: number;
-    userSquadOvr:number;
-    formation:   string;
-    difficulty:  string;
+    userSquadOvr: number;
+    formation: string;
+    difficulty: string;
   }) {
     track('match_started', props);
   },
 
   /** Partida concluída */
   completed(props: {
-    outcome:       'win' | 'draw' | 'loss';
-    homeScore:     number;
-    awayScore:     number;
-    durationMs:    number;
-    opponentOvr:   number;
-    userSquadOvr:  number;
+    outcome: 'win' | 'draw' | 'loss';
+    homeScore: number;
+    awayScore: number;
+    durationMs: number;
+    opponentOvr: number;
+    userSquadOvr: number;
     creditsEarned: number;
-    xpEarned:      number;
-    mvpCardId?:    string;
-    mvpOvr?:       number;
-    formation:     string;
+    xpEarned: number;
+    mvpCardId?: string;
+    mvpOvr?: number;
+    formation: string;
   }) {
     track('match_completed', props);
   },
 
   /** Usuário abandonou durante a partida */
   abandoned(props: {
-    atMinute:    number;
-    phase:       'pre' | 'live' | 'ht';
-    homeScore:   number;
-    awayScore:   number;
-    winning:     boolean;
+    atMinute: number;
+    phase: 'pre' | 'live' | 'ht';
+    homeScore: number;
+    awayScore: number;
+    winning: boolean;
   }) {
     track('match_abandoned', props);
   },
 
   /** Adversário selecionado */
   opponentSelected(props: {
-    opponentId:    string;
-    difficulty:    string;
-    winProbability:number;
+    opponentId: string;
+    difficulty: string;
+    winProbability: number;
   }) {
     track('match_opponent_selected', props);
   },
@@ -145,47 +145,47 @@ export const matchEvents = {
 export const packEvents = {
   /** Usuário tocou no pack para começar a abertura */
   openStarted(props: {
-    packId:   string;
+    packId: string;
     packName: string;
-    cost:     number;
-    balance:  number;
+    cost: number;
+    balance: number;
   }) {
     track('pack_open_started', props);
   },
 
   /** Pack completamente aberto (todas as cartas reveladas) */
   opened(props: {
-    packId:         string;
-    packName:       string;
-    cost:           number;
-    cardCount:      number;
-    rarityBreakdown:Record<string, number>;   // { legendary:1, rare:3, ... }
-    highestRarity:  string;
-    highestOvr:     number;
-    hasGoat:        boolean;
-    revealDurationMs:number;
+    packId: string;
+    packName: string;
+    cost: number;
+    cardCount: number;
+    rarityBreakdown: Record<string, number>; // { legendary:1, rare:3, ... }
+    highestRarity: string;
+    highestOvr: number;
+    hasGoat: boolean;
+    revealDurationMs: number;
   }) {
     track('pack_opened', props);
   },
 
   /** Carta individual revelada */
   cardRevealed(props: {
-    packId:      string;
-    cardId:      string;
-    rarityCode:  string;
-    ovr:         number;
-    position:    number;   // ordem de revelação (1-5)
-    durationMs:  number;   // tempo para revelar
+    packId: string;
+    cardId: string;
+    rarityCode: string;
+    ovr: number;
+    position: number; // ordem de revelação (1-5)
+    durationMs: number; // tempo para revelar
   }) {
     track('pack_card_revealed', props);
   },
 
   /** GOAT revelado (evento raro — rastrear sempre) */
   goatRevealed(props: {
-    packId:  string;
-    cardId:  string;
+    packId: string;
+    cardId: string;
     cardOvr: number;
-    cardName:string;
+    cardName: string;
   }) {
     track('pack_goat_revealed', { ...props, $set_once: { first_goat: new Date().toISOString() } });
   },
@@ -201,19 +201,19 @@ export const collectionEvents = {
 
   /** Busca realizada */
   searched(props: {
-    query:        string;
+    query: string;
     resultsCount: number;
-    filterCount:  number;
+    filterCount: number;
   }) {
     track('collection_searched', props);
   },
 
   /** Carta visualizada em detalhe */
   cardViewed(props: {
-    cardId:     string;
+    cardId: string;
     rarityCode: string;
-    ovr:        number;
-    source:     'grid' | 'search' | 'filter';
+    ovr: number;
+    source: 'grid' | 'search' | 'filter';
   }) {
     track('collection_card_viewed', props);
   },
@@ -245,22 +245,22 @@ export const squadEvents = {
   /** Carta adicionada ao campo */
   cardPlaced(props: {
     slotPosition: string;
-    cardId:       string;
-    rarityCode:   string;
-    ovr:          number;
-    newSquadOvr:  number;
-    chemistry:    number;
+    cardId: string;
+    rarityCode: string;
+    ovr: number;
+    newSquadOvr: number;
+    chemistry: number;
   }) {
     track('squad_card_placed', props);
   },
 
   /** Squad salvo */
   saved(props: {
-    formation:    string;
+    formation: string;
     starterCount: number;
-    benchCount:   number;
-    ovr:          number;
-    chemistry:    number;
+    benchCount: number;
+    ovr: number;
+    chemistry: number;
   }) {
     track('squad_saved', props);
   },
@@ -276,10 +276,10 @@ export const inGameEventEvents = {
 
   /** Tentativa de entrar no evento */
   entryAttempted(props: {
-    eventId:       string;
-    category:      string;
-    canEnter:      boolean;
-    blockingReason:string | null;
+    eventId: string;
+    category: string;
+    canEnter: boolean;
+    blockingReason: string | null;
   }) {
     track('event_entry_attempted', props);
   },
@@ -295,11 +295,11 @@ export const inGameEventEvents = {
 export const missionEvents = {
   /** Recompensa coletada */
   claimed(props: {
-    missionId:  string;
-    missionType:'daily' | 'weekly' | 'lifetime';
-    stage:      number;
-    credits:    number;
-    xp:         number;
+    missionId: string;
+    missionType: 'daily' | 'weekly' | 'lifetime';
+    stage: number;
+    credits: number;
+    xp: number;
   }) {
     track('mission_claimed', props);
   },
@@ -326,10 +326,10 @@ export const marketEvents = {
   },
 
   searchPerformed(props: {
-    query:         string;
-    filtersApplied:number;
-    resultsCount:  number;
-    sortBy:        string;
+    query: string;
+    filtersApplied: number;
+    resultsCount: number;
+    sortBy: string;
   }) {
     track('market_search_performed', props);
   },

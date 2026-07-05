@@ -23,10 +23,10 @@ import { track } from './posthog';
 // PostHog: onboarding_started → onboarding_step_completed (step=1..4) → onboarding_completed
 
 export const ONBOARDING_STEPS = {
-  ENTER_NAME:       { step:1, name:'enter_name'        as const },
-  CHOOSE_SQUAD:     { step:2, name:'choose_squad'      as const },
-  OPEN_FIRST_PACK:  { step:3, name:'open_first_pack'   as const },
-  PLAY_TUTORIAL:    { step:4, name:'play_tutorial'     as const },
+  ENTER_NAME: { step: 1, name: 'enter_name' as const },
+  CHOOSE_SQUAD: { step: 2, name: 'choose_squad' as const },
+  OPEN_FIRST_PACK: { step: 3, name: 'open_first_pack' as const },
+  PLAY_TUTORIAL: { step: 4, name: 'play_tutorial' as const },
 } as const;
 
 // ─── Pack Opening Funnel ──────────────────────────────────────────────────────
@@ -63,11 +63,11 @@ export function trackCollectionFunnelStep(
 // Para o PostHog calcular D1/D7/D30 automaticamente
 
 export function trackRetention(props: {
-  dayNumber:   1 | 7 | 30;  // D1, D7, D30
-  userId:      string;
-  level:       number;
-  totalCards:  number;
-  wins:        number;
+  dayNumber: 1 | 7 | 30; // D1, D7, D30
+  userId: string;
+  level: number;
+  totalCards: number;
+  wins: number;
 }): void {
   track(`retention_d${props.dayNumber}`, props);
 }
@@ -79,25 +79,25 @@ type EngagementTier = 'churned' | 'at_risk' | 'casual' | 'engaged' | 'power';
 
 export function calcEngagementTier(props: {
   daysSinceLastSession: number;
-  sessionsLast7d:       number;
-  packsLast7d:          number;
-  matchesLast7d:        number;
+  sessionsLast7d: number;
+  packsLast7d: number;
+  matchesLast7d: number;
 }): EngagementTier {
   const { daysSinceLastSession, sessionsLast7d, packsLast7d, matchesLast7d } = props;
 
-  if (daysSinceLastSession > 14)                 return 'churned';
-  if (daysSinceLastSession > 7)                  return 'at_risk';
-  if (sessionsLast7d < 2)                        return 'casual';
+  if (daysSinceLastSession > 14) return 'churned';
+  if (daysSinceLastSession > 7) return 'at_risk';
+  if (sessionsLast7d < 2) return 'casual';
   if (sessionsLast7d >= 5 || matchesLast7d >= 10) return 'power';
   return 'engaged';
 }
 
 export function trackEngagementScore(props: {
-  userId:            string;
-  tier:              EngagementTier;
-  sessionsLast7d:    number;
-  matchesLast7d:     number;
-  packsLast7d:       number;
+  userId: string;
+  tier: EngagementTier;
+  sessionsLast7d: number;
+  matchesLast7d: number;
+  packsLast7d: number;
 }): void {
   track('engagement_scored', props);
 }
@@ -123,23 +123,18 @@ export const POSTHOG_QUERIES = {
 
   // Taxa de partidas completadas vs abandonadas
   matchCompletion: {
-    start:     'match_started',
-    complete:  'match_completed',
-    abandon:   'match_abandoned',
+    start: 'match_started',
+    complete: 'match_completed',
+    abandon: 'match_abandoned',
   },
 
   // Cohorts de retenção
   retention: {
-    d1:  'retention_d1',
-    d7:  'retention_d7',
+    d1: 'retention_d1',
+    d7: 'retention_d7',
     d30: 'retention_d30',
   },
 
   // Eventos chave para DAU
-  dailyActive: [
-    'session_started',
-    'match_started',
-    'pack_open_started',
-    'collection_viewed',
-  ],
+  dailyActive: ['session_started', 'match_started', 'pack_open_started', 'collection_viewed'],
 } as const;

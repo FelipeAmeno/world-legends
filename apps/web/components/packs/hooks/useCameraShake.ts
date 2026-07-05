@@ -4,7 +4,7 @@ import { useCallback, useRef } from 'react';
 
 export function useCameraShake() {
   const rafRef = useRef(0);
-  const elRef  = useRef<HTMLDivElement | null>(null);
+  const elRef = useRef<HTMLDivElement | null>(null);
 
   const shake = useCallback((intensity = 8, duration = 400) => {
     const el = elRef.current;
@@ -19,7 +19,7 @@ export function useCameraShake() {
         return;
       }
       const decay = 1 - t / duration;
-      const mag   = intensity * decay;
+      const mag = intensity * decay;
       const x = (Math.random() - 0.5) * mag * 2;
       const y = (Math.random() - 0.5) * mag * 2;
       el.style.transform = `translate(${x.toFixed(2)}px,${y.toFixed(2)}px)`;

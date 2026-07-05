@@ -28,12 +28,21 @@ export function ClaimToast({ rewards, onDismiss }: Props) {
       {rewards && (
         <>
           {/* Particle burst */}
-          <div className="fixed top-20 left-0 right-0 pointer-events-none z-50 flex justify-center" style={{ height: 100 }}>
+          <div
+            className="fixed top-20 left-0 right-0 pointer-events-none z-50 flex justify-center"
+            style={{ height: 100 }}
+          >
             {PARTICLES.map((p, i) => (
               <motion.div
                 key={i}
                 className="absolute rounded-full"
-                style={{ width: p.size, height: p.size, background: p.color, top: '100%', left: '50%' }}
+                style={{
+                  width: p.size,
+                  height: p.size,
+                  background: p.color,
+                  top: '100%',
+                  left: '50%',
+                }}
                 initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
                 animate={{ x: p.x, y: -90, opacity: 0, scale: 0.3 }}
                 transition={{ duration: 1, delay: p.delay, ease: 'easeOut' }}

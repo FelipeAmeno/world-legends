@@ -49,29 +49,33 @@ let ctx: AudioContext | null = null;
 function getCtx(): AudioContext | null {
   if (typeof window === 'undefined') return null;
   if (!ctx) {
-    try { ctx = new AudioContext(); } catch { return null; }
+    try {
+      ctx = new AudioContext();
+    } catch {
+      return null;
+    }
   }
   return ctx;
 }
 
 /** Gera um bip sintético como placeholder de som */
 function playTone(
-  freq:    number,
-  dur:     number,
-  type:    OscillatorType = 'sine',
-  volume:  number = 0.15,
-  delay:   number = 0,
+  freq: number,
+  dur: number,
+  type: OscillatorType = 'sine',
+  volume = 0.15,
+  delay = 0,
 ): void {
   const c = getCtx();
   if (!c) return;
 
-  const osc  = c.createOscillator();
+  const osc = c.createOscillator();
   const gain = c.createGain();
 
   osc.connect(gain);
   gain.connect(c.destination);
 
-  osc.type      = type;
+  osc.type = type;
   osc.frequency.setValueAtTime(freq, c.currentTime + delay);
 
   gain.gain.setValueAtTime(0, c.currentTime + delay);
@@ -87,12 +91,13 @@ function playTone(
 export const SFX = {
   packSelect: () => {
     playTone(440, 0.12, 'sine', 0.1);
-    playTone(660, 0.10, 'sine', 0.08, 0.06);
+    playTone(660, 0.1, 'sine', 0.08, 0.06);
   },
 
   packCharge: () => {
     // Build-up crescente
-    const c = getCtx(); if (!c) return;
+    const c = getCtx();
+    if (!c) return;
     [200, 300, 440, 600, 800].forEach((freq, i) => {
       playTone(freq, 0.2, 'sawtooth', 0.05 + i * 0.02, i * 0.18);
     });
@@ -102,7 +107,7 @@ export const SFX = {
     // Whoosh + crack
     playTone(120, 0.08, 'square', 0.2);
     playTone(2000, 0.25, 'sine', 0.15, 0.05);
-    playTone(800,  0.30, 'triangle', 0.1, 0.1);
+    playTone(800, 0.3, 'triangle', 0.1, 0.1);
   },
 
   cardCommon: () => {
@@ -111,13 +116,13 @@ export const SFX = {
 
   cardRare: () => {
     playTone(660, 0.15, 'sine', 0.15);
-    playTone(880, 0.12, 'sine', 0.10, 0.08);
+    playTone(880, 0.12, 'sine', 0.1, 0.08);
   },
 
   cardElite: () => {
-    playTone(440, 0.05, 'square', 0.20);
-    playTone(880, 0.25, 'sine',   0.15, 0.05);
-    playTone(1320,0.20, 'sine',   0.10, 0.12);
+    playTone(440, 0.05, 'square', 0.2);
+    playTone(880, 0.25, 'sine', 0.15, 0.05);
+    playTone(1320, 0.2, 'sine', 0.1, 0.12);
   },
 
   cardLegendary: () => {
@@ -128,7 +133,7 @@ export const SFX = {
 
   cardUltra: () => {
     [330, 415, 495, 660, 825, 990].forEach((f, i) => {
-      playTone(f, 0.5, 'sine', 0.10 + i * 0.015, i * 0.05);
+      playTone(f, 0.5, 'sine', 0.1 + i * 0.015, i * 0.05);
     });
   },
 
@@ -136,8 +141,8 @@ export const SFX = {
     // Orchestral hit sintético
     const freqs = [220, 277, 330, 440, 554, 660, 880];
     freqs.forEach((f, i) => {
-      playTone(f, 1.5, 'sine',     0.12 + i * 0.01, i * 0.03);
-      playTone(f * 2, 0.8, 'triangle', 0.06,         i * 0.04 + 0.3);
+      playTone(f, 1.5, 'sine', 0.12 + i * 0.01, i * 0.03);
+      playTone(f * 2, 0.8, 'triangle', 0.06, i * 0.04 + 0.3);
     });
   },
 } as const;
@@ -146,11 +151,11 @@ export type SFXKey = keyof typeof SFX;
 
 /** Mapa de raridade → som */
 export const RARITY_SFX: Record<string, SFXKey> = {
-  common:         'cardCommon',
-  rare:           'cardRare',
-  elite:          'cardElite',
-  legendary:      'cardLegendary',
-  ultra:          'cardUltra',
+  common: 'cardCommon',
+  rare: 'cardRare',
+  elite: 'cardElite',
+  legendary: 'cardLegendary',
+  ultra: 'cardUltra',
   world_cup_hero: 'cardGoat',
 };
 
@@ -166,8 +171,8 @@ export const UI_SFX = {
   /** Confirmação positiva */
   success: () => {
     playTone(660, 0.12, 'sine', 0.12);
-    playTone(880, 0.15, 'sine', 0.10, 0.10);
-    playTone(1100,0.20, 'sine', 0.08, 0.20);
+    playTone(880, 0.15, 'sine', 0.1, 0.1);
+    playTone(1100, 0.2, 'sine', 0.08, 0.2);
   },
 
   /** Erro / ação bloqueada */
@@ -179,7 +184,7 @@ export const UI_SFX = {
   /** Toggle / switch */
   toggle: () => {
     playTone(900, 0.04, 'square', 0.06);
-    playTone(1100,0.04, 'square', 0.05, 0.04);
+    playTone(1100, 0.04, 'square', 0.05, 0.04);
   },
 
   /** Transição de tela */
@@ -190,7 +195,7 @@ export const UI_SFX = {
 
   /** Squad salvo */
   save: () => {
-    playTone(550, 0.10, 'sine', 0.10);
+    playTone(550, 0.1, 'sine', 0.1);
     playTone(660, 0.12, 'sine', 0.08, 0.08);
     playTone(880, 0.14, 'sine', 0.06, 0.16);
   },
@@ -203,7 +208,7 @@ export const MATCH_SFX = {
   goal: () => {
     // Horn + crowd roar sintético
     [220, 277, 330, 440].forEach((f, i) => {
-      playTone(f, 0.8, 'sawtooth', 0.10 + i * 0.02, i * 0.04);
+      playTone(f, 0.8, 'sawtooth', 0.1 + i * 0.02, i * 0.04);
     });
     playTone(880, 0.5, 'sine', 0.15, 0.1);
   },
@@ -211,20 +216,20 @@ export const MATCH_SFX = {
   /** Apito inicial */
   kickoff: () => {
     playTone(1200, 0.12, 'square', 0.18);
-    playTone(1000, 0.10, 'square', 0.15, 0.14);
+    playTone(1000, 0.1, 'square', 0.15, 0.14);
   },
 
   /** Apito final */
   fullTime: () => {
     playTone(1200, 0.12, 'square', 0.18);
-    playTone(1000, 0.10, 'square', 0.15, 0.14);
+    playTone(1000, 0.1, 'square', 0.15, 0.14);
     playTone(1200, 0.12, 'square', 0.18, 0.28);
   },
 
   /** Vitória */
   win: () => {
     [440, 550, 660, 880, 1100].forEach((f, i) => {
-      playTone(f, 0.35, 'sine', 0.10 + i * 0.02, i * 0.08);
+      playTone(f, 0.35, 'sine', 0.1 + i * 0.02, i * 0.08);
     });
   },
 
@@ -242,13 +247,13 @@ export const REWARD_SFX = {
   /** Moedas pequenas */
   coins: () => {
     [880, 990, 1100].forEach((f, i) => {
-      playTone(f, 0.08, 'sine', 0.10, i * 0.06);
+      playTone(f, 0.08, 'sine', 0.1, i * 0.06);
     });
   },
 
   /** XP ganho */
   xp: () => {
-    playTone(660, 0.10, 'triangle', 0.10);
+    playTone(660, 0.1, 'triangle', 0.1);
     playTone(880, 0.14, 'triangle', 0.08, 0.08);
   },
 
@@ -259,13 +264,13 @@ export const REWARD_SFX = {
       playTone(f, 0.6, 'sine', 0.08 + i * 0.01, i * 0.05);
     });
     // Shimmer peak
-    playTone(1760, 0.8, 'sine', 0.10, 0.4);
+    playTone(1760, 0.8, 'sine', 0.1, 0.4);
   },
 
   /** Missão concluída */
   missionDone: () => {
     [440, 550, 660, 880].forEach((f, i) => {
-      playTone(f, 0.2, 'sine', 0.10, i * 0.07);
+      playTone(f, 0.2, 'sine', 0.1, i * 0.07);
     });
     playTone(1320, 0.3, 'sine', 0.08, 0.32);
   },

@@ -1,8 +1,8 @@
+import { CardFullPage } from '@/components/collection/CardFullPage';
 import { getCollectionMap } from '@/lib/collection-data';
 import { getUserCollection } from '@/lib/server/game-data';
 import { getCurrentUser } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
-import { CardFullPage } from '@/components/collection/CardFullPage';
 
 type Props = {
   params: Promise<{ cardId: string }>;

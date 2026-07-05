@@ -1,20 +1,24 @@
 'use client';
 
-import { getTodayProgress, type TodayProgress } from '@/lib/retention-store';
+import { type TodayProgress, getTodayProgress } from '@/lib/retention-store';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
 const ITEMS: Array<{ key: keyof TodayProgress; icon: string; label: string }> = [
-  { key: 'login',   icon: '📅', label: 'Login' },
-  { key: 'pack',    icon: '📦', label: 'Pack' },
-  { key: 'win',     icon: '⚽', label: 'Vitória' },
+  { key: 'login', icon: '📅', label: 'Login' },
+  { key: 'pack', icon: '📦', label: 'Pack' },
+  { key: 'win', icon: '⚽', label: 'Vitória' },
   { key: 'mission', icon: '✅', label: 'Missão' },
-  { key: 'reward',  icon: '🎁', label: 'Recompensa' },
+  { key: 'reward', icon: '🎁', label: 'Recompensa' },
 ];
 
 export function ProgressTracker() {
   const [progress, setProgress] = useState<TodayProgress>({
-    login: false, pack: false, win: false, mission: false, reward: false,
+    login: false,
+    pack: false,
+    win: false,
+    mission: false,
+    reward: false,
   });
 
   useEffect(() => {

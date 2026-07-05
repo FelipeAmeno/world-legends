@@ -1,3 +1,12 @@
+import {
+  PITY_THRESHOLDS,
+  createPityCounter,
+  createUserPityState,
+  isForced,
+  updatePityAfterOpening,
+} from '@world-legends/packs';
+import type { UserPityState } from '@world-legends/packs';
+import type { RarityCode } from '@world-legends/types';
 /**
  * Testes de lógica do pack action (Sprint 1 — P2, P4).
  *
@@ -8,15 +17,6 @@
  *   - Lógica de compensação (invariante de atomicidade)
  */
 import { describe, expect, it } from 'vitest';
-import {
-  createPityCounter,
-  createUserPityState,
-  updatePityAfterOpening,
-  isForced,
-  PITY_THRESHOLDS,
-} from '@world-legends/packs';
-import type { UserPityState } from '@world-legends/packs';
-import type { RarityCode } from '@world-legends/types';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

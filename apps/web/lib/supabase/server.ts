@@ -9,9 +9,9 @@
  */
 
 import { createServerClient } from '@supabase/ssr';
-import type { CookieOptions }  from '@supabase/ssr';
-import { cookies }            from 'next/headers';
-import type { Database }      from './client';
+import type { CookieOptions } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import type { Database } from './client';
 import { isSupabaseConfigured } from './client';
 
 // ─── Para Server Components ───────────────────────────────────────────────────
@@ -36,7 +36,9 @@ export async function createSupabaseServer() {
         setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
           try {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options as any));
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options as any),
+            );
           } catch {
             // Server Components não podem escrever cookies
             // O middleware cuida de atualizar os cookies de sessão
@@ -53,7 +55,10 @@ export async function getCurrentUser() {
   const sb = await createSupabaseServer();
   if (!sb) return null;
 
-  const { data: { user }, error } = await sb.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await sb.auth.getUser();
   if (error || !user) return null;
   return user;
 }
@@ -62,6 +67,8 @@ export async function getCurrentSession() {
   const sb = await createSupabaseServer();
   if (!sb) return null;
 
-  const { data: { session } } = await sb.auth.getSession();
+  const {
+    data: { session },
+  } = await sb.auth.getSession();
   return session;
 }

@@ -1,14 +1,21 @@
 'use client';
 
-import { EASE, SPRING } from '@/lib/motion-tokens';
 import { useGame } from '@/lib/game-context';
+import { EASE, SPRING } from '@/lib/motion-tokens';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 
 const TITLES: [number, string][] = [
-  [1, 'Recruta'], [3, 'Jovem Promessa'], [5, 'Profissional'],
-  [8, 'Internacional'], [10, 'Ídolo'], [12, 'Estrela'],
-  [15, 'Superestrela'], [20, 'Lenda'], [30, 'Imortal'], [50, 'GOAT'],
+  [1, 'Recruta'],
+  [3, 'Jovem Promessa'],
+  [5, 'Profissional'],
+  [8, 'Internacional'],
+  [10, 'Ídolo'],
+  [12, 'Estrela'],
+  [15, 'Superestrela'],
+  [20, 'Lenda'],
+  [30, 'Imortal'],
+  [50, 'GOAT'],
 ];
 function getTitle(level: number): string {
   return [...TITLES].filter(([l]) => l <= level).pop()?.[1] ?? 'Recruta';
@@ -30,8 +37,8 @@ export function LevelUpOverlay() {
   const { state, dismissLevelUp } = useGame();
   const { leveledUp, level, prevLevel } = state;
 
-  const [phase, setPhase]       = useState<Phase>('enter');
-  const [xpWidth, setXpWidth]   = useState(0);
+  const [phase, setPhase] = useState<Phase>('enter');
+  const [xpWidth, setXpWidth] = useState(0);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
@@ -43,10 +50,13 @@ export function LevelUpOverlay() {
     setXpWidth(0);
 
     timers.current = [
-      setTimeout(() => { setPhase('xp'); setTimeout(() => setXpWidth(100), 60); }, 350),
+      setTimeout(() => {
+        setPhase('xp');
+        setTimeout(() => setXpWidth(100), 60);
+      }, 350),
       setTimeout(() => setPhase('burst'), 1150),
-      setTimeout(() => setPhase('title'),  2000),
-      setTimeout(() => setPhase('done'),   2800),
+      setTimeout(() => setPhase('title'), 2000),
+      setTimeout(() => setPhase('done'), 2800),
     ];
 
     return () => timers.current.forEach(clearTimeout);
@@ -54,7 +64,7 @@ export function LevelUpOverlay() {
 
   if (!leveledUp) return null;
 
-  const newTitle  = getTitle(level);
+  const newTitle = getTitle(level);
   const showBurst = phase === 'burst' || phase === 'title' || phase === 'done';
 
   return (
@@ -72,7 +82,7 @@ export function LevelUpOverlay() {
         className="absolute rounded-full blur-3xl pointer-events-none"
         style={{ width: 450, height: 450, background: 'rgba(201,168,76,0.1)' }}
         animate={{ scale: [1, 1.35, 1], opacity: [0.5, 0.9, 0.5] }}
-        transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 2.8, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
       />
 
       {/* Particle burst */}
@@ -81,15 +91,17 @@ export function LevelUpOverlay() {
           <div className="absolute" style={{ top: '42%', left: '50%', width: 0, height: 0 }}>
             {PARTICLES.map((p, i) => {
               const rad = (p.angle * Math.PI) / 180;
-              const tx  = Math.cos(rad) * p.r;
-              const ty  = Math.sin(rad) * p.r;
+              const tx = Math.cos(rad) * p.r;
+              const ty = Math.sin(rad) * p.r;
               return (
                 <motion.div
                   key={i}
                   className="absolute rounded-full"
                   style={{
-                    width: p.size, height: p.size,
-                    top: -p.size / 2, left: -p.size / 2,
+                    width: p.size,
+                    height: p.size,
+                    top: -p.size / 2,
+                    left: -p.size / 2,
                     background: p.color,
                     boxShadow: `0 0 ${p.size * 2}px ${p.color}`,
                   }}
@@ -112,8 +124,10 @@ export function LevelUpOverlay() {
               className="absolute rounded-full border pointer-events-none"
               style={{
                 borderColor: 'rgba(201,168,76,0.35)',
-                top: '42%', left: '50%',
-                x: '-50%', y: '-50%',
+                top: '42%',
+                left: '50%',
+                x: '-50%',
+                y: '-50%',
               }}
               initial={{ width: 80, height: 80, opacity: 0.8 }}
               animate={{ width: 460, height: 460, opacity: 0 }}
@@ -167,14 +181,22 @@ export function LevelUpOverlay() {
           <motion.div
             className="relative flex items-center justify-center"
             style={{
-              width: 78, height: 78, borderRadius: '50%',
+              width: 78,
+              height: 78,
+              borderRadius: '50%',
               border: '3px solid rgba(201,168,76,0.75)',
               background: 'rgba(201,168,76,0.06)',
               boxShadow: '0 0 28px rgba(201,168,76,0.45), inset 0 0 18px rgba(201,168,76,0.12)',
             }}
             animate={
               showBurst
-                ? { boxShadow: ['0 0 28px rgba(201,168,76,0.45)', '0 0 60px rgba(201,168,76,0.85)', '0 0 28px rgba(201,168,76,0.45)'] }
+                ? {
+                    boxShadow: [
+                      '0 0 28px rgba(201,168,76,0.45)',
+                      '0 0 60px rgba(201,168,76,0.85)',
+                      '0 0 28px rgba(201,168,76,0.45)',
+                    ],
+                  }
                 : {}
             }
             transition={{ duration: 0.55 }}
@@ -194,7 +216,11 @@ export function LevelUpOverlay() {
               {showBurst && (
                 <motion.div
                   className="absolute rounded-full pointer-events-none"
-                  style={{ inset: -3, borderRadius: '50%', border: '2px solid rgba(201,168,76,0.6)' }}
+                  style={{
+                    inset: -3,
+                    borderRadius: '50%',
+                    border: '2px solid rgba(201,168,76,0.6)',
+                  }}
                   initial={{ scale: 1, opacity: 0.9 }}
                   animate={{ scale: 1.5, opacity: 0 }}
                   transition={{ duration: 0.8, ease: 'easeOut' }}
@@ -213,7 +239,10 @@ export function LevelUpOverlay() {
               animate={{ opacity: 1, scaleX: 1 }}
               transition={{ duration: 0.28, ease: 'easeOut' }}
             >
-              <div className="flex justify-between mb-1.5" style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>
+              <div
+                className="flex justify-between mb-1.5"
+                style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)' }}
+              >
                 <span>XP</span>
                 <span>Nível {level}</span>
               </div>
@@ -229,7 +258,10 @@ export function LevelUpOverlay() {
                   }}
                   initial={{ width: '0%' }}
                   animate={{ width: `${xpWidth}%` }}
-                  transition={{ duration: 0.75, ease: EASE.smooth as [number, number, number, number] }}
+                  transition={{
+                    duration: 0.75,
+                    ease: EASE.smooth as [number, number, number, number],
+                  }}
                 />
               </div>
             </motion.div>
@@ -251,7 +283,15 @@ export function LevelUpOverlay() {
               exit={{ opacity: 0 }}
               transition={SPRING.bouncy}
             >
-              <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 4 }}>
+              <p
+                style={{
+                  fontSize: 9,
+                  color: 'rgba(255,255,255,0.3)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.2em',
+                  marginBottom: 4,
+                }}
+              >
                 Novo título
               </p>
               <p

@@ -6,13 +6,13 @@
  * @world-legends/daily-login package API — no DB, no Server Actions.
  */
 
-import { describe, expect, it } from 'vitest';
 import {
   DAILY_SCHEDULE,
-  STREAK_MILESTONES,
   DailyLoginService,
   type DailyLoginState,
+  STREAK_MILESTONES,
 } from '@world-legends/daily-login';
+import { describe, expect, it } from 'vitest';
 
 const svc = new DailyLoginService();
 
@@ -39,7 +39,7 @@ describe('DAILY_SCHEDULE', () => {
   it('somente o dia 7 é milestone', () => {
     const milestones = DAILY_SCHEDULE.filter((d) => d.isMilestone);
     expect(milestones.length).toBe(1);
-    expect(milestones[0]!.day).toBe(7);
+    expect(milestones[0]?.day).toBe(7);
   });
 
   it('cada dia tem pelo menos 1 recompensa', () => {

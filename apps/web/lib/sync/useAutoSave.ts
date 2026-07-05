@@ -14,13 +14,13 @@
  * Sem botão salvar. Sem intervenção do usuário.
  */
 
-import { useEffect, useCallback, useRef } from 'react';
-import { useAuth }                         from '@/lib/auth-context';
-import { getSyncEngine }                   from './SyncEngine';
+import { useAuth } from '@/lib/auth-context';
+import { useCallback, useEffect, useRef } from 'react';
+import { getSyncEngine } from './SyncEngine';
 import type {
+  AchievementPayload,
   MatchPayload,
   PackPayload,
-  AchievementPayload,
   SquadPayload,
   UserProgressPayload,
 } from './types';
@@ -34,7 +34,7 @@ import type {
  */
 export function useAutoSave() {
   const { user } = useAuth();
-  const engine   = getSyncEngine();
+  const engine = getSyncEngine();
   const prevUser = useRef<string | null>(null);
 
   // Sincronizar userId com o engine
@@ -71,9 +71,12 @@ export function useAutoSave() {
 export function useSaveUserProgress() {
   const engine = getSyncEngine();
 
-  const saveUserProgress = useCallback((payload: UserProgressPayload) => {
-    engine.enqueue('user_progress', payload);
-  }, [engine]);
+  const saveUserProgress = useCallback(
+    (payload: UserProgressPayload) => {
+      engine.enqueue('user_progress', payload);
+    },
+    [engine],
+  );
 
   return { saveUserProgress };
 }
@@ -84,12 +87,15 @@ export function useSaveUserProgress() {
 export function useSaveMatchResult() {
   const engine = getSyncEngine();
 
-  const saveMatchResult = useCallback((payload: MatchPayload) => {
-    // 1. Registrar partida
-    engine.enqueue('match_result', payload);
-    // 2. Atualizar stats do usuário
-    engine.enqueue('user_stats', { outcome: payload.outcome });
-  }, [engine]);
+  const saveMatchResult = useCallback(
+    (payload: MatchPayload) => {
+      // 1. Registrar partida
+      engine.enqueue('match_result', payload);
+      // 2. Atualizar stats do usuário
+      engine.enqueue('user_stats', { outcome: payload.outcome });
+    },
+    [engine],
+  );
 
   return { saveMatchResult };
 }
@@ -100,9 +106,12 @@ export function useSaveMatchResult() {
 export function useSavePackOpening() {
   const engine = getSyncEngine();
 
-  const savePackOpening = useCallback((payload: PackPayload) => {
-    engine.enqueue('pack_opening', payload);
-  }, [engine]);
+  const savePackOpening = useCallback(
+    (payload: PackPayload) => {
+      engine.enqueue('pack_opening', payload);
+    },
+    [engine],
+  );
 
   return { savePackOpening };
 }
@@ -113,9 +122,12 @@ export function useSavePackOpening() {
 export function useSaveSquad() {
   const engine = getSyncEngine();
 
-  const saveSquad = useCallback((payload: SquadPayload) => {
-    engine.enqueue('squad', payload);
-  }, [engine]);
+  const saveSquad = useCallback(
+    (payload: SquadPayload) => {
+      engine.enqueue('squad', payload);
+    },
+    [engine],
+  );
 
   return { saveSquad };
 }
@@ -126,10 +138,13 @@ export function useSaveSquad() {
 export function useSaveAchievement() {
   const engine = getSyncEngine();
 
-  const saveAchievement = useCallback((achievementId: string, stage: number) => {
-    const payload: AchievementPayload = { achievementId, stage };
-    engine.enqueue('achievement', payload);
-  }, [engine]);
+  const saveAchievement = useCallback(
+    (achievementId: string, stage: number) => {
+      const payload: AchievementPayload = { achievementId, stage };
+      engine.enqueue('achievement', payload);
+    },
+    [engine],
+  );
 
   return { saveAchievement };
 }
@@ -146,20 +161,16 @@ export function useSaveAchievement() {
  *     500  // debounce adicional
  *   )
  */
-export function useSyncOnChange<T>(
-  value:    T,
-  onSave:   (value: T) => void,
-  debounce: number = 0,
-): void {
+export function useSyncOnChange<T>(value: T, onSave: (value: T) => void, debounce = 0): void {
   const isFirstRender = useRef(true);
-  const savedValue    = useRef(value);
-  const timer         = useRef<NodeJS.Timeout | undefined>(undefined);
+  const savedValue = useRef(value);
+  const timer = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
     // Ignorar render inicial
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      savedValue.current    = value;
+      savedValue.current = value;
       return;
     }
 

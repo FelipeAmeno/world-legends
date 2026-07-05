@@ -12,19 +12,16 @@
  *   const result = await users.findById(userId)
  */
 
-import {
-  getRegistry,
-  initRegistry,
-  type PersistenceRegistry,
-} from '@world-legends/persistence';
+import { type PersistenceRegistry, getRegistry, initRegistry } from '@world-legends/persistence';
 
 // ─── Auto-detect ──────────────────────────────────────────────────────────────
 
 function isSupabaseReady(): boolean {
-  const url     = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   return !!(
-    url && anonKey &&
+    url &&
+    anonKey &&
     url !== 'https://your-project.supabase.co' &&
     !url.includes('placeholder')
   );
@@ -42,7 +39,7 @@ export function ensureRegistry(): void {
 
   if (isSupabaseReady()) {
     initRegistry('supabase', {
-      url:     process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
       anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     });
     console.info('[db] Persistence: Supabase ✓');
@@ -63,4 +60,4 @@ export function getDb(): PersistenceRegistry {
 
 // ─── Re-exports convenientes ──────────────────────────────────────────────────
 
-export { type PersistenceRegistry };
+export type { PersistenceRegistry };

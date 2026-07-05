@@ -18,40 +18,49 @@ type Tier = {
 };
 
 function getTier(days: number): Tier {
-  if (days >= 30) return {
-    flames: 0, crown: true,
-    label: '👑 Lenda mensal!',
-    color: '#fbbf24',
-    glow: '0 0 24px rgba(251,191,36,0.6)',
-    bg: 'rgba(251,191,36,0.08)',
-    border: 'rgba(251,191,36,0.35)',
-  };
-  if (days >= 15) return {
-    flames: 3, crown: false,
-    label: '🔥🔥🔥 Em chamas!',
-    color: '#f97316',
-    glow: '0 0 20px rgba(249,115,22,0.5)',
-    bg: 'rgba(249,115,22,0.08)',
-    border: 'rgba(249,115,22,0.3)',
-  };
-  if (days >= 7) return {
-    flames: 2, crown: false,
-    label: '🔥🔥 Consistência',
-    color: '#fb923c',
-    glow: '0 0 16px rgba(251,146,60,0.45)',
-    bg: 'rgba(251,146,60,0.07)',
-    border: 'rgba(251,146,60,0.25)',
-  };
-  if (days >= 3) return {
-    flames: 1, crown: false,
-    label: '🔥 Aquecendo',
-    color: '#fbbf24',
-    glow: '0 0 12px rgba(251,191,36,0.35)',
-    bg: 'rgba(251,191,36,0.06)',
-    border: 'rgba(251,191,36,0.2)',
-  };
+  if (days >= 30)
+    return {
+      flames: 0,
+      crown: true,
+      label: '👑 Lenda mensal!',
+      color: '#fbbf24',
+      glow: '0 0 24px rgba(251,191,36,0.6)',
+      bg: 'rgba(251,191,36,0.08)',
+      border: 'rgba(251,191,36,0.35)',
+    };
+  if (days >= 15)
+    return {
+      flames: 3,
+      crown: false,
+      label: '🔥🔥🔥 Em chamas!',
+      color: '#f97316',
+      glow: '0 0 20px rgba(249,115,22,0.5)',
+      bg: 'rgba(249,115,22,0.08)',
+      border: 'rgba(249,115,22,0.3)',
+    };
+  if (days >= 7)
+    return {
+      flames: 2,
+      crown: false,
+      label: '🔥🔥 Consistência',
+      color: '#fb923c',
+      glow: '0 0 16px rgba(251,146,60,0.45)',
+      bg: 'rgba(251,146,60,0.07)',
+      border: 'rgba(251,146,60,0.25)',
+    };
+  if (days >= 3)
+    return {
+      flames: 1,
+      crown: false,
+      label: '🔥 Aquecendo',
+      color: '#fbbf24',
+      glow: '0 0 12px rgba(251,191,36,0.35)',
+      bg: 'rgba(251,191,36,0.06)',
+      border: 'rgba(251,191,36,0.2)',
+    };
   return {
-    flames: 0, crown: false,
+    flames: 0,
+    crown: false,
     label: 'Comece hoje',
     color: 'rgba(255,255,255,0.3)',
     glow: 'none',
@@ -128,7 +137,10 @@ export function StreakBadge({ streakDays, nextMilestone }: Props) {
         </div>
 
         {nextMilestone && (
-          <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.3)' }}>
+          <div
+            className="h-1 rounded-full overflow-hidden"
+            style={{ background: 'rgba(0,0,0,0.3)' }}
+          >
             <motion.div
               className="h-full rounded-full"
               style={{

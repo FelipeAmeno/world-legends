@@ -273,7 +273,9 @@ export function PackFloatScene({ pack, phase, onTap, onBack }: Props) {
       <motion.div
         className="text-center min-h-[48px] flex flex-col items-center justify-center"
         animate={isCharging ? { opacity: 1 } : { opacity: [0.5, 1, 0.5] }}
-        transition={isCharging ? { duration: 0.1 } : { duration: 2, repeat: Number.POSITIVE_INFINITY }}
+        transition={
+          isCharging ? { duration: 0.1 } : { duration: 2, repeat: Number.POSITIVE_INFINITY }
+        }
       >
         {isCharging ? (
           <motion.p
@@ -291,7 +293,7 @@ export function PackFloatScene({ pack, phase, onTap, onBack }: Props) {
           </motion.p>
         ) : (
           <>
-            <p className="text-parchment text-sm font-medium">▼  Toque no pack para abrir</p>
+            <p className="text-parchment text-sm font-medium">▼ Toque no pack para abrir</p>
             <p className="text-muted text-[10px] mt-1">
               {pack.guarantee} · {pack.cardCount} cartas
             </p>

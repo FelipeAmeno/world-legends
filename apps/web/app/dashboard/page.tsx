@@ -1,4 +1,3 @@
-import { notFound } from 'next/navigation';
 import { getCollection } from '@/lib/collection-data';
 import { SQUAD_CHEMISTRY, SQUAD_RATING, USER_PROFILE } from '@/lib/mock-data';
 import { calculateChemistry } from '@world-legends/chemistry';
@@ -9,6 +8,7 @@ import { calculateChemistry } from '@world-legends/chemistry';
  * Em produção retorna 404.
  */
 import { BASE_RARITY_WEIGHTS, CLASSIC_PACK, ELITE_PACK, LEGEND_PACK } from '@world-legends/packs';
+import { notFound } from 'next/navigation';
 
 import { BuffsPanel } from '@/components/dashboard/BuffsPanel';
 import { ChemDebugPanel } from '@/components/dashboard/ChemDebugPanel';

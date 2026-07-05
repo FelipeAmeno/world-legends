@@ -2,12 +2,12 @@
 // Pure localStorage tracker for daily activity — no React dependencies.
 
 const KEY = {
-  date:    'wl_today_date',
-  login:   'wl_today_login',
-  pack:    'wl_today_pack',
-  win:     'wl_today_win',
+  date: 'wl_today_date',
+  login: 'wl_today_login',
+  pack: 'wl_today_pack',
+  win: 'wl_today_win',
   mission: 'wl_today_mission',
-  reward:  'wl_today_reward',
+  reward: 'wl_today_reward',
 } as const;
 
 export type TodayAction = 'login' | 'pack' | 'win' | 'mission' | 'reward';
@@ -41,10 +41,10 @@ export function getTodayProgress(): TodayProgress {
   }
   guardDay();
   return {
-    login:   localStorage.getItem(KEY.login)   === '1',
-    pack:    localStorage.getItem(KEY.pack)    === '1',
-    win:     localStorage.getItem(KEY.win)     === '1',
+    login: localStorage.getItem(KEY.login) === '1',
+    pack: localStorage.getItem(KEY.pack) === '1',
+    win: localStorage.getItem(KEY.win) === '1',
     mission: localStorage.getItem(KEY.mission) === '1',
-    reward:  localStorage.getItem(KEY.reward)  === '1',
+    reward: localStorage.getItem(KEY.reward) === '1',
   };
 }

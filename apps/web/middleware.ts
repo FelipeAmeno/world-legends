@@ -14,9 +14,9 @@
  */
 
 import { createServerClient } from '@supabase/ssr';
-import type { CookieOptions }  from '@supabase/ssr';
-import { NextResponse }        from 'next/server';
-import type { NextRequest }    from 'next/server';
+import type { CookieOptions } from '@supabase/ssr';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 // ─── Rotas públicas (sem auth) ────────────────────────────────────────────────
 
@@ -25,14 +25,14 @@ const PUBLIC_PREFIXES = ['/auth/', '/api/public/', '/_next/', '/favicon'];
 
 function isPublic(pathname: string): boolean {
   if (PUBLIC_PATHS.includes(pathname)) return true;
-  return PUBLIC_PREFIXES.some(prefix => pathname.startsWith(prefix));
+  return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 
 export async function middleware(request: NextRequest) {
-  const url    = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey= process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   // Modo guest: sem configuração → deixar passar tudo
   if (!url || !anonKey || url === 'https://your-project.supabase.co') {
@@ -48,19 +48,21 @@ export async function middleware(request: NextRequest) {
       },
       setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
         // Atualizar cookies na resposta (refresh token)
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value),
-        );
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         supabaseResponse = NextResponse.next({ request });
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options as any));
+        cookiesToSet.forEach(({ name, value, options }) =>
+          supabaseResponse.cookies.set(name, value, options as any),
+        );
       },
     },
   });
 
   // IMPORTANTE: não chamar getSession() aqui (pode ter bug de race)
   // Usar getUser() que valida o token no servidor
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
 

@@ -11,27 +11,69 @@ import type { RarityCode } from '@world-legends/types';
 // ─── Nomes dos países ─────────────────────────────────────────────────────────
 
 export const COUNTRY_NAMES: Record<string, string> = {
-  BR: 'Brasil',          AR: 'Argentina',        DE: 'Alemanha',
-  FR: 'França',          IT: 'Itália',           ES: 'Espanha',
-  NL: 'Holanda',         PT: 'Portugal',         UY: 'Uruguai',
-  HR: 'Croácia',         EN: 'Inglaterra',       GB: 'Grã-Bretanha',
-  DK: 'Dinamarca',       SU: 'União Soviética',  YU: 'Iugoslávia',
-  CS: 'Tchecoslováquia', NI: 'Irlanda do Norte', TR: 'Turquia',
-  CO: 'Colômbia',        HU: 'Hungria',          SE: 'Suécia',
-  PL: 'Polônia',         BE: 'Bélgica',          MX: 'México',
-  CM: 'Camarões',        NG: 'Nigéria',          SN: 'Senegal',
-  GH: 'Gana',            CL: 'Chile',            EG: 'Egito',
-  MA: 'Marrocos',        AU: 'Austrália',        JP: 'Japão',
-  KR: 'Coreia do Sul',   US: 'EUA',              RU: 'Rússia',
-  CZ: 'Rep. Tcheca',     SK: 'Eslováquia',       IE: 'Irlanda',
-  SC: 'Escócia',         WL: 'País de Gales',    CI: 'Costa do Marfim',
-  RO: 'Romênia',         BG: 'Bulgária',         AT: 'Áustria',
-  CH: 'Suíça',           NO: 'Noruega',          EC: 'Equador',
-  PE: 'Peru',            PY: 'Paraguai',         CR: 'Costa Rica',
-  TN: 'Tunísia',         ZA: 'África do Sul',    AO: 'Angola',
-  SA: 'Arábia Saudita',  IR: 'Irã',              GR: 'Grécia',
-  UA: 'Ucrânia',         IS: 'Islândia',         RS: 'Sérvia',
-  SI: 'Eslovênia',       AL: 'Albânia',          BY: 'Bielo-Rússia',
+  BR: 'Brasil',
+  AR: 'Argentina',
+  DE: 'Alemanha',
+  FR: 'França',
+  IT: 'Itália',
+  ES: 'Espanha',
+  NL: 'Holanda',
+  PT: 'Portugal',
+  UY: 'Uruguai',
+  HR: 'Croácia',
+  EN: 'Inglaterra',
+  GB: 'Grã-Bretanha',
+  DK: 'Dinamarca',
+  SU: 'União Soviética',
+  YU: 'Iugoslávia',
+  CS: 'Tchecoslováquia',
+  NI: 'Irlanda do Norte',
+  TR: 'Turquia',
+  CO: 'Colômbia',
+  HU: 'Hungria',
+  SE: 'Suécia',
+  PL: 'Polônia',
+  BE: 'Bélgica',
+  MX: 'México',
+  CM: 'Camarões',
+  NG: 'Nigéria',
+  SN: 'Senegal',
+  GH: 'Gana',
+  CL: 'Chile',
+  EG: 'Egito',
+  MA: 'Marrocos',
+  AU: 'Austrália',
+  JP: 'Japão',
+  KR: 'Coreia do Sul',
+  US: 'EUA',
+  RU: 'Rússia',
+  CZ: 'Rep. Tcheca',
+  SK: 'Eslováquia',
+  IE: 'Irlanda',
+  SC: 'Escócia',
+  WL: 'País de Gales',
+  CI: 'Costa do Marfim',
+  RO: 'Romênia',
+  BG: 'Bulgária',
+  AT: 'Áustria',
+  CH: 'Suíça',
+  NO: 'Noruega',
+  EC: 'Equador',
+  PE: 'Peru',
+  PY: 'Paraguai',
+  CR: 'Costa Rica',
+  TN: 'Tunísia',
+  ZA: 'África do Sul',
+  AO: 'Angola',
+  SA: 'Arábia Saudita',
+  IR: 'Irã',
+  GR: 'Grécia',
+  UA: 'Ucrânia',
+  IS: 'Islândia',
+  RS: 'Sérvia',
+  SI: 'Eslovênia',
+  AL: 'Albânia',
+  BY: 'Bielo-Rússia',
 };
 
 // ─── Flag emoji ───────────────────────────────────────────────────────────────
@@ -65,17 +107,23 @@ export function countryName(code: string): string {
 
 // ─── Raridade ─────────────────────────────────────────────────────────────────
 
-export const RARITY_META: Record<RarityCode, { label: string; color: string; textColor: string }> = {
-  world_cup_hero: { label: 'WCH',     color: '#e2e8f0', textColor: '#0f172a' },
-  ultra:          { label: 'Ultra',   color: '#ec4899', textColor: '#fff'    },
-  legendary:      { label: 'Lendária',color: '#c9a84c', textColor: '#07080f' },
-  elite:          { label: 'Elite',   color: '#3b82f6', textColor: '#fff'    },
-  rare:           { label: 'Rara',    color: '#a855f7', textColor: '#fff'    },
-  common:         { label: 'Comum',   color: '#6b7280', textColor: '#fff'    },
-};
+export const RARITY_META: Record<RarityCode, { label: string; color: string; textColor: string }> =
+  {
+    world_cup_hero: { label: 'WCH', color: '#e2e8f0', textColor: '#0f172a' },
+    ultra: { label: 'Ultra', color: '#ec4899', textColor: '#fff' },
+    legendary: { label: 'Lendária', color: '#c9a84c', textColor: '#07080f' },
+    elite: { label: 'Elite', color: '#3b82f6', textColor: '#fff' },
+    rare: { label: 'Rara', color: '#a855f7', textColor: '#fff' },
+    common: { label: 'Comum', color: '#6b7280', textColor: '#fff' },
+  };
 
 const RARITY_ORDER: Record<RarityCode, number> = {
-  world_cup_hero: 6, ultra: 5, legendary: 4, elite: 3, rare: 2, common: 1,
+  world_cup_hero: 6,
+  ultra: 5,
+  legendary: 4,
+  elite: 3,
+  rare: 2,
+  common: 1,
 };
 
 // ─── Tipos exportados ─────────────────────────────────────────────────────────
@@ -124,7 +172,7 @@ export function buildHallData(
   for (const card of catalogCards) {
     const nat = card.nationality;
     if (!byCountry.has(nat)) byCountry.set(nat, []);
-    byCountry.get(nat)!.push(card);
+    byCountry.get(nat)?.push(card);
   }
 
   // Ordena cartas dentro de cada país por raridade desc, depois OVR desc
@@ -173,7 +221,12 @@ export function buildHallData(
   }
 
   const rarityCodes: RarityCode[] = [
-    'world_cup_hero', 'ultra', 'legendary', 'elite', 'rare', 'common',
+    'world_cup_hero',
+    'ultra',
+    'legendary',
+    'elite',
+    'rare',
+    'common',
   ];
   const rarityProgress: RarityProgress[] = rarityCodes
     .filter((code) => rarityTotals.has(code))

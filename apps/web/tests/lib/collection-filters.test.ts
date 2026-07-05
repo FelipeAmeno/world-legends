@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest';
 import type { CollectionCard } from '@/lib/collection-data';
 import { applyFilters } from '@/lib/collection-data';
 import type { FilterState } from '@/lib/collection-data';
+import { describe, expect, it } from 'vitest';
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -50,7 +50,7 @@ describe('applyFilters — search', () => {
     ];
     const result = applyFilters(cards, { ...defaultFilter, search: 'ron' });
     expect(result).toHaveLength(1);
-    expect(result[0]!.displayName).toBe('Ronaldo');
+    expect(result[0]?.displayName).toBe('Ronaldo');
   });
 
   it('filtra por fullName', () => {
@@ -70,7 +70,7 @@ describe('applyFilters — search', () => {
     ];
     const result = applyFilters(cards, { ...defaultFilter, search: 'gk' });
     expect(result).toHaveLength(1);
-    expect(result[0]!.position).toBe('GK');
+    expect(result[0]?.position).toBe('GK');
   });
 
   it('retorna vazio quando nada bate', () => {
@@ -95,7 +95,7 @@ describe('applyFilters — rarity', () => {
     ];
     const result = applyFilters(cards, { ...defaultFilter, rarity: 'legendary' });
     expect(result).toHaveLength(1);
-    expect(result[0]!.rarityCode).toBe('legendary');
+    expect(result[0]?.rarityCode).toBe('legendary');
   });
 });
 
@@ -115,7 +115,7 @@ describe('applyFilters — position', () => {
     ];
     const result = applyFilters(cards, { ...defaultFilter, position: 'GK' });
     expect(result).toHaveLength(1);
-    expect(result[0]!.position).toBe('GK');
+    expect(result[0]?.position).toBe('GK');
   });
 });
 
@@ -174,14 +174,11 @@ describe('applyFilters — combinações', () => {
     ];
     const result = applyFilters(cards, { ...defaultFilter, search: 'ron', rarity: 'ultra' });
     expect(result).toHaveLength(1);
-    expect(result[0]!.cardId).toBe('r-ultra');
+    expect(result[0]?.cardId).toBe('r-ultra');
   });
 
   it('não muta o array original', () => {
-    const cards = [
-      makeCard({ overall: 90, cardId: 'a' }),
-      makeCard({ overall: 80, cardId: 'b' }),
-    ];
+    const cards = [makeCard({ overall: 90, cardId: 'a' }), makeCard({ overall: 80, cardId: 'b' })];
     const copy = [...cards];
     applyFilters(cards, { ...defaultFilter, sortKey: 'overall' });
     expect(cards).toEqual(copy);

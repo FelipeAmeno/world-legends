@@ -151,7 +151,9 @@ export function MissionCard({ view, onClaim, disabled = false }: Props) {
                   disabled={claiming || disabled}
                   className={[
                     'w-full py-2.5 rounded-xl font-display text-sm tracking-wider transition-all',
-                    claiming || disabled ? 'opacity-60 cursor-wait' : 'hover:scale-[1.02] active:scale-[0.98]',
+                    claiming || disabled
+                      ? 'opacity-60 cursor-wait'
+                      : 'hover:scale-[1.02] active:scale-[0.98]',
                   ].join(' ')}
                   style={{
                     background: 'linear-gradient(135deg, #8c6f27, #c9a84c, #e6c85a)',

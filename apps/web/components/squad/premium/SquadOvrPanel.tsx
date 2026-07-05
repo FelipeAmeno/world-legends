@@ -47,18 +47,24 @@ export function SquadOvrPanel({ snapshot, state }: Props) {
   const c = snapshot.chemistry;
 
   const chemColor =
-    c.total >= 80 ? 'text-emerald-400' : c.total >= 60 ? 'text-blue-400' : c.total >= 40 ? 'text-yellow-400' : 'text-muted';
+    c.total >= 80
+      ? 'text-emerald-400'
+      : c.total >= 60
+        ? 'text-blue-400'
+        : c.total >= 40
+          ? 'text-yellow-400'
+          : 'text-muted';
   const chemBg =
-    c.total >= 80 ? 'from-emerald-700 to-emerald-900'
-    : c.total >= 60 ? 'from-blue-700 to-blue-900'
-    : c.total >= 40 ? 'from-yellow-700 to-yellow-900'
-    : 'from-gray-700 to-gray-900';
+    c.total >= 80
+      ? 'from-emerald-700 to-emerald-900'
+      : c.total >= 60
+        ? 'from-blue-700 to-blue-900'
+        : c.total >= 40
+          ? 'from-yellow-700 to-yellow-900'
+          : 'from-gray-700 to-gray-900';
 
   // Collect active traits from starters
-  const { strengths, weaknesses } = useMemo(
-    () => getStrengthsWeaknesses(r, c.total),
-    [r, c.total],
-  );
+  const { strengths, weaknesses } = useMemo(() => getStrengthsWeaknesses(r, c.total), [r, c.total]);
 
   const activeTraits = useMemo(() => {
     const map = new Map<string, { name: string; tier: 1 | 2 | 3; count: number }>();
@@ -135,7 +141,7 @@ export function SquadOvrPanel({ snapshot, state }: Props) {
           <motion.p
             className="text-gold text-[9px] text-center mt-1.5"
             animate={{ opacity: [0.6, 1, 0.6] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
           >
             ✨ {c.breakdown.perfectLinks} links perfeitos
           </motion.p>
@@ -229,7 +235,12 @@ function SectorBar({ label, value, grad }: { label: string; value: number; grad:
     <div>
       <div className="flex justify-between text-[10px] mb-0.5">
         <span className="text-muted">{label}</span>
-        <motion.span key={value} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-parchment font-semibold">
+        <motion.span
+          key={value}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-parchment font-semibold"
+        >
           {value || '—'}
         </motion.span>
       </div>
@@ -265,7 +276,10 @@ function ChemLegend({ color, label }: { color: string; label: string }) {
 function CompatLegend({ color, label }: { color: string; label: string }) {
   return (
     <div className="flex items-center gap-2">
-      <div className="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-black/40" style={{ background: color }} />
+      <div
+        className="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-black/40"
+        style={{ background: color }}
+      />
       <span className="text-[9px] text-muted/60">{label}</span>
     </div>
   );

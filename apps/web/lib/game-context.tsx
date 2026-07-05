@@ -9,29 +9,37 @@
  */
 
 import {
-  createContext, useContext, useReducer, useEffect, useCallback,
   type ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useReducer,
 } from 'react';
 import {
-  INITIAL_STATE, gameReducer,
-  type GameState, type GameAction, type FlowStep, type PendingReward,
+  type FlowStep,
+  type GameAction,
+  type GameState,
+  INITIAL_STATE,
+  type PendingReward,
+  gameReducer,
 } from './game-state';
 
 // ─── Context type ─────────────────────────────────────────────────────────────
 
 type GameContextValue = {
-  state:       GameState;
-  dispatch:    (action: GameAction) => void;
+  state: GameState;
+  dispatch: (action: GameAction) => void;
 
   // Actions de alto nível
-  onboard:        (username: string) => void;
-  openPack:       (cost: number, cardIds: string[]) => void;
-  playMatch:      (reward: PendingReward, outcome: 'win'|'draw'|'loss') => void;
-  collectReward:  () => void;
+  onboard: (username: string) => void;
+  openPack: (cost: number, cardIds: string[]) => void;
+  playMatch: (reward: PendingReward, outcome: 'win' | 'draw' | 'loss') => void;
+  collectReward: () => void;
   dismissLevelUp: () => void;
-  advanceFlow:    () => void;
-  setFlow:        (step: FlowStep) => void;
-  gotoFree:       () => void;
+  advanceFlow: () => void;
+  setFlow: (step: FlowStep) => void;
+  gotoFree: () => void;
 };
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -74,34 +82,40 @@ export function GameProvider({ children }: Props) {
   }, [state]);
 
   // Actions de alto nível
-  const onboard       = useCallback((username: string) =>
-    dispatch({ type: 'ONBOARD', username }), []);
+  const onboard = useCallback((username: string) => dispatch({ type: 'ONBOARD', username }), []);
 
-  const openPack      = useCallback((cost: number, cardIds: string[]) =>
-    dispatch({ type: 'OPEN_PACK', cost, cardIds }), []);
+  const openPack = useCallback(
+    (cost: number, cardIds: string[]) => dispatch({ type: 'OPEN_PACK', cost, cardIds }),
+    [],
+  );
 
-  const playMatch     = useCallback((reward: PendingReward, outcome: 'win'|'draw'|'loss') =>
-    dispatch({ type: 'PLAY_MATCH', reward, outcome }), []);
+  const playMatch = useCallback(
+    (reward: PendingReward, outcome: 'win' | 'draw' | 'loss') =>
+      dispatch({ type: 'PLAY_MATCH', reward, outcome }),
+    [],
+  );
 
-  const collectReward = useCallback(() =>
-    dispatch({ type: 'COLLECT_REWARD' }), []);
+  const collectReward = useCallback(() => dispatch({ type: 'COLLECT_REWARD' }), []);
 
-  const dismissLevelUp= useCallback(() =>
-    dispatch({ type: 'DISMISS_LEVELUP' }), []);
+  const dismissLevelUp = useCallback(() => dispatch({ type: 'DISMISS_LEVELUP' }), []);
 
-  const advanceFlow   = useCallback(() =>
-    dispatch({ type: 'ADVANCE_FLOW' }), []);
+  const advanceFlow = useCallback(() => dispatch({ type: 'ADVANCE_FLOW' }), []);
 
-  const setFlow       = useCallback((step: FlowStep) =>
-    dispatch({ type: 'SET_FLOW', step }), []);
+  const setFlow = useCallback((step: FlowStep) => dispatch({ type: 'SET_FLOW', step }), []);
 
-  const gotoFree      = useCallback(() =>
-    dispatch({ type: 'GOTO_FREE' }), []);
+  const gotoFree = useCallback(() => dispatch({ type: 'GOTO_FREE' }), []);
 
   const value: GameContextValue = {
-    state, dispatch,
-    onboard, openPack, playMatch, collectReward,
-    dismissLevelUp, advanceFlow, setFlow, gotoFree,
+    state,
+    dispatch,
+    onboard,
+    openPack,
+    playMatch,
+    collectReward,
+    dismissLevelUp,
+    advanceFlow,
+    setFlow,
+    gotoFree,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

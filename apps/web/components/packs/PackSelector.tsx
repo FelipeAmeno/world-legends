@@ -103,9 +103,7 @@ function PackCard({
       ].join(' ')}
       style={{
         borderColor: pack.borderColor,
-        boxShadow: isSelected
-          ? `0 0 32px ${pack.glowColor}, 0 0 8px ${pack.glowColor}`
-          : undefined,
+        boxShadow: isSelected ? `0 0 32px ${pack.glowColor}, 0 0 8px ${pack.glowColor}` : undefined,
       }}
     >
       {/* Art */}
@@ -115,7 +113,9 @@ function PackCard({
       >
         <div
           className="absolute inset-0 opacity-20"
-          style={{ background: `radial-gradient(ellipse at 50% 30%, ${pack.glowColor} 0%, transparent 70%)` }}
+          style={{
+            background: `radial-gradient(ellipse at 50% 30%, ${pack.glowColor} 0%, transparent 70%)`,
+          }}
         />
         <div
           className="relative z-10 text-6xl mb-3 transition-transform duration-300 group-hover:scale-110"
@@ -177,7 +177,9 @@ function ComingSoonCard({ pack, index }: { pack: ComingSoonPack; index: number }
       >
         <div
           className="absolute inset-0 opacity-15"
-          style={{ background: `radial-gradient(ellipse at 50% 30%, ${pack.glowColor} 0%, transparent 70%)` }}
+          style={{
+            background: `radial-gradient(ellipse at 50% 30%, ${pack.glowColor} 0%, transparent 70%)`,
+          }}
         />
 
         {/* Lock overlay */}
@@ -188,7 +190,10 @@ function ComingSoonCard({ pack, index }: { pack: ComingSoonPack; index: number }
             style={{
               background: `${pack.glowColor}30`,
               border: `1px solid ${pack.borderColor}`,
-              color: pack.borderColor.replace('0.38)', '0.9)').replace('0.35)', '0.9)').replace('0.45)', '0.9)'),
+              color: pack.borderColor
+                .replace('0.38)', '0.9)')
+                .replace('0.35)', '0.9)')
+                .replace('0.45)', '0.9)'),
             }}
           >
             Em Breve
@@ -207,7 +212,15 @@ function ComingSoonCard({ pack, index }: { pack: ComingSoonPack; index: number }
       <div className="px-3 py-2.5" style={{ background: `${pack.gradientFrom}cc` }}>
         <p className="text-parchment/70 font-bold text-xs truncate">{pack.name}</p>
         <p className="text-white/30 text-[9px] truncate mt-0.5">{pack.tagline}</p>
-        <p className="text-[10px] mt-1" style={{ color: pack.borderColor.replace('0.38)', '0.7)').replace('0.35)', '0.7)').replace('0.45)', '0.7)') }}>
+        <p
+          className="text-[10px] mt-1"
+          style={{
+            color: pack.borderColor
+              .replace('0.38)', '0.7)')
+              .replace('0.35)', '0.7)')
+              .replace('0.45)', '0.7)'),
+          }}
+        >
           {pack.priceLabel}
         </p>
       </div>

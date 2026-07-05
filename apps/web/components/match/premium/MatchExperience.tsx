@@ -22,8 +22,9 @@ import { LiveMatchView } from './LiveMatchView';
 import { MatchResultScreen } from './MatchResultScreen';
 import { OpponentPicker } from './OpponentPicker';
 import { PreMatchScreen } from './PreMatchScreen';
+import { StadiumIntro } from './StadiumIntro';
 
-type Phase = 'SELECT' | 'LOADING' | 'PRE' | 'LIVE' | 'HT' | 'RESULT';
+type Phase = 'SELECT' | 'LOADING' | 'INTRO' | 'PRE' | 'LIVE' | 'HT' | 'RESULT';
 
 export function MatchExperience() {
   const [phase, setPhase] = useState<Phase>('SELECT');
@@ -53,7 +54,7 @@ export function MatchExperience() {
         result.newBalance,
       );
       setData(experienceData);
-      setPhase('PRE');
+      setPhase('INTRO');
     } catch {
       setLoadError('Erro ao iniciar partida. Tente novamente.');
       setPhase('SELECT');
@@ -110,13 +111,24 @@ export function MatchExperience() {
           >
             <div className="mb-6">
               <div className="flex items-center justify-between mb-1">
-                <h1 className="font-display text-3xl tracking-wider" style={{ color: '#f87171' }}>PARTIDA</h1>
+                <h1 className="font-display text-3xl tracking-wider" style={{ color: '#f87171' }}>
+                  PARTIDA
+                </h1>
                 <a
                   href="/"
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-white/35 hover:text-white/65 transition-colors"
                   style={{ border: '1px solid rgba(255,255,255,0.07)' }}
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                     <polyline points="9 22 9 12 15 12 15 22" />
                   </svg>
@@ -150,12 +162,25 @@ export function MatchExperience() {
             <motion.div
               className="w-16 h-16 rounded-full border-2 border-gold/30 border-t-gold"
               animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: 'linear' }}
             />
             <div className="text-center">
               <p className="font-display text-xl gold-text tracking-wider">PREPARANDO</p>
               <p className="text-muted text-xs mt-1">Simulando a partida…</p>
             </div>
+          </motion.div>
+        )}
+
+        {/* INTRO */}
+        {phase === 'INTRO' && data && (
+          <motion.div
+            key="intro"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="h-screen"
+          >
+            <StadiumIntro data={data} onComplete={() => setPhase('PRE')} />
           </motion.div>
         )}
 

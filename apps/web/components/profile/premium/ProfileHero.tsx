@@ -27,16 +27,15 @@ export function ProfileHero({ wins, draws, losses, winRate }: Props) {
   const state = useGameState();
   const { user } = useAuth();
 
-  const guestName = user?.user_metadata?.['name'] as string | undefined
-    ?? user?.email?.split('@')[0]
-    ?? 'Jogador';
+  const guestName =
+    (user?.user_metadata?.name as string | undefined) ?? user?.email?.split('@')[0] ?? 'Jogador';
 
-  const name    = state.isOnboarded ? state.username  : guestName;
-  const level   = state.isOnboarded ? state.level     : 1;
-  const xpCur   = state.isOnboarded ? state.currentXp : 0;
-  const xpNext  = state.isOnboarded ? state.xpForNext : 100;
-  const credits = state.isOnboarded ? state.credits   : 0;
-  const frags   = state.isOnboarded ? state.fragments : 0;
+  const name = state.isOnboarded ? state.username : guestName;
+  const level = state.isOnboarded ? state.level : 1;
+  const xpCur = state.isOnboarded ? state.currentXp : 0;
+  const xpNext = state.isOnboarded ? state.xpForNext : 100;
+  const credits = state.isOnboarded ? state.credits : 0;
+  const frags = state.isOnboarded ? state.fragments : 0;
   const title = levelTitle(level);
   const xpPct = Math.round((xpCur / Math.max(1, xpNext)) * 100);
   const initial = name.charAt(0).toUpperCase();

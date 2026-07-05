@@ -25,35 +25,38 @@ import type { ReactNode } from 'react';
 export type TransitionMode = 'fade' | 'slide-up' | 'slide-left' | 'scale';
 
 type Props = {
-  children:  ReactNode;
-  mode?:     TransitionMode;
+  children: ReactNode;
+  mode?: TransitionMode;
   className?: string;
 };
 
-const MODE_VARIANTS: Record<TransitionMode, {
-  initial: object;
-  animate: object;
-  exit:    object;
-}> = {
+const MODE_VARIANTS: Record<
+  TransitionMode,
+  {
+    initial: object;
+    animate: object;
+    exit: object;
+  }
+> = {
   fade: {
     initial: { opacity: 0 },
     animate: { opacity: 1, transition: { duration: 0.25 } },
-    exit:    { opacity: 0, transition: { duration: 0.15 } },
+    exit: { opacity: 0, transition: { duration: 0.15 } },
   },
   'slide-up': {
     initial: PAGE_TRANSITION.initial,
     animate: PAGE_TRANSITION.animate,
-    exit:    PAGE_TRANSITION.exit,
+    exit: PAGE_TRANSITION.exit,
   },
   'slide-left': {
     initial: { opacity: 0, x: -12 },
     animate: { opacity: 1, x: 0, transition: SPRING.smooth },
-    exit:    { opacity: 0, x: 12, transition: { duration: 0.15 } },
+    exit: { opacity: 0, x: 12, transition: { duration: 0.15 } },
   },
   scale: {
     initial: VARIANTS.scale.hidden,
     animate: VARIANTS.scale.visible,
-    exit:    VARIANTS.scale.exit,
+    exit: VARIANTS.scale.exit,
   },
 };
 
@@ -83,7 +86,7 @@ export function FadeIn({
   className = '',
 }: {
   children: ReactNode;
-  delay?:   number;
+  delay?: number;
   className?: string;
 }) {
   return (
@@ -105,8 +108,8 @@ export function StaggerList({
   className = '',
   staggerDelay = 0.06,
 }: {
-  children:      ReactNode;
-  className?:    string;
+  children: ReactNode;
+  className?: string;
   staggerDelay?: number;
 }) {
   return (
@@ -115,7 +118,7 @@ export function StaggerList({
       initial="hidden"
       animate="visible"
       variants={{
-        hidden:  {},
+        hidden: {},
         visible: { transition: { staggerChildren: staggerDelay, delayChildren: 0.04 } },
       }}
     >
@@ -128,14 +131,11 @@ export function StaggerItem({
   children,
   className = '',
 }: {
-  children:   ReactNode;
+  children: ReactNode;
   className?: string;
 }) {
   return (
-    <motion.div
-      className={className}
-      variants={VARIANTS.staggerItem}
-    >
+    <motion.div className={className} variants={VARIANTS.staggerItem}>
       {children}
     </motion.div>
   );

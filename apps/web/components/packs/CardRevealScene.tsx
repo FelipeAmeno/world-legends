@@ -13,7 +13,7 @@ const HIGH_RARITY_CONFETTI = new Set<RevealEffect>(['legendary', 'ultra', 'world
 // Color that floods the background after a high-rarity reveal
 const RARITY_FLOOD: Partial<Record<RevealEffect, string>> = {
   legendary: 'rgba(201,168,76,0.18)',
-  ultra:     'rgba(236,72,153,0.22)',
+  ultra: 'rgba(236,72,153,0.22)',
 };
 
 type Props = {
@@ -24,22 +24,22 @@ type Props = {
 };
 
 export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
-  const [flipped,        setFlipped]        = useState<Set<number>>(new Set());
-  const [showRevAll,     setShowRevAll]     = useState(false);
-  const [showCards,      setShowCards]      = useState(false);
-  const [goatIndex,      setGoatIndex]      = useState<number | null>(null);
-  const [goatDone,       setGoatDone]       = useState(false);
+  const [flipped, setFlipped] = useState<Set<number>>(new Set());
+  const [showRevAll, setShowRevAll] = useState(false);
+  const [showCards, setShowCards] = useState(false);
+  const [goatIndex, setGoatIndex] = useState<number | null>(null);
+  const [goatDone, setGoatDone] = useState(false);
   const [confettiRarity, setConfettiRarity] = useState<RevealEffect | null>(null);
 
   // Intro sequence states
-  const [revealFlash,    setRevealFlash]    = useState(true);
+  const [revealFlash, setRevealFlash] = useState(true);
   const [showRevealText, setShowRevealText] = useState(false);
 
   // Rarity flood — background color reacts when a big card flips
   const [rarityFlood, setRarityFlood] = useState<string | null>(null);
 
   const goatCard = cards.find((c) => c.effect === 'world_cup_hero');
-  const goatIdx  = goatCard ? cards.indexOf(goatCard) : null;
+  const goatIdx = goatCard ? cards.indexOf(goatCard) : null;
 
   // ── Intro sequence (0–600ms) ──────────────────────────────────────────────
   useEffect(() => {
@@ -49,7 +49,7 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
     const t2 = setTimeout(() => setShowRevealText(true), 150);
     const t3 = setTimeout(() => setShowRevealText(false), 560);
     // Cards slide in at 600ms
-    const tCards  = setTimeout(() => setShowCards(true), 600);
+    const tCards = setTimeout(() => setShowCards(true), 600);
     // "Revelar Tudo" button at 2200ms
     const tRevAll = setTimeout(() => setShowRevAll(true), 2200);
 
@@ -58,7 +58,7 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
 
   // ── Detect all cards flipped ───────────────────────────────────────────────
   useEffect(() => {
-    const allFlipped  = flipped.size === cards.length;
+    const allFlipped = flipped.size === cards.length;
     const goatPending = goatIdx !== null && !goatDone;
     if (allFlipped && !goatPending) onAllFlipped();
   }, [flipped, cards.length, goatIdx, goatDone, onAllFlipped]);
@@ -161,8 +161,8 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
               style={{
                 fontSize: 28,
                 background: `linear-gradient(90deg, ${pack.glowColor.replace(/[\d.]+\)$/, '1)')}, #fff, ${pack.glowColor.replace(/[\d.]+\)$/, '1)')})`,
-                WebkitBackgroundClip:   'text',
-                WebkitTextFillColor:    'transparent',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
                 filter: `drop-shadow(0 0 18px ${pack.glowColor})`,
               }}
               animate={{ opacity: [0.6, 1, 0.6] }}
@@ -239,14 +239,16 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
             <motion.div
               key={drawn.card.cardId + i}
               initial={{ opacity: 0, y: 90, scale: 0.55, rotateX: 25 }}
-              animate={showCards
-                ? { opacity: 1, y: 0, scale: 1, rotateX: 0 }
-                : { opacity: 0, y: 90, scale: 0.55, rotateX: 25 }}
+              animate={
+                showCards
+                  ? { opacity: 1, y: 0, scale: 1, rotateX: 0 }
+                  : { opacity: 0, y: 90, scale: 0.55, rotateX: 25 }
+              }
               transition={{
-                type:      'spring',
+                type: 'spring',
                 stiffness: 220,
-                damping:   18,
-                delay:     showCards ? 0.05 + i * 0.10 : 0,
+                damping: 18,
+                delay: showCards ? 0.05 + i * 0.1 : 0,
               }}
             >
               <RevealedCard
@@ -299,8 +301,8 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
               className="px-6 py-2.5 rounded-xl text-xs font-bold transition-all"
               style={{
                 background: `linear-gradient(135deg,${pack.glowColor.replace(/[\d.]+\)$/, '0.15)')},${pack.glowColor.replace(/[\d.]+\)$/, '0.08)')})`,
-                border:    `1px solid ${pack.borderColor.replace(/[\d.]+\)$/, '0.5)')}`,
-                color:      pack.borderColor.replace(/[\d.]+\)$/, '1)'),
+                border: `1px solid ${pack.borderColor.replace(/[\d.]+\)$/, '0.5)')}`,
+                color: pack.borderColor.replace(/[\d.]+\)$/, '1)'),
                 boxShadow: `0 0 12px ${pack.glowColor.replace(/[\d.]+\)$/, '0.2)')}`,
               }}
             >

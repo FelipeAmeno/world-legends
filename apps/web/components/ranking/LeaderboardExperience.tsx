@@ -29,37 +29,59 @@ import { SeasonTimer } from './SeasonTimer';
 const CATEGORIES = Object.values(CATEGORY_CONFIGS);
 
 const COUNTRY_FLAGS: Record<string, string> = {
-  BR:'🇧🇷', AR:'🇦🇷', FR:'🇫🇷', DE:'🇩🇪', IT:'🇮🇹', ES:'🇪🇸',
-  PT:'🇵🇹', NL:'🇳🇱', CM:'🇨🇲', SN:'🇸🇳', NG:'🇳🇬', EN:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-  UY:'🇺🇾', MX:'🇲🇽', CO:'🇨🇴', CL:'🇨🇱', GH:'🇬🇭', JP:'🇯🇵',
-  KR:'🇰🇷', SE:'🇸🇪', US:'🇺🇸', GB:'🇬🇧',
+  BR: '🇧🇷',
+  AR: '🇦🇷',
+  FR: '🇫🇷',
+  DE: '🇩🇪',
+  IT: '🇮🇹',
+  ES: '🇪🇸',
+  PT: '🇵🇹',
+  NL: '🇳🇱',
+  CM: '🇨🇲',
+  SN: '🇸🇳',
+  NG: '🇳🇬',
+  EN: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+  UY: '🇺🇾',
+  MX: '🇲🇽',
+  CO: '🇨🇴',
+  CL: '🇨🇱',
+  GH: '🇬🇭',
+  JP: '🇯🇵',
+  KR: '🇰🇷',
+  SE: '🇸🇪',
+  US: '🇺🇸',
+  GB: '🇬🇧',
 };
 
-function rowToEntry(row: LeaderboardUserRow, rank: number, currentUserId?: string): LeaderboardEntry {
+function rowToEntry(
+  row: LeaderboardUserRow,
+  rank: number,
+  currentUserId?: string,
+): LeaderboardEntry {
   const total = row.wins + row.draws + row.losses;
   return {
     rank,
-    userId:        row.profileId,
-    username:      row.username,
+    userId: row.profileId,
+    username: row.username,
     avatarInitial: row.username.charAt(0).toUpperCase(),
-    nationality:   row.countryCode,
-    flagEmoji:     COUNTRY_FLAGS[row.countryCode] ?? '🏳️',
-    level:         1,
-    wins:          row.wins,
-    losses:        row.losses,
-    winRate:       total > 0 ? Math.round((row.wins / total) * 100) : 0,
-    squadOvr:      0,
-    totalCards:    0,
-    seasonPoints:  row.eloRating,
+    nationality: row.countryCode,
+    flagEmoji: COUNTRY_FLAGS[row.countryCode] ?? '🏳️',
+    level: 1,
+    wins: row.wins,
+    losses: row.losses,
+    winRate: total > 0 ? Math.round((row.wins / total) * 100) : 0,
+    squadOvr: 0,
+    totalCards: 0,
+    seasonPoints: row.eloRating,
     isCurrentUser: row.profileId === currentUserId,
-    isFriend:      false,
-    isOnline:      false,
+    isFriend: false,
+    isOnline: false,
   };
 }
 
 type Props = {
-  realData?:       LeaderboardUserRow[];
-  currentUserId?:  string | undefined;
+  realData?: LeaderboardUserRow[];
+  currentUserId?: string | undefined;
 };
 
 export function LeaderboardExperience({ realData, currentUserId }: Props) {

@@ -47,7 +47,10 @@ export function RewardReveal({ payload, onContinue }: Props) {
       exit={{ opacity: 0 }}
     >
       {/* Particle burst */}
-      <div className="absolute inset-0 pointer-events-none flex items-center justify-center" style={{ top: '15%' }}>
+      <div
+        className="absolute inset-0 pointer-events-none flex items-center justify-center"
+        style={{ top: '15%' }}
+      >
         <AnimatePresence>
           {PARTICLES.map((p, i) => (
             <motion.div
@@ -144,11 +147,7 @@ export function RewardReveal({ payload, onContinue }: Props) {
                     ? 'rgba(59,130,246,0.4)'
                     : 'rgba(201,168,76,0.4)',
               color:
-                reward.kind === 'pack'
-                  ? '#c084fc'
-                  : reward.kind === 'xp'
-                    ? '#93c5fd'
-                    : '#fbbf24',
+                reward.kind === 'pack' ? '#c084fc' : reward.kind === 'xp' ? '#93c5fd' : '#fbbf24',
             }}
           >
             <span>{reward.icon}</span>

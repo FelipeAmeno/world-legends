@@ -9,13 +9,13 @@
  */
 
 import { claimCollectionRewardAction, getCollectionsAction } from '@/lib/actions/collections';
-import { getCollection } from '@/lib/collection-data';
 import type { CollectionSetView } from '@/lib/actions/collections';
+import { getCollection } from '@/lib/collection-data';
 import { COLLECTION_SETS } from '@/lib/collection-sets';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useState, useTransition } from 'react';
-import { AlbumSetPanel } from './AlbumSetPanel';
 import { AlbumClaimToast } from './AlbumClaimToast';
+import { AlbumSetPanel } from './AlbumSetPanel';
 
 const THEME_STYLES: Record<string, { border: string; glow: string; badge: string }> = {
   classic: {
@@ -68,29 +68,24 @@ export function AlbumPage() {
       setViews([...data.views] as CollectionSetView[]);
       setLoading(false);
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const handleClaim = useCallback(
-    (setCode: string) => {
-      startT(async () => {
-        const result = await claimCollectionRewardAction(setCode);
-        if (!result.ok) return;
+  const handleClaim = useCallback((setCode: string) => {
+    startT(async () => {
+      const result = await claimCollectionRewardAction(setCode);
+      if (!result.ok) return;
 
-        setViews((prev) =>
-          prev.map((v) =>
-            v.def.code === setCode ? { ...v, isClaimed: true } : v,
-          ),
-        );
+      setViews((prev) => prev.map((v) => (v.def.code === setCode ? { ...v, isClaimed: true } : v)));
 
-        const def = COLLECTION_SETS.find((s) => s.code === setCode);
-        if (def) {
-          setToast({ name: def.name, credits: result.creditsEarned });
-        }
-      });
-    },
-    [],
-  );
+      const def = COLLECTION_SETS.find((s) => s.code === setCode);
+      if (def) {
+        setToast({ name: def.name, credits: result.creditsEarned });
+      }
+    });
+  }, []);
 
   const totalCompleted = views.filter((v) => v.isCompleted).length;
 
@@ -99,7 +94,11 @@ export function AlbumPage() {
       <div className="max-w-2xl mx-auto space-y-3">
         <div className="h-8 w-48 bg-surface rounded-lg animate-pulse mb-6" />
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-28 rounded-2xl bg-surface border border-border animate-pulse" style={{ animationDelay: `${i * 0.08}s` }} />
+          <div
+            key={i}
+            className="h-28 rounded-2xl bg-surface border border-border animate-pulse"
+            style={{ animationDelay: `${i * 0.08}s` }}
+          />
         ))}
       </div>
     );
@@ -113,7 +112,9 @@ export function AlbumPage() {
           <h1 className="font-display text-3xl gold-text tracking-wider">ÁLBUM</h1>
           <p className="text-muted text-xs mt-0.5">
             {totalCompleted > 0 ? (
-              <span className="text-emerald-400 font-bold">{totalCompleted}/{COLLECTION_SETS.length} conjuntos completos</span>
+              <span className="text-emerald-400 font-bold">
+                {totalCompleted}/{COLLECTION_SETS.length} conjuntos completos
+              </span>
             ) : (
               <span>{COLLECTION_SETS.length} conjuntos para completar</span>
             )}
@@ -121,7 +122,9 @@ export function AlbumPage() {
         </div>
         <div className="text-right">
           <p className="text-muted text-[9px] uppercase tracking-wider">Progresso</p>
-          <p className="font-display text-lg text-parchment">{totalCompleted}/{COLLECTION_SETS.length}</p>
+          <p className="font-display text-lg text-parchment">
+            {totalCompleted}/{COLLECTION_SETS.length}
+          </p>
         </div>
       </div>
 
@@ -188,9 +191,7 @@ function AlbumSetCard({ view, isActive, onToggle, onClaim, disabled, cardMap }: 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p className="text-parchment text-sm font-bold leading-tight truncate">{def.name}</p>
-            {isClaimed && (
-              <span className="text-emerald-400 text-xs font-bold shrink-0">✓</span>
-            )}
+            {isClaimed && <span className="text-emerald-400 text-xs font-bold shrink-0">✓</span>}
             {isCompleted && !isClaimed && (
               <motion.span
                 className="shrink-0 text-[9px] font-black px-2 py-0.5 rounded-full border bg-gold/20 text-gold border-gold/40"
@@ -201,7 +202,9 @@ function AlbumSetCard({ view, isActive, onToggle, onClaim, disabled, cardMap }: 
               </motion.span>
             )}
           </div>
-          <p className="text-muted text-[10px] mt-0.5">{ownedCardIds.length}/{def.requiredCardIds.length} cartas</p>
+          <p className="text-muted text-[10px] mt-0.5">
+            {ownedCardIds.length}/{def.requiredCardIds.length} cartas
+          </p>
 
           {/* Progress bar */}
           <div className="mt-1.5 h-1.5 bg-black/30 rounded-full overflow-hidden border border-white/5">
@@ -246,11 +249,7 @@ function AlbumSetCard({ view, isActive, onToggle, onClaim, disabled, cardMap }: 
               <p className="text-muted text-[10px] mb-3">{def.description}</p>
 
               {/* Card slots grid */}
-              <AlbumSetPanel
-                def={def}
-                ownedSet={ownedSet}
-                cardMap={cardMap}
-              />
+              <AlbumSetPanel def={def} ownedSet={ownedSet} cardMap={cardMap} />
 
               {/* Claim button */}
               {isCompleted && !isClaimed && (
@@ -271,7 +270,8 @@ function AlbumSetCard({ view, isActive, onToggle, onClaim, disabled, cardMap }: 
               )}
               {isClaimed && (
                 <div className="flex items-center gap-2 mt-4 text-emerald-400 text-sm font-bold">
-                  <span>✓</span><span>Recompensa coletada</span>
+                  <span>✓</span>
+                  <span>Recompensa coletada</span>
                 </div>
               )}
             </div>

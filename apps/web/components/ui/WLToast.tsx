@@ -1,45 +1,42 @@
 'use client';
 
+import { SPRING } from '@/lib/motion-tokens';
 import type { ToastItem, ToastType } from '@/lib/wl-toast';
 import { toastStore } from '@/lib/wl-toast';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useSyncExternalStore, useCallback } from 'react';
-import { SPRING } from '@/lib/motion-tokens';
+import { useCallback, useSyncExternalStore } from 'react';
 
 // ─── Estilos por tipo ─────────────────────────────────────────────────────────
 
-const STYLE: Record<
-  ToastType,
-  { bg: string; border: string; color: string; iconBg: string }
-> = {
+const STYLE: Record<ToastType, { bg: string; border: string; color: string; iconBg: string }> = {
   success: {
-    bg:     'rgba(6,78,59,0.95)',
+    bg: 'rgba(6,78,59,0.95)',
     border: 'rgba(16,185,129,0.4)',
-    color:  '#34d399',
+    color: '#34d399',
     iconBg: 'rgba(16,185,129,0.15)',
   },
   error: {
-    bg:     'rgba(69,10,10,0.95)',
+    bg: 'rgba(69,10,10,0.95)',
     border: 'rgba(239,68,68,0.4)',
-    color:  '#f87171',
+    color: '#f87171',
     iconBg: 'rgba(239,68,68,0.15)',
   },
   reward: {
-    bg:     'rgba(30,20,0,0.96)',
+    bg: 'rgba(30,20,0,0.96)',
     border: 'rgba(201,168,76,0.5)',
-    color:  '#e6c85a',
+    color: '#e6c85a',
     iconBg: 'rgba(201,168,76,0.12)',
   },
   info: {
-    bg:     'rgba(7,20,40,0.95)',
+    bg: 'rgba(7,20,40,0.95)',
     border: 'rgba(59,130,246,0.4)',
-    color:  '#60a5fa',
+    color: '#60a5fa',
     iconBg: 'rgba(59,130,246,0.12)',
   },
   warning: {
-    bg:     'rgba(40,25,0,0.95)',
+    bg: 'rgba(40,25,0,0.95)',
     border: 'rgba(251,146,60,0.4)',
-    color:  '#fb923c',
+    color: '#fb923c',
     iconBg: 'rgba(251,146,60,0.12)',
   },
 };

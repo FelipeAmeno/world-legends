@@ -216,12 +216,7 @@ export function CardDetailModal({ card, isFav, isComparing, onClose, onFav, onCo
                 sub={status.label}
                 valueColor={status.color}
               />
-              <StatusCard
-                label="Evolução"
-                value="+0"
-                sub="Nível 0"
-                valueColor="text-gold"
-              />
+              <StatusCard label="Evolução" value="+0" sub="Nível 0" valueColor="text-gold" />
               <StatusCard
                 label="Raridade"
                 value={

@@ -15,10 +15,19 @@ type Props = {
 // ─── Animated team shield ─────────────────────────────────────────────────────
 
 function TeamShield({
-  name, initials, ovr, color, side, delay,
+  name,
+  initials,
+  ovr,
+  color,
+  side,
+  delay,
 }: {
-  name: string; initials: string; ovr: number;
-  color: string; side: 'left' | 'right'; delay: number;
+  name: string;
+  initials: string;
+  ovr: number;
+  color: string;
+  side: 'left' | 'right';
+  delay: number;
 }) {
   return (
     <motion.div
@@ -31,19 +40,21 @@ function TeamShield({
       <motion.div
         className="relative flex items-center justify-center"
         style={{
-          width: 68, height: 76,
+          width: 68,
+          height: 76,
           clipPath: 'polygon(50% 0%,100% 18%,100% 72%,50% 100%,0% 72%,0% 18%)',
           background: `linear-gradient(145deg,${color}18,${color}38)`,
           border: `2px solid ${color}55`,
         }}
         animate={{
-          boxShadow: [
-            `0 0 10px ${color}28`,
-            `0 0 24px ${color}55`,
-            `0 0 10px ${color}28`,
-          ],
+          boxShadow: [`0 0 10px ${color}28`, `0 0 24px ${color}55`, `0 0 10px ${color}28`],
         }}
-        transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut', delay: delay + 0.5 }}
+        transition={{
+          duration: 2.8,
+          repeat: Number.POSITIVE_INFINITY,
+          ease: 'easeInOut',
+          delay: delay + 0.5,
+        }}
       >
         <span
           className="font-display text-xl font-black select-none"
@@ -115,29 +126,32 @@ function CountdownDigit({ count }: { count: number }) {
 export function PreMatchScreen({ data, onKickoff, onBack }: Props) {
   const { opponent } = data;
   const userLineup = getUserLineup();
-  const userOvr    = data.display.userOvr || 80;
-  const prob       = computeWinProbability(userOvr, opponent.avgOvr);
+  const userOvr = data.display.userOvr || 80;
+  const prob = computeWinProbability(userOvr, opponent.avgOvr);
   const [countdown, setCountdown] = useState(8);
 
   useEffect(() => {
-    if (countdown <= 0) { onKickoff(); return; }
+    if (countdown <= 0) {
+      onKickoff();
+      return;
+    }
     const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(t);
   }, [countdown, onKickoff]);
 
   const userInitials = 'BR';
-  const oppInitials  = (opponent.name ?? '??').slice(0, 2).toUpperCase();
+  const oppInitials = (opponent.name ?? '??').slice(0, 2).toUpperCase();
 
   return (
     <div className="flex flex-col h-screen relative overflow-hidden">
-
       {/* Stadium atmosphere */}
       <div className="absolute inset-0 pointer-events-none">
         <div
           className="absolute bottom-0 left-0 right-0"
           style={{
             height: '40%',
-            background: 'linear-gradient(0deg,rgba(4,18,4,0.85) 0%,rgba(8,28,8,0.35) 60%,transparent 100%)',
+            background:
+              'linear-gradient(0deg,rgba(4,18,4,0.85) 0%,rgba(8,28,8,0.35) 60%,transparent 100%)',
           }}
         />
         <div
@@ -151,16 +165,25 @@ export function PreMatchScreen({ data, onKickoff, onBack }: Props) {
         <motion.div
           className="absolute rounded-full blur-3xl"
           style={{
-            width: 320, height: 110,
-            bottom: '18%', left: '50%', transform: 'translateX(-50%)',
+            width: 320,
+            height: 110,
+            bottom: '18%',
+            left: '50%',
+            transform: 'translateX(-50%)',
             background: 'rgba(16,120,16,0.10)',
           }}
           animate={{ opacity: [0.5, 0.9, 0.5] }}
-          transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 3.5, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
         />
         {/* Team color glows */}
-        <div className="absolute top-1/4 left-0 w-52 h-52 rounded-full blur-3xl" style={{ background: 'rgba(16,185,129,0.06)' }} />
-        <div className="absolute top-1/4 right-0 w-52 h-52 rounded-full blur-3xl" style={{ background: `${opponent.color ?? 'rgba(239,68,68'}0.06)` }} />
+        <div
+          className="absolute top-1/4 left-0 w-52 h-52 rounded-full blur-3xl"
+          style={{ background: 'rgba(16,185,129,0.06)' }}
+        />
+        <div
+          className="absolute top-1/4 right-0 w-52 h-52 rounded-full blur-3xl"
+          style={{ background: `${opponent.color ?? 'rgba(239,68,68'}0.06)` }}
+        />
       </div>
 
       {/* Back button */}
@@ -177,7 +200,12 @@ export function PreMatchScreen({ data, onKickoff, onBack }: Props) {
       {/* PRÉ-JOGO */}
       <motion.p
         className="relative z-10 text-center mt-3 mb-5"
-        style={{ fontSize: 10, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.45em', textTransform: 'uppercase' }}
+        style={{
+          fontSize: 10,
+          color: 'rgba(255,255,255,0.22)',
+          letterSpacing: '0.45em',
+          textTransform: 'uppercase',
+        }}
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
@@ -187,7 +215,14 @@ export function PreMatchScreen({ data, onKickoff, onBack }: Props) {
 
       {/* Shields + VS + Countdown */}
       <div className="relative z-10 flex items-center justify-center gap-3 px-4 mb-7">
-        <TeamShield name="🇧🇷 Seleção BR" initials={userInitials} ovr={userOvr} color="#10b981" side="left" delay={0.15} />
+        <TeamShield
+          name="🇧🇷 Seleção BR"
+          initials={userInitials}
+          ovr={userOvr}
+          color="#10b981"
+          side="left"
+          delay={0.15}
+        />
 
         <motion.div
           className="flex flex-col items-center gap-2 mx-1"
@@ -230,7 +265,15 @@ export function PreMatchScreen({ data, onKickoff, onBack }: Props) {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ ...SPRING.smooth, delay: 0.45 }}
       >
-        <p className="text-center mb-2" style={{ fontSize: 9, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+        <p
+          className="text-center mb-2"
+          style={{
+            fontSize: 9,
+            color: 'rgba(255,255,255,0.22)',
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+          }}
+        >
           Probabilidade
         </p>
         <div className="flex rounded-full overflow-hidden gap-px" style={{ height: 10 }}>
@@ -239,20 +282,32 @@ export function PreMatchScreen({ data, onKickoff, onBack }: Props) {
             style={{ background: '#10b981' }}
             initial={{ width: '33%' }}
             animate={{ width: `${prob.home}%` }}
-            transition={{ duration: 1.3, delay: 0.65, ease: EASE.smooth as [number,number,number,number] }}
+            transition={{
+              duration: 1.3,
+              delay: 0.65,
+              ease: EASE.smooth as [number, number, number, number],
+            }}
           />
           <motion.div
             style={{ background: 'rgba(234,179,8,0.75)' }}
             initial={{ width: '33%' }}
             animate={{ width: `${prob.draw}%` }}
-            transition={{ duration: 1.3, delay: 0.65, ease: EASE.smooth as [number,number,number,number] }}
+            transition={{
+              duration: 1.3,
+              delay: 0.65,
+              ease: EASE.smooth as [number, number, number, number],
+            }}
           />
           <motion.div
             className="rounded-r-full"
             style={{ background: '#ef4444' }}
             initial={{ width: '33%' }}
             animate={{ width: `${prob.away}%` }}
-            transition={{ duration: 1.3, delay: 0.65, ease: EASE.smooth as [number,number,number,number] }}
+            transition={{
+              duration: 1.3,
+              delay: 0.65,
+              ease: EASE.smooth as [number, number, number, number],
+            }}
           />
         </div>
         <div className="flex justify-between mt-1.5" style={{ fontSize: 9 }}>
@@ -273,7 +328,9 @@ export function PreMatchScreen({ data, onKickoff, onBack }: Props) {
         <LineupColumn
           title={opponent.name}
           players={Array.from({ length: 11 }, (_, i) => ({
-            position: (['GK','RB','CB','CB','LB','CM','CM','CM','RW','ST','LW'] as string[])[i] ?? 'MID',
+            position:
+              (['GK', 'RB', 'CB', 'CB', 'LB', 'CM', 'CM', 'CM', 'RW', 'ST', 'LW'] as string[])[i] ??
+              'MID',
             name: `Jogador ${i + 1}`,
             ovr: Math.max(60, Math.min(99, opponent.avgOvr + (i % 3) - 1)),
             flag: opponent.flag,
@@ -305,7 +362,9 @@ export function PreMatchScreen({ data, onKickoff, onBack }: Props) {
 }
 
 function LineupColumn({
-  title, players, home = false,
+  title,
+  players,
+  home = false,
 }: {
   title: string;
   players: Array<{ position: string; name: string; ovr: number; flag?: string }>;
@@ -313,7 +372,10 @@ function LineupColumn({
 }) {
   return (
     <div className="glass rounded-xl p-2.5 overflow-y-auto">
-      <p className={`font-bold truncate mb-2 ${home ? 'text-gold' : 'text-parchment'}`} style={{ fontSize: 10 }}>
+      <p
+        className={`font-bold truncate mb-2 ${home ? 'text-gold' : 'text-parchment'}`}
+        style={{ fontSize: 10 }}
+      >
         {title}
       </p>
       <div className="space-y-px">
@@ -325,9 +387,18 @@ function LineupColumn({
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.6 + i * 0.035, duration: 0.18 }}
           >
-            <span className="w-6 shrink-0" style={{ fontSize: 7, color: 'rgba(255,255,255,0.35)' }}>{p.position}</span>
-            <span className="text-parchment font-medium flex-1 truncate" style={{ fontSize: 9 }}>{p.name}</span>
-            <span className={`font-display shrink-0 ${home ? 'text-gold' : 'text-parchment'}`} style={{ fontSize: 11 }}>{p.ovr}</span>
+            <span className="w-6 shrink-0" style={{ fontSize: 7, color: 'rgba(255,255,255,0.35)' }}>
+              {p.position}
+            </span>
+            <span className="text-parchment font-medium flex-1 truncate" style={{ fontSize: 9 }}>
+              {p.name}
+            </span>
+            <span
+              className={`font-display shrink-0 ${home ? 'text-gold' : 'text-parchment'}`}
+              style={{ fontSize: 11 }}
+            >
+              {p.ovr}
+            </span>
           </motion.div>
         ))}
       </div>

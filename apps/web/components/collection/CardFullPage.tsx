@@ -8,44 +8,44 @@ import { useCallback, useEffect, useState } from 'react';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const FAV_KEY   = 'wl:collection:favorites';
+const FAV_KEY = 'wl:collection:favorites';
 const DREAM_KEY = 'wl:dream-team';
 const DREAM_MAX = 11;
 
 const RARITY_COLORS: Record<string, string> = {
-  common:         'rgba(107,114,128,0.5)',
-  rare:           'rgba(168,85,247,0.6)',
-  elite:          'rgba(59,130,246,0.65)',
-  legendary:      'rgba(201,168,76,0.7)',
-  ultra:          'rgba(236,72,153,0.65)',
+  common: 'rgba(107,114,128,0.5)',
+  rare: 'rgba(168,85,247,0.6)',
+  elite: 'rgba(59,130,246,0.65)',
+  legendary: 'rgba(201,168,76,0.7)',
+  ultra: 'rgba(236,72,153,0.65)',
   world_cup_hero: 'rgba(240,244,255,0.75)',
 };
 
 const RARITY_SOLID: Record<string, string> = {
-  common:         '#6b7280',
-  rare:           '#a855f7',
-  elite:          '#3b82f6',
-  legendary:      '#c9a84c',
-  ultra:          '#ec4899',
+  common: '#6b7280',
+  rare: '#a855f7',
+  elite: '#3b82f6',
+  legendary: '#c9a84c',
+  ultra: '#ec4899',
   world_cup_hero: '#e2e8f0',
 };
 
 const RARITY_BG: Record<string, [string, string]> = {
-  common:         ['#0c0d10', '#181a20'],
-  rare:           ['#0a0018', '#1a0040'],
-  elite:          ['#000d20', '#001840'],
-  legendary:      ['#120900', '#2d1800'],
-  ultra:          ['#1a0012', '#330024'],
+  common: ['#0c0d10', '#181a20'],
+  rare: ['#0a0018', '#1a0040'],
+  elite: ['#000d20', '#001840'],
+  legendary: ['#120900', '#2d1800'],
+  ultra: ['#1a0012', '#330024'],
   world_cup_hero: ['#04040a', '#0e0c18'],
 };
 
 const ATTR_LABELS: Array<{ key: string; label: string; icon: string; color: string }> = [
-  { key: 'pace',      label: 'Ritmo',       icon: '⚡', color: '#f59e0b' },
-  { key: 'shooting',  label: 'Finalização', icon: '🎯', color: '#ef4444' },
-  { key: 'passing',   label: 'Passe',       icon: '🔄', color: '#10b981' },
-  { key: 'dribbling', label: 'Drible',      icon: '🌀', color: '#3b82f6' },
-  { key: 'defending', label: 'Defesa',      icon: '🛡',  color: '#6366f1' },
-  { key: 'physical',  label: 'Físico',      icon: '💪', color: '#ec4899' },
+  { key: 'pace', label: 'Ritmo', icon: '⚡', color: '#f59e0b' },
+  { key: 'shooting', label: 'Finalização', icon: '🎯', color: '#ef4444' },
+  { key: 'passing', label: 'Passe', icon: '🔄', color: '#10b981' },
+  { key: 'dribbling', label: 'Drible', icon: '🌀', color: '#3b82f6' },
+  { key: 'defending', label: 'Defesa', icon: '🛡', color: '#6366f1' },
+  { key: 'physical', label: 'Físico', icon: '💪', color: '#ec4899' },
 ];
 
 const TIER_STARS = ['', '★', '★★', '★★★'] as const;
@@ -57,30 +57,36 @@ function loadSet(key: string): Set<string> {
   try {
     const raw = localStorage.getItem(key);
     return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
-  } catch { return new Set(); }
+  } catch {
+    return new Set();
+  }
 }
 
 function saveSet(key: string, s: Set<string>) {
-  try { localStorage.setItem(key, JSON.stringify([...s])); } catch { /* noop */ }
+  try {
+    localStorage.setItem(key, JSON.stringify([...s]));
+  } catch {
+    /* noop */
+  }
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 type Props = {
-  card:  CollectionCard;
+  card: CollectionCard;
   owned: boolean;
 };
 
 export function CardFullPage({ card, owned }: Props) {
   const router = useRouter();
 
-  const [isFav,       setIsFav]       = useState(false);
+  const [isFav, setIsFav] = useState(false);
   const [isDreamTeam, setIsDreamTeam] = useState(false);
-  const [dreamCount,  setDreamCount]  = useState(0);
-  const [showAttrs,   setShowAttrs]   = useState(false);
+  const [dreamCount, setDreamCount] = useState(0);
+  const [showAttrs, setShowAttrs] = useState(false);
 
   useEffect(() => {
-    const favs  = loadSet(FAV_KEY);
+    const favs = loadSet(FAV_KEY);
     const dream = loadSet(DREAM_KEY);
     setIsFav(favs.has(card.cardId));
     setIsDreamTeam(dream.has(card.cardId));
@@ -94,7 +100,8 @@ export function CardFullPage({ card, owned }: Props) {
     setIsFav((prev) => {
       const next = !prev;
       const favs = loadSet(FAV_KEY);
-      if (next) favs.add(card.cardId); else favs.delete(card.cardId);
+      if (next) favs.add(card.cardId);
+      else favs.delete(card.cardId);
       saveSet(FAV_KEY, favs);
       return next;
     });
@@ -117,7 +124,7 @@ export function CardFullPage({ card, owned }: Props) {
   }, [card.cardId]);
 
   const color = RARITY_SOLID[card.rarityCode] ?? '#c9a84c';
-  const glow  = RARITY_COLORS[card.rarityCode] ?? 'rgba(201,168,76,0.5)';
+  const glow = RARITY_COLORS[card.rarityCode] ?? 'rgba(201,168,76,0.5)';
   const [bgFrom, bgTo] = RARITY_BG[card.rarityCode] ?? ['#0c0d10', '#181a20'];
   const meta = RARITY_META[card.rarityCode];
 
@@ -149,7 +156,10 @@ export function CardFullPage({ card, owned }: Props) {
           onClick={() => router.back()}
           whileTap={{ scale: 0.92 }}
           className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all"
-          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
+          style={{
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.08)',
+          }}
         >
           <span className="text-white text-sm">←</span>
           <span className="text-white/60 text-xs font-medium">Coleção</span>
@@ -164,8 +174,10 @@ export function CardFullPage({ card, owned }: Props) {
               whileTap={{ scale: 0.88 }}
               className="w-10 h-10 rounded-xl flex flex-col items-center justify-center"
               style={{
-                background: isDreamTeam ? 'rgba(245,158,11,0.2)'  : 'rgba(255,255,255,0.06)',
-                border:     isDreamTeam ? '1px solid rgba(245,158,11,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                background: isDreamTeam ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.06)',
+                border: isDreamTeam
+                  ? '1px solid rgba(245,158,11,0.5)'
+                  : '1px solid rgba(255,255,255,0.08)',
               }}
             >
               <motion.span
@@ -183,8 +195,10 @@ export function CardFullPage({ card, owned }: Props) {
               whileTap={{ scale: 0.88 }}
               className="w-10 h-10 rounded-xl flex items-center justify-center"
               style={{
-                background: isFav ? 'rgba(236,72,153,0.2)'   : 'rgba(255,255,255,0.06)',
-                border:     isFav ? '1px solid rgba(236,72,153,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                background: isFav ? 'rgba(236,72,153,0.2)' : 'rgba(255,255,255,0.06)',
+                border: isFav
+                  ? '1px solid rgba(236,72,153,0.5)'
+                  : '1px solid rgba(255,255,255,0.08)',
               }}
             >
               <motion.span
@@ -214,17 +228,14 @@ export function CardFullPage({ card, owned }: Props) {
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-4"
           style={{
             background: `${color}18`,
-            border:     `1px solid ${color}40`,
+            border: `1px solid ${color}40`,
           }}
         >
           <span
             className="w-1.5 h-1.5 rounded-full"
             style={{ background: color, boxShadow: `0 0 6px ${color}` }}
           />
-          <span
-            className="text-[10px] font-black uppercase tracking-[0.2em]"
-            style={{ color }}
-          >
+          <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color }}>
             {card.rarityCode === 'world_cup_hero' ? 'World Cup Hero' : meta?.label}
           </span>
           {!owned && (
@@ -313,8 +324,13 @@ export function CardFullPage({ card, owned }: Props) {
               transition={{ delay: 0.3 }}
             >
               <SectionLabel label="História" />
-              <p className="text-white/55 text-sm leading-relaxed" style={{ opacity: owned ? 1 : 0.5 }}>
-                {owned ? card.bioShort : '???  Abra esta carta para descobrir a história desta lenda.'}
+              <p
+                className="text-white/55 text-sm leading-relaxed"
+                style={{ opacity: owned ? 1 : 0.5 }}
+              >
+                {owned
+                  ? card.bioShort
+                  : '???  Abra esta carta para descobrir a história desta lenda.'}
               </p>
             </motion.section>
           )}
@@ -347,7 +363,9 @@ export function CardFullPage({ card, owned }: Props) {
                     <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
                       <motion.div
                         className="h-full rounded-full"
-                        style={{ background: `linear-gradient(90deg, ${attrColor}70, ${attrColor})` }}
+                        style={{
+                          background: `linear-gradient(90deg, ${attrColor}70, ${attrColor})`,
+                        }}
                         initial={{ width: '0%' }}
                         animate={{ width: showAttrs && owned ? `${pct}%` : '0%' }}
                         transition={{ duration: 0.7, delay: i * 0.08, ease: 'easeOut' }}
@@ -377,14 +395,17 @@ export function CardFullPage({ card, owned }: Props) {
                     className="flex items-center gap-2 px-3 py-2 rounded-full"
                     style={{
                       background: `${color}${owned ? '10' : '05'}`,
-                      border:     `1px solid ${color}${owned ? '30' : '15'}`,
+                      border: `1px solid ${color}${owned ? '30' : '15'}`,
                       opacity: owned ? 1 : 0.4,
                     }}
                   >
                     <span className="text-parchment text-xs font-semibold">{t.name}</span>
                     <span
                       className="text-[10px] font-bold"
-                      style={{ color: t.tier === 3 ? '#fbbf24' : t.tier === 2 ? color : 'rgba(255,255,255,0.3)' }}
+                      style={{
+                        color:
+                          t.tier === 3 ? '#fbbf24' : t.tier === 2 ? color : 'rgba(255,255,255,0.3)',
+                      }}
                     >
                       {TIER_STARS[t.tier]}
                     </span>
@@ -402,14 +423,20 @@ export function CardFullPage({ card, owned }: Props) {
           >
             <SectionLabel label="Informações" />
             <div className="grid grid-cols-3 gap-3">
-              <InfoCard label="Raridade" value={meta?.label ?? card.rarityCode} valueColor={color} />
-              <InfoCard label="Edição"   value={card.editionCode} valueColor="text-parchment" />
-              <InfoCard label="Época"    value={card.era}         valueColor="text-parchment" />
-              <InfoCard label="Posição"  value={card.position}    valueColor="text-parchment" />
-              <InfoCard label="País"     value={`${card.flagEmoji} ${card.nationality}`} valueColor="text-parchment" />
-              {owned && (
-                <InfoCard label="Contratos" value="10"           valueColor="text-emerald-400" />
-              )}
+              <InfoCard
+                label="Raridade"
+                value={meta?.label ?? card.rarityCode}
+                valueColor={color}
+              />
+              <InfoCard label="Edição" value={card.editionCode} valueColor="text-parchment" />
+              <InfoCard label="Época" value={card.era} valueColor="text-parchment" />
+              <InfoCard label="Posição" value={card.position} valueColor="text-parchment" />
+              <InfoCard
+                label="País"
+                value={`${card.flagEmoji} ${card.nationality}`}
+                valueColor="text-parchment"
+              />
+              {owned && <InfoCard label="Contratos" value="10" valueColor="text-emerald-400" />}
             </div>
           </motion.section>
 
@@ -422,7 +449,7 @@ export function CardFullPage({ card, owned }: Props) {
               className="rounded-2xl overflow-hidden"
               style={{
                 background: `linear-gradient(135deg, ${color}08, rgba(0,0,0,0.4))`,
-                border:     `1px solid ${color}20`,
+                border: `1px solid ${color}20`,
               }}
             >
               <div className="p-5 text-center">
@@ -431,7 +458,8 @@ export function CardFullPage({ card, owned }: Props) {
                   Você ainda não possui esta carta
                 </p>
                 <p className="text-white/30 text-xs mb-4 leading-relaxed">
-                  Abra packs para tentar conseguir <span style={{ color }}>{card.displayName}</span> e outros lendas
+                  Abra packs para tentar conseguir <span style={{ color }}>{card.displayName}</span>{' '}
+                  e outros lendas
                 </p>
                 <motion.button
                   onClick={() => router.push('/packs')}
@@ -439,7 +467,7 @@ export function CardFullPage({ card, owned }: Props) {
                   className="px-6 py-2.5 rounded-xl font-bold text-sm transition-all"
                   style={{
                     background: `linear-gradient(135deg, ${color}30, ${color}15)`,
-                    border:     `1px solid ${color}40`,
+                    border: `1px solid ${color}40`,
                     color,
                   }}
                 >
@@ -460,14 +488,24 @@ export function CardFullPage({ card, owned }: Props) {
               {isDreamTeam ? (
                 <div
                   className="flex items-center gap-3 p-4 rounded-2xl"
-                  style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}
+                  style={{
+                    background: 'rgba(245,158,11,0.08)',
+                    border: '1px solid rgba(245,158,11,0.2)',
+                  }}
                 >
                   <span className="text-2xl">⭐</span>
                   <div>
-                    <p className="text-[11px] font-bold" style={{ color: '#f59e0b' }}>No seu Dream Team</p>
-                    <p className="text-muted text-[10px] mt-0.5">{dreamCount}/{DREAM_MAX} posições preenchidas</p>
+                    <p className="text-[11px] font-bold" style={{ color: '#f59e0b' }}>
+                      No seu Dream Team
+                    </p>
+                    <p className="text-muted text-[10px] mt-0.5">
+                      {dreamCount}/{DREAM_MAX} posições preenchidas
+                    </p>
                   </div>
-                  <button onClick={toggleDreamTeam} className="ml-auto text-muted text-xs hover:text-red-400 transition-colors">
+                  <button
+                    onClick={toggleDreamTeam}
+                    className="ml-auto text-muted text-xs hover:text-red-400 transition-colors"
+                  >
                     Remover
                   </button>
                 </div>
@@ -478,7 +516,7 @@ export function CardFullPage({ card, owned }: Props) {
                   className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl transition-all"
                   style={{
                     background: 'rgba(245,158,11,0.06)',
-                    border:     '1px dashed rgba(245,158,11,0.2)',
+                    border: '1px dashed rgba(245,158,11,0.2)',
                   }}
                 >
                   <span>☆</span>
@@ -503,22 +541,26 @@ export function CardFullPage({ card, owned }: Props) {
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <p className="text-[9px] font-black uppercase tracking-[0.22em] mb-3" style={{ color: 'rgba(255,255,255,0.3)' }}>
+    <p
+      className="text-[9px] font-black uppercase tracking-[0.22em] mb-3"
+      style={{ color: 'rgba(255,255,255,0.3)' }}
+    >
       {label}
     </p>
   );
 }
 
 function InfoCard({
-  label, value, valueColor,
+  label,
+  value,
+  valueColor,
 }: {
-  label:      string;
-  value:      string;
+  label: string;
+  value: string;
   valueColor: string;
 }) {
-  const colorStyle = valueColor.startsWith('#') || valueColor.startsWith('rgba')
-    ? { color: valueColor }
-    : {};
+  const colorStyle =
+    valueColor.startsWith('#') || valueColor.startsWith('rgba') ? { color: valueColor } : {};
   const colorClass = valueColor.startsWith('text-') ? valueColor : '';
 
   return (

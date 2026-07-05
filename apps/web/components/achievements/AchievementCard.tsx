@@ -1,8 +1,8 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import type { AchievementView } from '@/lib/actions/achievements';
 import type { AchievementDef } from '@world-legends/achievements';
+import { motion } from 'framer-motion';
 
 // ─── Rarity visuals ───────────────────────────────────────────────────────────
 
@@ -88,9 +88,7 @@ export function AchievementCard({ view, onClaim, claiming }: AchievementCardProp
               unlocked ? cfg.border : 'border-white/5 bg-black/30',
             ].join(' ')}
           >
-            <span style={unlocked ? {} : { filter: 'grayscale(100%)' }}>
-              {def.icon}
-            </span>
+            <span style={unlocked ? {} : { filter: 'grayscale(100%)' }}>{def.icon}</span>
           </div>
 
           {/* Content */}
@@ -100,7 +98,9 @@ export function AchievementCard({ view, onClaim, claiming }: AchievementCardProp
                 {def.name}
               </p>
               {/* Rarity badge */}
-              <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider ${cfg.badge}`}>
+              <span
+                className={`text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider ${cfg.badge}`}
+              >
                 {cfg.label}
               </span>
               {unlocked && rewardClaimed && (
@@ -126,9 +126,7 @@ export function AchievementCard({ view, onClaim, claiming }: AchievementCardProp
           </div>
 
           {/* Locked icon overlay */}
-          {!unlocked && (
-            <span className="text-muted text-lg shrink-0">🔒</span>
-          )}
+          {!unlocked && <span className="text-muted text-lg shrink-0">🔒</span>}
         </div>
 
         {/* Claim reward button */}

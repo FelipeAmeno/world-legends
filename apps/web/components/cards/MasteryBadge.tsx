@@ -1,7 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import type { CardMasteryView } from '@/lib/actions/card-mastery';
+import { motion } from 'framer-motion';
 
 type Props = {
   mastery: CardMasteryView;

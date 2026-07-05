@@ -1,5 +1,6 @@
 'use client';
 
+import { PlayerCard } from '@/components/cards/PlayerCard';
 import type { CollectionCard } from '@/lib/collection-data';
 import { RARITY_VISUAL } from '@/lib/collection-data';
 import { motion } from 'framer-motion';
@@ -115,101 +116,48 @@ export function CollectionCardTile({
     <div ref={ref}>
       {inView ? (
         <motion.div
+          className="relative cursor-pointer group"
+          onClick={() => onSelect(card)}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.2 }}
-          className={[
-            'relative rounded-xl border overflow-hidden cursor-pointer group',
-            visual.bgClass,
-            isComparing ? 'border-blue-400' : visual.borderClass,
-            visual.glowClass,
-          ].join(' ')}
-          style={{ aspectRatio: '3/4' }}
-          onClick={() => onSelect(card)}
           whileHover={{ scale: 1.04, y: -3 }}
           whileTap={{ scale: 0.96 }}
+          style={{ display: 'inline-block', width: '100%' }}
         >
-          {/* Glow radial */}
-          <div
-            className="absolute inset-0 opacity-20 pointer-events-none"
-            style={{
-              background: `radial-gradient(ellipse at 50% 25%, ${RARITY_GLOW[card.rarityCode]}, transparent 65%)`,
-            }}
-          />
+          <PlayerCard card={card} size="md" glow />
 
-          {/* Rarity */}
-          <div className="absolute top-1.5 left-1.5">
-            <span
-              className={`text-[7px] font-black uppercase px-1 py-0.5 rounded ${visual.textClass}`}
-              style={{ background: 'rgba(0,0,0,0.65)' }}
-            >
-              {card.rarityCode === 'world_cup_hero'
-                ? 'WCH'
-                : card.rarityLabel.slice(0, 3).toUpperCase()}
-            </span>
-          </div>
-
-          {/* Hover actions */}
+          {/* Hover actions — overlay on top of card */}
           <div
-            className="absolute top-1.5 right-1.5 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            className="absolute top-1 right-1 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => onFav(card.cardId)}
               className="w-6 h-6 rounded-full text-xs flex items-center justify-center"
-              style={{ background: 'rgba(0,0,0,0.7)' }}
+              style={{ background: 'rgba(0,0,0,0.75)' }}
             >
               {isFav ? '❤️' : '🤍'}
             </button>
             <button
               onClick={() => onCompare(card)}
               className={`w-6 h-6 rounded-full text-[11px] flex items-center justify-center ${isComparing ? 'text-blue-400' : 'text-white/60'}`}
-              style={{ background: 'rgba(0,0,0,0.7)' }}
+              style={{ background: 'rgba(0,0,0,0.75)' }}
             >
               ⚖
             </button>
           </div>
 
-          {/* OVR */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <p
-              className="font-display"
-              style={{
-                fontSize: '42px',
-                lineHeight: 1,
-                background: `linear-gradient(180deg, #ffffff 0%, ${RARITY_GLOW[card.rarityCode]} 100%)`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                filter: `drop-shadow(0 0 8px ${RARITY_GLOW[card.rarityCode]})`,
-              }}
-            >
-              {card.overall}
-            </p>
-          </div>
-
-          {/* Bottom info */}
-          <div
-            className="absolute bottom-0 left-0 right-0 px-1.5 pb-2 pt-6"
-            style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.85), transparent)' }}
-          >
-            <p className="text-parchment text-[9px] font-bold leading-tight truncate text-center">
-              {card.displayName}
-            </p>
-            <p className="text-muted text-[7px] text-center mt-0.5">
-              {card.position} · {card.flagEmoji}
-            </p>
-          </div>
-
-          {/* Fav indicator */}
-          {isFav && !isComparing && (
-            <div className="absolute top-1.5 right-1.5">
+          {/* Fav indicator when not hovering */}
+          {isFav && (
+            <div className="absolute top-1.5 right-1.5 group-hover:opacity-0 transition-opacity z-20">
               <span className="text-xs drop-shadow">❤️</span>
             </div>
           )}
 
           {/* Compare border */}
           {isComparing && (
-            <div className="absolute inset-0 border-2 border-blue-400 rounded-xl pointer-events-none" />
+            <div className="absolute inset-0 border-2 border-blue-400 rounded-[10px] pointer-events-none z-20" />
           )}
         </motion.div>
       ) : (

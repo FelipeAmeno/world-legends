@@ -29,7 +29,8 @@ function Shimmer({ className = '', style }: { className?: string; style?: React.
       <div
         className="absolute inset-0"
         style={{
-          background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.055) 50%, transparent 100%)',
+          background:
+            'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.055) 50%, transparent 100%)',
           backgroundSize: '200% 100%',
           animation: 'skeleton-shimmer 1.8s ease-in-out infinite',
         }}
@@ -88,7 +89,10 @@ export function SkeletonProfile() {
       {/* Avatar area */}
       <div className="px-5 pb-5">
         <div className="flex items-end gap-4 -mt-10">
-          <Shimmer className="w-24 h-24 rounded-3xl shrink-0" style={{ border: '4px solid #07080f' }} />
+          <Shimmer
+            className="w-24 h-24 rounded-3xl shrink-0"
+            style={{ border: '4px solid #07080f' }}
+          />
           <div className="flex-1 pb-1 space-y-2">
             <Shimmer className="h-7 w-40 rounded" />
             <Shimmer className="h-4 w-24 rounded-full" />
@@ -107,7 +111,11 @@ export function SkeletonProfile() {
         {/* Pills */}
         <div className="flex gap-2 mt-3">
           {[60, 72, 56, 40, 44, 40].map((w, i) => (
-            <Shimmer key={i} className={`h-7 w-${w < 60 ? '10' : w < 72 ? '14' : '16'} rounded-full`} style={{ width: w }} />
+            <Shimmer
+              key={i}
+              className={`h-7 w-${w < 60 ? '10' : w < 72 ? '14' : '16'} rounded-full`}
+              style={{ width: w }}
+            />
           ))}
         </div>
       </div>
@@ -190,18 +198,21 @@ export type SkeletonVariant =
   | 'list';
 
 const SKELETON_MAP: Record<SkeletonVariant, (props?: Record<string, unknown>) => ReactNode> = {
-  'card':         () => <SkeletonCard />,
-  'card-wide':    () => <SkeletonCardWide />,
-  'stat':         () => <SkeletonStat />,
-  'profile':      () => <SkeletonProfile />,
-  'grid-2':       () => <SkeletonGrid2 />,
-  'leaderboard':  () => <SkeletonLeaderboard />,
-  'pack':         () => <SkeletonPack />,
-  'text':         () => <SkeletonText />,
-  'list':         () => <SkeletonList />,
+  card: () => <SkeletonCard />,
+  'card-wide': () => <SkeletonCardWide />,
+  stat: () => <SkeletonStat />,
+  profile: () => <SkeletonProfile />,
+  'grid-2': () => <SkeletonGrid2 />,
+  leaderboard: () => <SkeletonLeaderboard />,
+  pack: () => <SkeletonPack />,
+  text: () => <SkeletonText />,
+  list: () => <SkeletonList />,
 };
 
-export function Skeleton({ variant, ...props }: { variant: SkeletonVariant } & Record<string, unknown>) {
+export function Skeleton({
+  variant,
+  ...props
+}: { variant: SkeletonVariant } & Record<string, unknown>) {
   const Component = SKELETON_MAP[variant];
   return <>{Component(props)}</>;
 }

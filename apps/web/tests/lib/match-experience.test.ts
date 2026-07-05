@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
 import type { EventDisplay } from '@/lib/match-data';
 import { buildMomentumCurve, buildRichEvents } from '@/lib/match-experience';
+import { describe, expect, it } from 'vitest';
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -26,71 +26,71 @@ describe('buildRichEvents', () => {
   it('atribui ids sequenciais começando em 0', () => {
     const events = [makeEvent({ minute: 5 }), makeEvent({ minute: 10 })];
     const rich = buildRichEvents(events);
-    expect(rich[0]!.id).toBe(0);
-    expect(rich[1]!.id).toBe(1);
+    expect(rich[0]?.id).toBe(0);
+    expect(rich[1]?.id).toBe(1);
   });
 
   it('preserva o minuto de cada evento', () => {
     const events = [makeEvent({ minute: 23 }), makeEvent({ minute: 67 })];
     const rich = buildRichEvents(events);
-    expect(rich[0]!.minute).toBe(23);
-    expect(rich[1]!.minute).toBe(67);
+    expect(rich[0]?.minute).toBe(23);
+    expect(rich[1]?.minute).toBe(67);
   });
 
   it('classifica goal_home corretamente e marca isKey=true', () => {
     const event = makeEvent({ type: 'goal', side: 'home', text: 'Ronaldo marca!' });
     const [rich] = buildRichEvents([event]);
-    expect(rich!.kind).toBe('goal_home');
-    expect(rich!.isKey).toBe(true);
-    expect(rich!.headline).toBe('GOOOOOL!');
+    expect(rich?.kind).toBe('goal_home');
+    expect(rich?.isKey).toBe(true);
+    expect(rich?.headline).toBe('GOOOOOL!');
   });
 
   it('classifica goal_away corretamente e marca isKey=true', () => {
     const event = makeEvent({ type: 'goal', side: 'away', text: 'Gol adversário' });
     const [rich] = buildRichEvents([event]);
-    expect(rich!.kind).toBe('goal_away');
-    expect(rich!.isKey).toBe(true);
+    expect(rich?.kind).toBe('goal_away');
+    expect(rich?.isKey).toBe(true);
   });
 
   it('marca full_time como isKey=true', () => {
     const event = makeEvent({ type: 'full_time', side: 'neutral', minute: 90 });
     const [rich] = buildRichEvents([event]);
-    expect(rich!.isKey).toBe(true);
+    expect(rich?.isKey).toBe(true);
   });
 
   it('marca chance como isKey=false', () => {
     const event = makeEvent({ type: 'chance', side: 'neutral' });
     const [rich] = buildRichEvents([event]);
-    expect(rich!.isKey).toBe(false);
+    expect(rich?.isKey).toBe(false);
   });
 
   it('goal_home tem momentum positivo', () => {
     const event = makeEvent({ type: 'goal', side: 'home' });
     const [rich] = buildRichEvents([event]);
-    expect(rich!.momentum).toBeGreaterThan(0);
+    expect(rich?.momentum).toBeGreaterThan(0);
   });
 
   it('goal_away tem momentum negativo', () => {
     const event = makeEvent({ type: 'goal', side: 'away' });
     const [rich] = buildRichEvents([event]);
-    expect(rich!.momentum).toBeLessThan(0);
+    expect(rich?.momentum).toBeLessThan(0);
   });
 
   it('preenche bgColor e iconText', () => {
     const event = makeEvent({ type: 'goal', side: 'home' });
     const [rich] = buildRichEvents([event]);
-    expect(typeof rich!.bgColor).toBe('string');
-    expect(rich!.bgColor.length).toBeGreaterThan(0);
-    expect(typeof rich!.iconText).toBe('string');
-    expect(rich!.iconText.length).toBeGreaterThan(0);
+    expect(typeof rich?.bgColor).toBe('string');
+    expect(rich?.bgColor.length).toBeGreaterThan(0);
+    expect(typeof rich?.iconText).toBe('string');
+    expect(rich?.iconText.length).toBeGreaterThan(0);
   });
 
   it('mantém side original do evento', () => {
     const home = makeEvent({ type: 'chance', side: 'home' });
     const away = makeEvent({ type: 'chance', side: 'away' });
     const rich = buildRichEvents([home, away]);
-    expect(rich[0]!.side).toBe('home');
-    expect(rich[1]!.side).toBe('away');
+    expect(rich[0]?.side).toBe('home');
+    expect(rich[1]?.side).toBe('away');
   });
 });
 
@@ -136,6 +136,6 @@ describe('buildMomentumCurve', () => {
     const ev = makeEvent({ minute: 45 });
     const [rich] = buildRichEvents([ev]);
     const curve = buildMomentumCurve([rich!]);
-    expect(curve[1]!.minute).toBe(45);
+    expect(curve[1]?.minute).toBe(45);
   });
 });

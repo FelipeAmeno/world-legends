@@ -136,6 +136,13 @@ export function LiveMatchView({ data, paused, onHalfTime, onFullTime }: Props) {
 
 // ─── Goal celebration overlay ─────────────────────────────────────────────────
 
+const GOAL_SPARKS = Array.from({ length: 18 }, (_, i) => ({
+  angle: (i / 18) * 360,
+  distance: 60 + (i % 4) * 22,
+  size: 4 + (i % 3) * 2,
+  delay: i * 0.02,
+}));
+
 function GoalCelebration() {
   return (
     <motion.div
@@ -145,26 +152,77 @@ function GoalCelebration() {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
     >
-      {/* Green flash */}
+      {/* Stadium lights flash */}
       <motion.div
         className="absolute inset-0"
         initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 0.3, 0] }}
-        transition={{ duration: 0.8 }}
-        style={{ background: 'radial-gradient(ellipse, rgba(16,185,129,0.4), transparent 60%)' }}
+        animate={{ opacity: [0, 0.45, 0.1, 0.35, 0] }}
+        transition={{ duration: 1.0, times: [0, 0.15, 0.35, 0.5, 1] }}
+        style={{
+          background:
+            'radial-gradient(ellipse 100% 80% at 50% 30%, rgba(255,248,200,0.18), transparent 70%)',
+        }}
       />
 
+      {/* Green pitch glow */}
+      <motion.div
+        className="absolute inset-0"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 0.5, 0] }}
+        transition={{ duration: 1.2 }}
+        style={{
+          background:
+            'radial-gradient(ellipse 70% 50% at 50% 60%, rgba(16,185,129,0.35), transparent 65%)',
+        }}
+      />
+
+      {/* Spark particles */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        {GOAL_SPARKS.map((p, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              width: p.size,
+              height: p.size,
+              background: i % 3 === 0 ? '#10b981' : i % 3 === 1 ? '#c9a84c' : '#fff',
+              top: '50%',
+              left: '50%',
+            }}
+            initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+            animate={{
+              x: Math.cos((p.angle * Math.PI) / 180) * p.distance,
+              y: Math.sin((p.angle * Math.PI) / 180) * p.distance,
+              opacity: 0,
+              scale: 0,
+            }}
+            transition={{ duration: 0.85, delay: p.delay, ease: 'easeOut' }}
+          />
+        ))}
+      </div>
+
       {/* GOOOOL text */}
-      <motion.p
-        className="font-display text-6xl sm:text-8xl text-emerald-400 relative z-10"
-        initial={{ scale: 0.5, opacity: 0 }}
-        animate={{ scale: [0.5, 1.2, 1], opacity: [0, 1, 1] }}
-        exit={{ scale: 1.5, opacity: 0 }}
-        transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
-        style={{ textShadow: '0 0 40px rgba(16,185,129,0.8), 0 0 80px rgba(16,185,129,0.4)' }}
-      >
-        GOOOOL!
-      </motion.p>
+      <motion.div className="relative z-10 flex flex-col items-center gap-2">
+        <motion.p
+          className="font-display text-6xl sm:text-8xl text-emerald-400"
+          initial={{ scale: 0.4, opacity: 0 }}
+          animate={{ scale: [0.4, 1.3, 1], opacity: [0, 1, 1] }}
+          exit={{ scale: 1.6, opacity: 0 }}
+          transition={{ duration: 0.55, ease: [0.34, 1.56, 0.64, 1] }}
+          style={{ textShadow: '0 0 50px rgba(16,185,129,0.9), 0 0 100px rgba(16,185,129,0.4)' }}
+        >
+          GOOOOL!
+        </motion.p>
+        <motion.p
+          className="text-[9px] font-bold tracking-[0.35em] uppercase"
+          style={{ color: 'rgba(255,255,255,0.4)' }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          ⚽ A torcida vai à loucura!
+        </motion.p>
+      </motion.div>
     </motion.div>
   );
 }

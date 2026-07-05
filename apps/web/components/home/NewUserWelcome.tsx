@@ -16,7 +16,7 @@ export function NewUserWelcome() {
   const [status, setStatus] = useState<'claiming' | 'ready'>('claiming');
 
   const derivedName =
-    ((user?.user_metadata?.['name'] as string | undefined)?.split(' ')[0]) ??
+    (user?.user_metadata?.name as string | undefined)?.split(' ')[0] ??
     user?.email?.split('@')[0] ??
     'Treinador';
 
@@ -31,7 +31,7 @@ export function NewUserWelcome() {
       setStatus('ready');
       toast.reward('Founder Pack desbloqueado! 🎁', '📦', 4000);
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleOpenPack = () => {
@@ -93,9 +93,7 @@ export function NewUserWelcome() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          <p className="text-parchment text-xl font-semibold">
-            Bem-vindo, {derivedName}! 🎉
-          </p>
+          <p className="text-parchment text-xl font-semibold">Bem-vindo, {derivedName}! 🎉</p>
           <p className="text-muted text-sm leading-relaxed">
             Seu Founder Pack está esperando.
             <br />
@@ -125,10 +123,7 @@ export function NewUserWelcome() {
             >
               📦
             </motion.div>
-            <p
-              className="mt-3 font-display text-sm tracking-widest"
-              style={{ color: '#a78bfa' }}
-            >
+            <p className="mt-3 font-display text-sm tracking-widest" style={{ color: '#a78bfa' }}>
               FOUNDER PACK
             </p>
             <div
@@ -169,9 +164,7 @@ export function NewUserWelcome() {
           )}
         </motion.button>
 
-        <p className="text-white/20 text-[10px] mt-4">
-          Gratuito · 11 cartas garantidas
-        </p>
+        <p className="text-white/20 text-[10px] mt-4">Gratuito · 11 cartas garantidas</p>
       </motion.div>
     </div>
   );

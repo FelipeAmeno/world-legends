@@ -17,51 +17,50 @@
  */
 
 import {
-  type SyncStatus,
+  type AchievementPayload,
   type ChangeType,
-  type QueuedChange,
-  type SyncEvent,
-  type UserProgressPayload,
-  type UserStatsPayload,
-  type SquadPayload,
   type MatchPayload,
   type PackPayload,
-  type AchievementPayload,
+  type QueuedChange,
   SYNC_DEBOUNCE_MS,
   SYNC_RETRY_MAX,
+  type SquadPayload,
+  type SyncEvent,
+  type SyncStatus,
+  type UserProgressPayload,
+  type UserStatsPayload,
 } from './types';
 
-import { ChangeQueue }       from './ChangeQueue';
-import { RetryScheduler }    from './RetryScheduler';
-import { reconcileUser, reconcileAchievements, reconcileSquad } from './Reconciler';
+import { ChangeQueue } from './ChangeQueue';
+import { reconcileAchievements, reconcileSquad, reconcileUser } from './Reconciler';
+import { RetryScheduler } from './RetryScheduler';
 
 import {
-  persistReward,
+  loadAchievementSummary,
+  loadOrCreateUser,
+  persistAchievementClaim,
   persistMatchResult,
   persistPackOpening,
+  persistReward,
   persistSquad,
-  persistAchievementClaim,
-  loadOrCreateUser,
-  loadAchievementSummary,
 } from '@/lib/persistence/bridge';
 
 // ─── SyncEngine ───────────────────────────────────────────────────────────────
 
 export class SyncEngine {
-  private readonly queue    = new ChangeQueue();
-  private readonly retry    = new RetryScheduler();
-  private readonly listeners= new Set<(event: SyncEvent) => void>();
+  private readonly queue = new ChangeQueue();
+  private readonly retry = new RetryScheduler();
+  private readonly listeners = new Set<(event: SyncEvent) => void>();
 
-  private userId:      string | null    = null;
-  private status:      SyncStatus       = 'idle';
-  private debounce:    NodeJS.Timeout  | null = null;
-  private isOnline:    boolean          = typeof navigator !== 'undefined'
-                                          ? navigator.onLine : true;
+  private userId: string | null = null;
+  private status: SyncStatus = 'idle';
+  private debounce: NodeJS.Timeout | null = null;
+  private isOnline: boolean = typeof navigator !== 'undefined' ? navigator.onLine : true;
   private isFlushing = false;
 
   constructor() {
     if (typeof window === 'undefined') return;
-    window.addEventListener('online',  this.handleOnline);
+    window.addEventListener('online', this.handleOnline);
     window.addEventListener('offline', this.handleOffline);
   }
 
@@ -118,7 +117,7 @@ export class SyncEngine {
 
     if (allOk && this.queue.isEmpty && this.retry.pendingCount === 0) {
       this.setStatus('idle');
-      this.emit({ kind:'queue_flushed', count:changes.length });
+      this.emit({ kind: 'queue_flushed', count: changes.length });
     } else if (!allOk) {
       this.setStatus('retrying');
     }
@@ -132,18 +131,17 @@ export class SyncEngine {
     try {
       await this.callBridge(change);
       this.queue.remove(change.id);
-      this.emit({ kind:'change_saved', changeId:change.id });
+      this.emit({ kind: 'change_saved', changeId: change.id });
       return true;
-
     } catch (error) {
-      const msg        = (error as Error).message ?? 'Erro desconhecido';
-      const willRetry  = change.attempts < SYNC_RETRY_MAX;
+      const msg = (error as Error).message ?? 'Erro desconhecido';
+      const willRetry = change.attempts < SYNC_RETRY_MAX;
 
-      this.emit({ kind:'change_failed', changeId:change.id, error:msg, willRetry });
+      this.emit({ kind: 'change_failed', changeId: change.id, error: msg, willRetry });
 
       if (willRetry) {
         this.retry.schedule(change.id, change.attempts, async () => {
-          const ok = await this.processChange({ ...change, attempts:change.attempts });
+          const ok = await this.processChange({ ...change, attempts: change.attempts });
           if (ok && this.queue.isEmpty && this.retry.pendingCount === 0) {
             this.setStatus('idle');
           }
@@ -168,7 +166,7 @@ export class SyncEngine {
     switch (change.type) {
       case 'user_progress': {
         const p = change.payload as UserProgressPayload;
-        await persistReward(uid, 0, 0);   // atualiza via addReward do bridge
+        await persistReward(uid, 0, 0); // atualiza via addReward do bridge
         break;
       }
       case 'user_stats': {
@@ -219,15 +217,12 @@ export class SyncEngine {
     try {
       // 1. Buscar estado do servidor
       const serverUser = await loadOrCreateUser(this.userId, '');
-      const serverAch  = await loadAchievementSummary(this.userId);
+      const serverAch = await loadAchievementSummary(this.userId);
 
       if (!serverUser) return;
 
       // 2. Reconciliar usuário
-      const userResult = reconcileUser(
-        localUser as any,
-        serverUser as any,
-      );
+      const userResult = reconcileUser(localUser as any, serverUser as any);
 
       // 3. Reconciliar conquistas
       const achResult = reconcileAchievements(localAchievements, serverAch);
@@ -236,15 +231,14 @@ export class SyncEngine {
       for (const [id, stage] of Object.entries(achResult.merged)) {
         const serverStage = serverAch[id] ?? 0;
         if (stage > serverStage) {
-          this.enqueue('achievement', { achievementId:id, stage });
+          this.enqueue('achievement', { achievementId: id, stage });
         }
       }
 
       const allChanged = [...userResult.changed, ...achResult.changed];
       if (allChanged.length > 0) {
-        this.emit({ kind:'reconciled', merged:allChanged });
+        this.emit({ kind: 'reconciled', merged: allChanged });
       }
-
     } catch (e) {
       console.warn('[sync] Reconciliation failed:', e);
     }
@@ -274,7 +268,7 @@ export class SyncEngine {
   private setStatus(s: SyncStatus): void {
     if (this.status === s) return;
     this.status = s;
-    this.emit({ kind:'status_changed', status:s });
+    this.emit({ kind: 'status_changed', status: s });
   }
 
   private emit(event: SyncEvent): void {
@@ -286,9 +280,15 @@ export class SyncEngine {
     return () => this.listeners.delete(cb);
   }
 
-  getStatus(): SyncStatus { return this.status; }
-  getQueueSize(): number  { return this.queue.size; }
-  getIsOnline(): boolean  { return this.isOnline; }
+  getStatus(): SyncStatus {
+    return this.status;
+  }
+  getQueueSize(): number {
+    return this.queue.size;
+  }
+  getIsOnline(): boolean {
+    return this.isOnline;
+  }
 
   /** Forçar flush imediato (ex: antes de fechar a aba) */
   async forceFlush(): Promise<void> {
@@ -299,7 +299,7 @@ export class SyncEngine {
   /** Destruir (remover listeners) */
   destroy(): void {
     if (typeof window === 'undefined') return;
-    window.removeEventListener('online',  this.handleOnline);
+    window.removeEventListener('online', this.handleOnline);
     window.removeEventListener('offline', this.handleOffline);
     if (this.debounce) clearTimeout(this.debounce);
     this.retry.cancelAll();

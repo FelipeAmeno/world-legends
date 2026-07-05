@@ -16,57 +16,65 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export type Database = {
   public: {
     Tables: {
-      users:         { Row: UserRow; Insert: Partial<UserRow>; Update: Partial<UserRow> };
-      owned_cards:   { Row: OwnedCardRow; Insert: Partial<OwnedCardRow>; Update: Partial<OwnedCardRow> };
-      squads:        { Row: SquadRow; Insert: Partial<SquadRow>; Update: Partial<SquadRow> };
-      match_history: { Row: MatchHistRow; Insert: Partial<MatchHistRow>; Update: Partial<MatchHistRow> };
+      users: { Row: UserRow; Insert: Partial<UserRow>; Update: Partial<UserRow> };
+      owned_cards: {
+        Row: OwnedCardRow;
+        Insert: Partial<OwnedCardRow>;
+        Update: Partial<OwnedCardRow>;
+      };
+      squads: { Row: SquadRow; Insert: Partial<SquadRow>; Update: Partial<SquadRow> };
+      match_history: {
+        Row: MatchHistRow;
+        Insert: Partial<MatchHistRow>;
+        Update: Partial<MatchHistRow>;
+      };
     };
   };
 };
 
 export type UserRow = {
-  id:         string;
-  username:   string;
-  level:      number;
+  id: string;
+  username: string;
+  level: number;
   current_xp: number;
-  xp_for_next:number;
-  credits:    number;
-  fragments:  number;
-  wins:       number;
-  draws:      number;
-  losses:     number;
+  xp_for_next: number;
+  credits: number;
+  fragments: number;
+  wins: number;
+  draws: number;
+  losses: number;
   created_at: string;
   updated_at: string;
 };
 
 export type OwnedCardRow = {
-  id:          string;
-  user_id:     string;
-  card_id:     string;
-  evolution:   number;
-  contracts:   number;
+  id: string;
+  user_id: string;
+  card_id: string;
+  evolution: number;
+  contracts: number;
   obtained_at: string;
 };
 
 export type SquadRow = {
-  id:         string;
-  user_id:    string;
-  formation:  string;
-  slots:      unknown;
-  bench_ids:  string[];
+  id: string;
+  user_id: string;
+  formation: string;
+  slots: unknown;
+  bench_ids: string[];
   updated_at: string;
 };
 
 export type MatchHistRow = {
-  id:             string;
-  user_id:        string;
-  opponent:       string;
-  home_score:     number;
-  away_score:     number;
-  outcome:        'win' | 'draw' | 'loss';
+  id: string;
+  user_id: string;
+  opponent: string;
+  home_score: number;
+  away_score: number;
+  outcome: 'win' | 'draw' | 'loss';
   credits_earned: number;
-  xp_earned:      number;
-  played_at:      string;
+  xp_earned: number;
+  played_at: string;
 };
 
 // ─── Verificar se Supabase está configurado ───────────────────────────────────

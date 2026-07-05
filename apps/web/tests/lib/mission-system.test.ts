@@ -1,18 +1,18 @@
-import { describe, expect, it } from 'vitest';
 import {
-  ALL_MISSION_DEFS,
   ACHIEVEMENT_IDS,
+  ALL_MISSION_DEFS,
   DAILY_MISSION_IDS,
-  WEEKLY_MISSION_IDS,
   type MissionDef,
   type MissionProgress,
   type PlayerMetrics,
+  WEEKLY_MISSION_IDS,
   buildMissionViews,
   claimMission,
   dailyPeriodKey,
   refreshProgress,
   weeklyPeriodKey,
 } from '@/lib/mission-system';
+import { describe, expect, it } from 'vitest';
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -143,31 +143,31 @@ describe('buildMissionViews', () => {
 
   it('missão sem progresso: pct=0, claimable=false', () => {
     const [view] = buildMissionViews([dailyPlay], {}, baseMetrics);
-    expect(view!.pct).toBe(0);
-    expect(view!.claimable).toBe(false);
-    expect(view!.allDone).toBe(false);
+    expect(view?.pct).toBe(0);
+    expect(view?.claimable).toBe(false);
+    expect(view?.allDone).toBe(false);
   });
 
   it('missão com progresso completo: claimable=true', () => {
     const prog = { daily_play1: makeProgress('daily_play1', 1) };
     const [view] = buildMissionViews([dailyPlay], prog, baseMetrics);
-    expect(view!.claimable).toBe(true);
-    expect(view!.pct).toBe(100);
+    expect(view?.claimable).toBe(true);
+    expect(view?.pct).toBe(100);
   });
 
   it('missão já coletada: allDone=true, claimable=false', () => {
     const prog = { daily_play1: makeProgress('daily_play1', 1, 1) };
     const [view] = buildMissionViews([dailyPlay], prog, baseMetrics);
-    expect(view!.allDone).toBe(true);
-    expect(view!.claimable).toBe(false);
+    expect(view?.allDone).toBe(true);
+    expect(view?.claimable).toBe(false);
   });
 
   it('progresso parcial: pct entre 0 e 100', () => {
     const multiDef = ALL_MISSION_DEFS.find((d) => d.id === 'daily_match3')!;
     const prog = { daily_match3: makeProgress('daily_match3', 2) };
     const [view] = buildMissionViews([multiDef], prog, baseMetrics);
-    expect(view!.pct).toBeGreaterThan(0);
-    expect(view!.pct).toBeLessThan(100);
+    expect(view?.pct).toBeGreaterThan(0);
+    expect(view?.pct).toBeLessThan(100);
   });
 
   it('achievement multi-stage: mostra stage correto após claim', () => {
@@ -178,8 +178,8 @@ describe('buildMissionViews', () => {
     const metrics = { ...baseMetrics, matchesPlayed: 20 };
     const [view] = buildMissionViews([lifeDef], prog, metrics);
     // Deve mostrar stage 2 e ser coletável
-    expect(view!.currentStage.stage).toBe(2);
-    expect(view!.claimable).toBe(true);
+    expect(view?.currentStage.stage).toBe(2);
+    expect(view?.claimable).toBe(true);
   });
 });
 
@@ -201,8 +201,8 @@ describe('refreshProgress', () => {
       },
     };
     const updated = refreshProgress(prog, dailyDefs);
-    expect(updated['daily_play1']!.current).toBe(0);
-    expect(updated['daily_play1']!.stageClaimed).toBe(0);
+    expect(updated.daily_play1?.current).toBe(0);
+    expect(updated.daily_play1?.stageClaimed).toBe(0);
   });
 
   it('não reseta diárias de hoje', () => {
@@ -216,8 +216,8 @@ describe('refreshProgress', () => {
       },
     };
     const updated = refreshProgress(prog, dailyDefs);
-    expect(updated['daily_play1']!.current).toBe(1);
-    expect(updated['daily_play1']!.stageClaimed).toBe(1);
+    expect(updated.daily_play1?.current).toBe(1);
+    expect(updated.daily_play1?.stageClaimed).toBe(1);
   });
 
   it('não modifica missões lifetime', () => {
@@ -231,8 +231,8 @@ describe('refreshProgress', () => {
       },
     };
     const updated = refreshProgress(prog, lifeDefs);
-    expect(updated['life_matches']!.current).toBe(50);
-    expect(updated['life_matches']!.stageClaimed).toBe(2);
+    expect(updated.life_matches?.current).toBe(50);
+    expect(updated.life_matches?.stageClaimed).toBe(2);
   });
 });
 
@@ -242,12 +242,12 @@ describe('claimMission', () => {
   it('marca stage como coletado', () => {
     const prog = { daily_play1: makeProgress('daily_play1', 1, 0) };
     const updated = claimMission('daily_play1', 1, prog);
-    expect(updated['daily_play1']!.stageClaimed).toBe(1);
+    expect(updated.daily_play1?.stageClaimed).toBe(1);
   });
 
   it('cria entrada se missão não existia', () => {
     const updated = claimMission('daily_play1', 1, {});
-    expect(updated['daily_play1']!.stageClaimed).toBe(1);
+    expect(updated.daily_play1?.stageClaimed).toBe(1);
   });
 
   it('não afeta outras missões', () => {
@@ -256,6 +256,6 @@ describe('claimMission', () => {
       daily_win1: makeProgress('daily_win1', 0, 0),
     };
     const updated = claimMission('daily_play1', 1, prog);
-    expect(updated['daily_win1']!.stageClaimed).toBe(0);
+    expect(updated.daily_win1?.stageClaimed).toBe(0);
   });
 });

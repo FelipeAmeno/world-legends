@@ -1,8 +1,8 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { MASTERY_LEVELS } from '@world-legends/card-mastery';
 import type { CardMasteryView } from '@/lib/actions/card-mastery';
+import { MASTERY_LEVELS } from '@world-legends/card-mastery';
+import { motion } from 'framer-motion';
 
 type Props = {
   mastery: CardMasteryView;
@@ -42,7 +42,9 @@ export function MasteryPanel({ mastery }: Props) {
         <div className="mb-4">
           <div className="flex justify-between text-[9px] text-muted mb-1">
             <span>{levelConfig.name}</span>
-            <span>{state.xpToNextLevel} XP para {nextLevelConfig.name}</span>
+            <span>
+              {state.xpToNextLevel} XP para {nextLevelConfig.name}
+            </span>
           </div>
           <div className="h-2 rounded-full bg-black/30 border border-white/5 overflow-hidden">
             <motion.div

@@ -5,11 +5,11 @@ import { RARITY_VISUAL } from '@/lib/collection-data';
 import type { ChemLine, SBSnapshot, SlotDef, SquadSlots } from '@/lib/squad-builder';
 import { getPositionCompat } from '@/lib/squad-builder';
 import type { FormationKey } from '@/lib/squad-builder';
-import { useDroppable, useDraggable } from '@dnd-kit/core';
+import type { DragSource } from '@/lib/squad-builder';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback } from 'react';
-import type { DragSource } from '@/lib/squad-builder';
 
 type Props = {
   formation: FormationKey;
@@ -47,24 +47,111 @@ function PitchMarkings() {
       </defs>
       <rect width="100" height="130" fill="url(#pitchGrad)" />
       <rect width="100" height="130" fill="url(#grassStripe)" />
-      <rect x="3" y="3" width="94" height="124" rx="0.5" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="0.6" />
+      <rect
+        x="3"
+        y="3"
+        width="94"
+        height="124"
+        rx="0.5"
+        fill="none"
+        stroke="rgba(255,255,255,0.18)"
+        strokeWidth="0.6"
+      />
       <line x1="3" y1="65" x2="97" y2="65" stroke="rgba(255,255,255,0.18)" strokeWidth="0.5" />
-      <circle cx="50" cy="65" r="9.5" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="0.5" />
+      <circle
+        cx="50"
+        cy="65"
+        r="9.5"
+        fill="none"
+        stroke="rgba(255,255,255,0.18)"
+        strokeWidth="0.5"
+      />
       <circle cx="50" cy="65" r="0.7" fill="rgba(255,255,255,0.3)" />
-      <rect x="19" y="3" width="62" height="18" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="0.45" />
-      <rect x="31" y="3" width="38" height="8" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="0.4" />
+      <rect
+        x="19"
+        y="3"
+        width="62"
+        height="18"
+        fill="none"
+        stroke="rgba(255,255,255,0.15)"
+        strokeWidth="0.45"
+      />
+      <rect
+        x="31"
+        y="3"
+        width="38"
+        height="8"
+        fill="none"
+        stroke="rgba(255,255,255,0.12)"
+        strokeWidth="0.4"
+      />
       <circle cx="50" cy="16" r="0.5" fill="rgba(255,255,255,0.25)" />
-      <path d="M 38,21 A 9,9 0 0,0 62,21" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="0.4" />
-      <rect x="19" y="109" width="62" height="18" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="0.45" />
-      <rect x="31" y="119" width="38" height="8" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="0.4" />
+      <path
+        d="M 38,21 A 9,9 0 0,0 62,21"
+        fill="none"
+        stroke="rgba(255,255,255,0.12)"
+        strokeWidth="0.4"
+      />
+      <rect
+        x="19"
+        y="109"
+        width="62"
+        height="18"
+        fill="none"
+        stroke="rgba(255,255,255,0.15)"
+        strokeWidth="0.45"
+      />
+      <rect
+        x="31"
+        y="119"
+        width="38"
+        height="8"
+        fill="none"
+        stroke="rgba(255,255,255,0.12)"
+        strokeWidth="0.4"
+      />
       <circle cx="50" cy="115" r="0.5" fill="rgba(255,255,255,0.25)" />
-      <path d="M 38,109 A 9,9 0 0,1 62,109" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="0.4" />
-      <rect x="39" y="0.5" width="22" height="3.5" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="0.5" />
-      <rect x="39" y="126" width="22" height="3.5" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="0.5" />
-      {([
-        [3, 3], [97, 3], [3, 127], [97, 127],
-      ] as [number, number][]).map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r="1.2" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="0.4" />
+      <path
+        d="M 38,109 A 9,9 0 0,1 62,109"
+        fill="none"
+        stroke="rgba(255,255,255,0.12)"
+        strokeWidth="0.4"
+      />
+      <rect
+        x="39"
+        y="0.5"
+        width="22"
+        height="3.5"
+        fill="none"
+        stroke="rgba(255,255,255,0.25)"
+        strokeWidth="0.5"
+      />
+      <rect
+        x="39"
+        y="126"
+        width="22"
+        height="3.5"
+        fill="none"
+        stroke="rgba(255,255,255,0.25)"
+        strokeWidth="0.5"
+      />
+      {(
+        [
+          [3, 3],
+          [97, 3],
+          [3, 127],
+          [97, 127],
+        ] as [number, number][]
+      ).map(([x, y], i) => (
+        <circle
+          key={i}
+          cx={x}
+          cy={y}
+          r="1.2"
+          fill="none"
+          stroke="rgba(255,255,255,0.15)"
+          strokeWidth="0.4"
+        />
       ))}
     </svg>
   );
@@ -85,7 +172,10 @@ function ChemistryLinesLayer({ lines }: { lines: ChemLine[] }) {
             <feGaussianBlur stdDeviation="0.7" result="blur" />
             <feFlood floodColor={l.glow} floodOpacity="0.9" result="color" />
             <feComposite in="color" in2="blur" operator="in" result="g" />
-            <feMerge><feMergeNode in="g" /><feMergeNode in="SourceGraphic" /></feMerge>
+            <feMerge>
+              <feMergeNode in="g" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
           </filter>
         ))}
       </defs>
@@ -98,10 +188,24 @@ function ChemistryLinesLayer({ lines }: { lines: ChemLine[] }) {
         const sw = l.total >= 4 ? 0.9 : l.total >= 3 ? 0.7 : 0.5;
         return (
           <g key={i}>
-            <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={l.color} strokeWidth={sw * 2.5} strokeOpacity={0.12} strokeLinecap="round" />
+            <line
+              x1={x1}
+              y1={y1}
+              x2={x2}
+              y2={y2}
+              stroke={l.color}
+              strokeWidth={sw * 2.5}
+              strokeOpacity={0.12}
+              strokeLinecap="round"
+            />
             <motion.line
-              x1={x1} y1={y1} x2={x2} y2={y2}
-              stroke={l.color} strokeWidth={sw} strokeLinecap="round"
+              x1={x1}
+              y1={y1}
+              x2={x2}
+              y2={y2}
+              stroke={l.color}
+              strokeWidth={sw}
+              strokeLinecap="round"
               initial={{ pathLength: 0, opacity: 0 }}
               animate={{ pathLength: 1, opacity: hasBoth ? 1 : 0.18 }}
               transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -109,10 +213,12 @@ function ChemistryLinesLayer({ lines }: { lines: ChemLine[] }) {
             />
             {l.total >= 4 && hasBoth && (
               <motion.circle
-                cx={(x1 + x2) / 2} cy={(y1 + y2) / 2} r="0.8"
+                cx={(x1 + x2) / 2}
+                cy={(y1 + y2) / 2}
+                r="0.8"
                 fill={l.color}
                 animate={{ r: [0.4, 1.2, 0.4], opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 1.6, repeat: Infinity }}
+                transition={{ duration: 1.6, repeat: Number.POSITIVE_INFINITY }}
               />
             )}
           </g>
@@ -144,10 +250,21 @@ const RARITY_GLOW: Record<string, string> = {
 };
 
 const POS_COLOR: Record<string, string> = {
-  GK: '#f59e0b', CB: '#3b82f6', LB: '#3b82f6', RB: '#3b82f6',
-  LWB: '#3b82f6', RWB: '#3b82f6', CDM: '#10b981', CM: '#10b981',
-  CAM: '#10b981', LM: '#10b981', RM: '#10b981',
-  LW: '#ef4444', RW: '#ef4444', CF: '#ef4444', ST: '#ef4444',
+  GK: '#f59e0b',
+  CB: '#3b82f6',
+  LB: '#3b82f6',
+  RB: '#3b82f6',
+  LWB: '#3b82f6',
+  RWB: '#3b82f6',
+  CDM: '#10b981',
+  CM: '#10b981',
+  CAM: '#10b981',
+  LM: '#10b981',
+  RM: '#10b981',
+  LW: '#ef4444',
+  RW: '#ef4444',
+  CF: '#ef4444',
+  ST: '#ef4444',
 };
 
 // ─── PitchSlot ────────────────────────────────────────────────────────────────
@@ -162,7 +279,15 @@ type SlotProps = {
   onRemove: () => void;
 };
 
-function PitchSlot({ slot, card, chemPerPlayer, isDragOver, isSelected, onSlotClick, onRemove }: SlotProps) {
+function PitchSlot({
+  slot,
+  card,
+  chemPerPlayer,
+  isDragOver,
+  isSelected,
+  onSlotClick,
+  onRemove,
+}: SlotProps) {
   const { setNodeRef: setDropRef, isOver } = useDroppable({ id: slot.slotId });
   const {
     attributes,
@@ -173,11 +298,20 @@ function PitchSlot({ slot, card, chemPerPlayer, isDragOver, isSelected, onSlotCl
   } = useDraggable({
     id: `slot-${slot.slotId}`,
     disabled: !card,
-    data: { source: { kind: 'slot', slotId: slot.slotId, cardId: card?.cardId ?? '' } satisfies DragSource },
+    data: {
+      source: {
+        kind: 'slot',
+        slotId: slot.slotId,
+        cardId: card?.cardId ?? '',
+      } satisfies DragSource,
+    },
   });
 
   const mergedRef = useCallback(
-    (node: HTMLElement | null) => { setDropRef(node); setDragRef(node); },
+    (node: HTMLElement | null) => {
+      setDropRef(node);
+      setDragRef(node);
+    },
     [setDropRef, setDragRef],
   );
 
@@ -198,8 +332,7 @@ function PitchSlot({ slot, card, chemPerPlayer, isDragOver, isSelected, onSlotCl
 
   if (card) {
     const compat = getPositionCompat(card.position, slot.position);
-    const compatDot =
-      compat === 'natural' ? '#22c55e' : compat === 'ok' ? '#eab308' : '#ef4444';
+    const compatDot = compat === 'natural' ? '#22c55e' : compat === 'ok' ? '#eab308' : '#ef4444';
     const cardChem = chemColor(chemPerPlayer, card.cardId);
 
     return (
@@ -210,7 +343,10 @@ function PitchSlot({ slot, card, chemPerPlayer, isDragOver, isSelected, onSlotCl
           {...listeners}
           className="relative group cursor-grab active:cursor-grabbing touch-none"
           style={transformStyle}
-          onClick={(e) => { e.stopPropagation(); onSlotClick(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSlotClick();
+          }}
         >
           <AnimatePresence mode="wait">
             <motion.div
@@ -223,7 +359,9 @@ function PitchSlot({ slot, card, chemPerPlayer, isDragOver, isSelected, onSlotCl
             >
               <div
                 className={`relative w-14 h-[72px] rounded-xl border-2 flex flex-col overflow-hidden shadow-lg ${visual?.bgClass ?? ''} ${visual?.borderClass ?? ''}`}
-                style={{ boxShadow: `0 0 18px ${RARITY_GLOW[card.rarityCode]}, 0 4px 16px rgba(0,0,0,0.6)` }}
+                style={{
+                  boxShadow: `0 0 18px ${RARITY_GLOW[card.rarityCode]}, 0 4px 16px rgba(0,0,0,0.6)`,
+                }}
               >
                 {/* OVR */}
                 <div className="flex-1 flex items-center justify-center pt-1">
@@ -239,7 +377,10 @@ function PitchSlot({ slot, card, chemPerPlayer, isDragOver, isSelected, onSlotCl
                   </p>
                 </div>
                 {/* Name + position */}
-                <div className="pb-1 px-0.5" style={{ background: 'linear-gradient(0deg,rgba(0,0,0,0.85),transparent)' }}>
+                <div
+                  className="pb-1 px-0.5"
+                  style={{ background: 'linear-gradient(0deg,rgba(0,0,0,0.85),transparent)' }}
+                >
                   <p className="text-parchment text-[7px] font-bold text-center truncate leading-tight">
                     {card.displayName.split(' ').pop()}
                   </p>
@@ -262,7 +403,10 @@ function PitchSlot({ slot, card, chemPerPlayer, isDragOver, isSelected, onSlotCl
 
               {/* Remove */}
               <button
-                onClick={(e) => { e.stopPropagation(); onRemove(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove();
+                }}
                 className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-600 text-white text-[7px] font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20"
               >
                 ✕
@@ -284,14 +428,23 @@ function PitchSlot({ slot, card, chemPerPlayer, isDragOver, isSelected, onSlotCl
             ? { scale: 1.25, borderColor: '#c9a84c', backgroundColor: 'rgba(201,168,76,0.15)' }
             : isActualOver
               ? { scale: 1.2, borderColor: posColor, backgroundColor: `${posColor}20` }
-              : { scale: 1, borderColor: 'rgba(255,255,255,0.2)', backgroundColor: 'rgba(255,255,255,0.03)' }
+              : {
+                  scale: 1,
+                  borderColor: 'rgba(255,255,255,0.2)',
+                  backgroundColor: 'rgba(255,255,255,0.03)',
+                }
         }
         transition={{ duration: 0.15 }}
-        onClick={(e) => { e.stopPropagation(); onSlotClick(); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSlotClick();
+        }}
       >
         <span
           className="text-[9px] font-bold"
-          style={{ color: isSelected ? '#c9a84c' : isActualOver ? posColor : 'rgba(255,255,255,0.3)' }}
+          style={{
+            color: isSelected ? '#c9a84c' : isActualOver ? posColor : 'rgba(255,255,255,0.3)',
+          }}
         >
           {slot.position}
         </span>
@@ -300,7 +453,7 @@ function PitchSlot({ slot, card, chemPerPlayer, isDragOver, isSelected, onSlotCl
             className="text-[7px] text-gold"
             initial={{ opacity: 0 }}
             animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 1, repeat: Infinity }}
+            transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY }}
           >
             ✦
           </motion.span>
@@ -331,15 +484,15 @@ function SuggestionPanel({ slot, suggestions, onPick, onClose }: SuggestionPanel
       style={{
         left: `${slot.left}%`,
         top: above ? `${slot.top - 2}%` : `${slot.top + 2}%`,
-        transform: above
-          ? 'translate(-50%, calc(-100% - 16px))'
-          : 'translate(-50%, 16px)',
+        transform: above ? 'translate(-50%, calc(-100% - 16px))' : 'translate(-50%, 16px)',
       }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-2 mb-0.5">
         <span className="text-[8px] text-gold uppercase tracking-widest">Sugestões</span>
-        <button onClick={onClose} className="text-[8px] text-white/30 hover:text-white/60">✕</button>
+        <button onClick={onClose} className="text-[8px] text-white/30 hover:text-white/60">
+          ✕
+        </button>
       </div>
       {/* Cards */}
       <div className="flex gap-1.5">
@@ -352,7 +505,10 @@ function SuggestionPanel({ slot, suggestions, onPick, onClose }: SuggestionPanel
               initial={{ opacity: 0, y: above ? 8 : -8, scale: 0.85 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ delay: i * 0.04, type: 'spring', stiffness: 360, damping: 26 }}
-              onClick={(e) => { e.stopPropagation(); onPick(card.cardId); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onPick(card.cardId);
+              }}
               whileHover={{ scale: 1.1, y: -3 }}
               whileTap={{ scale: 0.92 }}
               className={`relative w-12 h-[60px] rounded-lg border-2 flex flex-col overflow-hidden ${visual.bgClass} ${visual.borderClass}`}
@@ -371,7 +527,10 @@ function SuggestionPanel({ slot, suggestions, onPick, onClose }: SuggestionPanel
                   {card.overall}
                 </p>
               </div>
-              <div className="pb-0.5 px-0.5" style={{ background: 'linear-gradient(0deg,rgba(0,0,0,0.85),transparent)' }}>
+              <div
+                className="pb-0.5 px-0.5"
+                style={{ background: 'linear-gradient(0deg,rgba(0,0,0,0.85),transparent)' }}
+              >
                 <p className="text-parchment text-[6px] font-bold text-center truncate">
                   {card.displayName.split(' ').pop()}
                 </p>
@@ -379,9 +538,13 @@ function SuggestionPanel({ slot, suggestions, onPick, onClose }: SuggestionPanel
               {/* Compat dot */}
               {(() => {
                 const compat = getPositionCompat(card.position, slot.position);
-                const dot = compat === 'natural' ? '#22c55e' : compat === 'ok' ? '#eab308' : '#ef4444';
+                const dot =
+                  compat === 'natural' ? '#22c55e' : compat === 'ok' ? '#eab308' : '#ef4444';
                 return (
-                  <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full" style={{ background: dot }} />
+                  <div
+                    className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full"
+                    style={{ background: dot }}
+                  />
                 );
               })()}
             </motion.button>
@@ -391,7 +554,14 @@ function SuggestionPanel({ slot, suggestions, onPick, onClose }: SuggestionPanel
       {/* Arrow */}
       <div
         className="absolute left-1/2 -translate-x-1/2"
-        style={{ [above ? 'bottom' : 'top']: '-6px', width: 0, height: 0, borderLeft: '6px solid transparent', borderRight: '6px solid transparent', [above ? 'borderTop' : 'borderBottom']: '6px solid rgba(201,168,76,0.4)' }}
+        style={{
+          [above ? 'bottom' : 'top']: '-6px',
+          width: 0,
+          height: 0,
+          borderLeft: '6px solid transparent',
+          borderRight: '6px solid transparent',
+          [above ? 'borderTop' : 'borderBottom']: '6px solid rgba(201,168,76,0.4)',
+        }}
       />
     </div>
   );

@@ -16,10 +16,10 @@
 export type ToastType = 'success' | 'error' | 'reward' | 'info' | 'warning';
 
 export type ToastItem = {
-  id:       string;
-  type:     ToastType;
-  message:  string;
-  icon?:    string;
+  id: string;
+  type: ToastType;
+  message: string;
+  icon?: string;
   duration: number;
 };
 
@@ -64,9 +64,9 @@ export const toastStore = new ToastStore();
 
 const ICONS: Record<ToastType, string> = {
   success: '✓',
-  error:   '✕',
-  reward:  '🏆',
-  info:    'ℹ',
+  error: '✕',
+  reward: '🏆',
+  info: 'ℹ',
   warning: '⚠',
 };
 

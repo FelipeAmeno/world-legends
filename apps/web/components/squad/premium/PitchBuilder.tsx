@@ -20,11 +20,11 @@ import {
 } from '@/lib/squad-builder';
 import type { DropTarget } from '@/lib/squad-builder';
 import {
+  DndContext,
   type DragEndEvent,
   type DragOverEvent,
-  type DragStartEvent,
-  DndContext,
   DragOverlay,
+  type DragStartEvent,
   PointerSensor,
   TouchSensor,
   useSensor,
@@ -33,8 +33,8 @@ import {
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 
-import { toast } from '@/lib/wl-toast';
 import { Particles, useBurst } from '@/components/fx/Particles';
+import { toast } from '@/lib/wl-toast';
 import Link from 'next/link';
 import { BenchStrip } from './BenchStrip';
 import { CardPoolSheet } from './CardPoolSheet';
@@ -106,7 +106,12 @@ export function PitchBuilder({ allCards, initialState }: Props) {
       }
       state.bench.forEach((card, idx) => {
         if (card?.userCardId)
-          slots.push({ slotId: `bench-${idx}`, userCardId: card.userCardId, isStarter: false, benchOrder: idx });
+          slots.push({
+            slotId: `bench-${idx}`,
+            userCardId: card.userCardId,
+            isStarter: false,
+            benchOrder: idx,
+          });
       });
 
       const result = await saveSquad({ formation: state.formation, slots });
@@ -173,7 +178,7 @@ export function PitchBuilder({ allCards, initialState }: Props) {
   const selectedSlotDef = useMemo(
     () =>
       selectedSlotId
-        ? FORMATIONS[state.formation].find((s) => s.slotId === selectedSlotId) ?? null
+        ? (FORMATIONS[state.formation].find((s) => s.slotId === selectedSlotId) ?? null)
         : null,
     [selectedSlotId, state.formation],
   );
@@ -183,16 +188,13 @@ export function PitchBuilder({ allCards, initialState }: Props) {
     [selectedSlotDef, pool],
   );
 
-  const handleSlotClick = useCallback(
-    (slotId: string, occupied: boolean) => {
-      if (occupied) {
-        setSelectedSlotId(null);
-        return;
-      }
-      setSelectedSlotId((prev) => (prev === slotId ? null : slotId));
-    },
-    [],
-  );
+  const handleSlotClick = useCallback((slotId: string, occupied: boolean) => {
+    if (occupied) {
+      setSelectedSlotId(null);
+      return;
+    }
+    setSelectedSlotId((prev) => (prev === slotId ? null : slotId));
+  }, []);
 
   const handleSuggestion = useCallback(
     (cardId: string) => {
@@ -260,8 +262,10 @@ export function PitchBuilder({ allCards, initialState }: Props) {
       <div
         className="flex flex-col h-full bg-[#060810] overflow-hidden relative"
         onClick={(e) => {
-          if ((e.target as HTMLElement).closest('[data-squad-slot]') === null &&
-              (e.target as HTMLElement).closest('[data-squad-pool]') === null) {
+          if (
+            (e.target as HTMLElement).closest('[data-squad-slot]') === null &&
+            (e.target as HTMLElement).closest('[data-squad-pool]') === null
+          ) {
             setSelectedSlotId(null);
           }
         }}
@@ -286,7 +290,10 @@ export function PitchBuilder({ allCards, initialState }: Props) {
                   <motion.span
                     className={`w-1.5 h-1.5 rounded-full ${saveDot.color}`}
                     animate={saveStatus === 'saving' ? { opacity: [1, 0.3, 1] } : { opacity: 1 }}
-                    transition={{ duration: 0.8, repeat: saveStatus === 'saving' ? Number.POSITIVE_INFINITY : 0 }}
+                    transition={{
+                      duration: 0.8,
+                      repeat: saveStatus === 'saving' ? Number.POSITIVE_INFINITY : 0,
+                    }}
                   />
                   <span className="text-[9px] text-white/40">{saveDot.label}</span>
                 </div>
@@ -354,7 +361,9 @@ export function PitchBuilder({ allCards, initialState }: Props) {
                 </motion.span>
               </AnimatePresence>
               <div className="flex flex-col gap-0.5 pb-1">
-                <span className="text-[8px] text-gold/60 uppercase tracking-widest font-bold">OVR</span>
+                <span className="text-[8px] text-gold/60 uppercase tracking-widest font-bold">
+                  OVR
+                </span>
                 <span className="text-[8px] text-muted">{snapshot.starterCount}/11</span>
               </div>
             </div>
@@ -372,9 +381,7 @@ export function PitchBuilder({ allCards, initialState }: Props) {
             )}
 
             {/* Divisor */}
-            {snapshot.rating.overall > 0 && (
-              <div className="w-px h-10 bg-white/8 shrink-0" />
-            )}
+            {snapshot.rating.overall > 0 && <div className="w-px h-10 bg-white/8 shrink-0" />}
 
             {/* Química */}
             <div className="flex flex-col items-center">
@@ -490,7 +497,9 @@ function SectorMini({ label, value, color }: { label: string; value: number; col
   return (
     <div className="flex flex-col gap-0.5 min-w-[32px]">
       <div className="flex items-baseline justify-between gap-1">
-        <span className="text-[8px] font-bold" style={{ color }}>{label}</span>
+        <span className="text-[8px] font-bold" style={{ color }}>
+          {label}
+        </span>
         <motion.span
           key={value}
           className="font-display text-xs leading-none text-white/70"
@@ -541,8 +550,13 @@ function DragPreviewCard({ card }: { card: CollectionCard }) {
           {card.overall}
         </p>
       </div>
-      <div className="pb-1 px-0.5" style={{ background: 'linear-gradient(0deg,rgba(0,0,0,0.85),transparent)' }}>
-        <p className="text-parchment text-[7px] font-bold text-center truncate">{card.displayName.split(' ').pop()}</p>
+      <div
+        className="pb-1 px-0.5"
+        style={{ background: 'linear-gradient(0deg,rgba(0,0,0,0.85),transparent)' }}
+      >
+        <p className="text-parchment text-[7px] font-bold text-center truncate">
+          {card.displayName.split(' ').pop()}
+        </p>
         <p className="text-white/40 text-[6px] text-center">{card.position}</p>
       </div>
     </div>

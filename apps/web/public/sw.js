@@ -10,42 +10,40 @@
  * Cache version: incrementar ao mudar qualquer asset
  */
 
-const CACHE_VERSION   = 'wl-v1';
-const STATIC_CACHE    = `${CACHE_VERSION}-static`;
-const PAGES_CACHE     = `${CACHE_VERSION}-pages`;
-const OFFLINE_URL     = '/offline';
+const CACHE_VERSION = 'wl-v1';
+const STATIC_CACHE = `${CACHE_VERSION}-static`;
+const PAGES_CACHE = `${CACHE_VERSION}-pages`;
+const OFFLINE_URL = '/offline';
 
 // Recursos pré-cacheados no install
-const PRECACHE_ASSETS = [
-  '/',
-  '/offline',
-  '/manifest.json',
-  '/icons/icon.svg',
-];
+const PRECACHE_ASSETS = ['/', '/offline', '/manifest.json', '/icons/icon.svg'];
 
 // ─── Install ──────────────────────────────────────────────────────────────────
 
-self.addEventListener('install', event => {
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then(cache => cache.addAll(PRECACHE_ASSETS))
+    caches
+      .open(STATIC_CACHE)
+      .then((cache) => cache.addAll(PRECACHE_ASSETS))
       .then(() => self.skipWaiting()),
   );
 });
 
 // ─── Activate ─────────────────────────────────────────────────────────────────
 
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
     Promise.all([
       // Remover caches antigos
-      caches.keys().then(keys =>
-        Promise.all(
-          keys
-            .filter(key => key.startsWith('wl-') && !key.startsWith(CACHE_VERSION))
-            .map(key => caches.delete(key)),
+      caches
+        .keys()
+        .then((keys) =>
+          Promise.all(
+            keys
+              .filter((key) => key.startsWith('wl-') && !key.startsWith(CACHE_VERSION))
+              .map((key) => caches.delete(key)),
+          ),
         ),
-      ),
       // Tomar controle imediatamente
       self.clients.claim(),
     ]),
@@ -54,7 +52,7 @@ self.addEventListener('activate', event => {
 
 // ─── Fetch ────────────────────────────────────────────────────────────────────
 
-self.addEventListener('fetch', event => {
+self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
@@ -139,38 +137,39 @@ async function networkFirstWithOfflineFallback(request) {
 
     // Fallback: página offline
     const offlinePage = await caches.match(OFFLINE_URL);
-    return offlinePage ?? new Response('<h1>Offline</h1>', {
-      headers: { 'Content-Type': 'text/html' },
-    });
+    return (
+      offlinePage ??
+      new Response('<h1>Offline</h1>', {
+        headers: { 'Content-Type': 'text/html' },
+      })
+    );
   }
 }
 
 // ─── Push Notifications (futuro) ─────────────────────────────────────────────
 
-self.addEventListener('push', event => {
+self.addEventListener('push', (event) => {
   if (!event.data) return;
   const { title, body, icon, data } = event.data.json();
 
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon:    icon ?? '/icons/icon-192.png',
-      badge:   '/icons/icon-72.png',
+      icon: icon ?? '/icons/icon-192.png',
+      badge: '/icons/icon-72.png',
       data,
       vibrate: [200, 100, 200],
-      actions: data?.action
-        ? [{ action:'open', title:data.action }]
-        : [],
+      actions: data?.action ? [{ action: 'open', title: data.action }] : [],
     }),
   );
 });
 
-self.addEventListener('notificationclick', event => {
+self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = event.notification.data?.href ?? '/';
   event.waitUntil(
-    clients.matchAll({ type:'window' }).then(windowClients => {
-      const existing = windowClients.find(c => c.url === url);
+    clients.matchAll({ type: 'window' }).then((windowClients) => {
+      const existing = windowClients.find((c) => c.url === url);
       if (existing) return existing.focus();
       return clients.openWindow(url);
     }),

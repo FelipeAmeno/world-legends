@@ -115,7 +115,9 @@ export function FilterPanel({
       </FilterGroup>
 
       {/* Overall */}
-      <FilterGroup label={`Overall — ${filters.overallMin === 0 ? '0' : filters.overallMin}–${filters.overallMax}`}>
+      <FilterGroup
+        label={`Overall — ${filters.overallMin === 0 ? '0' : filters.overallMin}–${filters.overallMax}`}
+      >
         <div className="w-full space-y-2">
           <div className="flex items-center gap-3">
             <label htmlFor={minId} className="text-[9px] text-muted uppercase w-6 shrink-0">

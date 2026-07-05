@@ -49,16 +49,16 @@ export async function loadOrCreateUser(userId: string, username: string) {
 
   // Primeiro login → criar perfil
   const created = await users.upsert({
-    id:          userId,
+    id: userId,
     username,
-    level:       1,
-    current_xp:  0,
+    level: 1,
+    current_xp: 0,
     xp_for_next: 100,
-    credits:     500,
-    fragments:   0,
-    wins:        0,
-    draws:       0,
-    losses:      0,
+    credits: 500,
+    fragments: 0,
+    wins: 0,
+    draws: 0,
+    losses: 0,
   });
 
   if (!created.ok) {
@@ -92,13 +92,13 @@ export async function persistDeductCredits(userId: string, amount: number): Prom
 // ─── Partida ─────────────────────────────────────────────────────────────────
 
 export type MatchResult = {
-  opponent:      string;
-  opponentOvr:   number;
-  homeScore:     number;
-  awayScore:     number;
-  outcome:       MatchOutcome;
+  opponent: string;
+  opponentOvr: number;
+  homeScore: number;
+  awayScore: number;
+  outcome: MatchOutcome;
   creditsEarned: number;
-  xpEarned:      number;
+  xpEarned: number;
 };
 
 /**
@@ -110,13 +110,13 @@ export async function persistMatchResult(userId: string, result: MatchResult) {
 
   // 1. Registrar partida
   const matchRes = await matches.create({
-    user_id:        userId,
-    opponent:       result.opponent,
-    home_score:     result.homeScore,
-    away_score:     result.awayScore,
-    outcome:        result.outcome,
+    user_id: userId,
+    opponent: result.opponent,
+    home_score: result.homeScore,
+    away_score: result.awayScore,
+    outcome: result.outcome,
     credits_earned: result.creditsEarned,
-    xp_earned:      result.xpEarned,
+    xp_earned: result.xpEarned,
   });
   log('persistMatchResult:create', matchRes);
 
@@ -132,11 +132,11 @@ export async function persistMatchResult(userId: string, result: MatchResult) {
 // ─── Pack Opening ─────────────────────────────────────────────────────────────
 
 export type PackOpenResult = {
-  packId:    string;
-  packName:  string;
-  cost:      number;
+  packId: string;
+  packName: string;
+  cost: number;
   cardsJson: Array<{ cardId: string; rarityCode: string }>;
-  newCardIds:string[];  // owned_card IDs a inserir na collection
+  newCardIds: string[]; // owned_card IDs a inserir na collection
 };
 
 /**
@@ -149,10 +149,10 @@ export async function persistPackOpening(userId: string, result: PackOpenResult)
 
   // 1. Registrar abertura de pack
   const packRes = await packs.create({
-    user_id:  userId,
-    pack_id:  result.packId,
+    user_id: userId,
+    pack_id: result.packId,
     card_ids: result.newCardIds,
-    cost:     result.cost,
+    cost: result.cost,
   });
   log('persistPackOpening:pack', packRes);
 
@@ -160,19 +160,18 @@ export async function persistPackOpening(userId: string, result: PackOpenResult)
   if (result.cardsJson.length > 0) {
     const cardRes = await collection.addCards(
       userId,
-      result.cardsJson.map(c => c.cardId),
+      result.cardsJson.map((c) => c.cardId),
     );
     log('persistPackOpening:cards', cardRes);
   }
-
 }
 
 // ─── Squad ───────────────────────────────────────────────────────────────────
 
 export type SquadState = {
   formation: string;
-  slots:     Array<{ slotId: string; ownedCardId: string }>;
-  benchIds:  string[];
+  slots: Array<{ slotId: string; ownedCardId: string }>;
+  benchIds: string[];
 };
 
 /**
@@ -182,10 +181,10 @@ export async function persistSquad(userId: string, squad: SquadState) {
   if (!userId) return;
   const { squads } = getRegistry();
   const result = await squads.upsert({
-    user_id:    userId,
-    formation:  squad.formation,
-    slots:      squad.slots as any,
-    bench_ids:  squad.benchIds as readonly string[],
+    user_id: userId,
+    formation: squad.formation,
+    slots: squad.slots as any,
+    bench_ids: squad.benchIds as readonly string[],
     updated_at: new Date().toISOString(),
   });
   log('persistSquad', result);
@@ -198,14 +197,14 @@ export async function persistSquad(userId: string, squad: SquadState) {
  * Idempotente: não duplica se já reivindicado.
  */
 export async function persistAchievementClaim(
-  userId:        string,
+  userId: string,
   achievementId: string,
-  stage:         number,
+  stage: number,
 ) {
   if (!userId) return;
   const { achievements } = getRegistry();
   const result = await achievements.claim({
-    user_id:        userId,
+    user_id: userId,
     achievement_id: achievementId,
     stage,
   });

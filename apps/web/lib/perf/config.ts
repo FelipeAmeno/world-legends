@@ -48,7 +48,7 @@ export const PERF = {
    * Reduzir animações para dispositivos low-end ou preferência do usuário.
    * Verificar: window.matchMedia('(prefers-reduced-motion: reduce)').matches
    */
-  REDUCED_MOTION: false,  // será sobrescrito no cliente
+  REDUCED_MOTION: false, // será sobrescrito no cliente
 
   /** Limitar stagger animations a N items em telas com muitos elementos */
   MAX_STAGGER_ITEMS: 20,
@@ -88,19 +88,19 @@ export const PERF_FLAGS = {
 
 export const CACHE = {
   /** Dados estáticos do catálogo de cartas (muda raramente) */
-  CATALOG:  'public, max-age=3600, stale-while-revalidate=86400',
+  CATALOG: 'public, max-age=3600, stale-while-revalidate=86400',
 
   /** Dados do usuário (muda frequentemente) */
-  USER:     'private, max-age=0, must-revalidate',
+  USER: 'private, max-age=0, must-revalidate',
 
   /** Leaderboard (atualiza a cada 5 minutos) */
-  RANKING:  'public, max-age=300, stale-while-revalidate=600',
+  RANKING: 'public, max-age=300, stale-while-revalidate=600',
 
   /** Eventos (atualiza a cada hora) */
-  EVENTS:   'public, max-age=3600, stale-while-revalidate=7200',
+  EVENTS: 'public, max-age=3600, stale-while-revalidate=7200',
 
   /** Assets estáticos imutáveis (hash no nome) */
-  IMMUTABLE:'public, max-age=31536000, immutable',
+  IMMUTABLE: 'public, max-age=31536000, immutable',
 } as const;
 
 // ─── Bundle splitting hints ───────────────────────────────────────────────────
@@ -111,8 +111,4 @@ export const CACHE = {
  *
  * Prioridade: rotas que o usuário visita logo após o login.
  */
-export const PREFETCH_ROUTES = [
-  '/collection',
-  '/match',
-  '/packs',
-] as const;
+export const PREFETCH_ROUTES = ['/collection', '/match', '/packs'] as const;

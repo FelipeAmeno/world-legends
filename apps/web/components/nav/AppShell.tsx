@@ -31,9 +31,7 @@ export function AppShell({ children }: Props) {
           className="flex-1 overflow-y-auto px-4 py-4"
           style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}
         >
-          <PageTransition key={pathname}>
-            {children}
-          </PageTransition>
+          <PageTransition key={pathname}>{children}</PageTransition>
         </main>
         <PremiumBottomNav />
       </div>
@@ -45,9 +43,7 @@ export function AppShell({ children }: Props) {
           <GameTopBar />
           <FlowProgress />
           <main className="flex-1 overflow-y-auto px-6 py-5">
-            <PageTransition key={pathname}>
-              {children}
-            </PageTransition>
+            <PageTransition key={pathname}>{children}</PageTransition>
           </main>
         </div>
       </div>

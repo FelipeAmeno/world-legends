@@ -12,8 +12,8 @@
  *   'overlay' — sobreposição sobre conteúdo existente
  */
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { SPRING, EASE } from '@/lib/motion-tokens';
+import { EASE, SPRING } from '@/lib/motion-tokens';
+import { AnimatePresence, motion } from 'framer-motion';
 
 type Variant = 'full' | 'inline' | 'overlay';
 
@@ -67,13 +67,18 @@ function FullScreenLoader({ message }: { message?: string | undefined }) {
           className="absolute top-1/4 left-1/3 w-80 h-80 rounded-full blur-3xl"
           style={{ background: 'rgba(201,168,76,0.06)' }}
           animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
         />
         <motion.div
           className="absolute bottom-1/3 right-1/4 w-56 h-56 rounded-full blur-3xl"
           style={{ background: 'rgba(58,110,165,0.05)' }}
           animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.7, 0.4] }}
-          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+          transition={{
+            duration: 5,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: 'easeInOut',
+            delay: 1,
+          }}
         />
       </div>
 
@@ -88,7 +93,7 @@ function FullScreenLoader({ message }: { message?: string | undefined }) {
         <motion.div
           className="mb-6"
           animate={{ y: [-4, 4, -4] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
         >
           <div
             className="w-20 h-20 rounded-3xl flex items-center justify-center border"
@@ -115,14 +120,19 @@ function FullScreenLoader({ message }: { message?: string | undefined }) {
         <motion.h1
           className="font-display text-5xl leading-none tracking-[0.12em] mb-2"
           style={{
-            background: 'linear-gradient(135deg, #c9a84c 0%, #e6c85a 45%, #f5e098 70%, #c9a84c 100%)',
+            background:
+              'linear-gradient(135deg, #c9a84c 0%, #e6c85a 45%, #f5e098 70%, #c9a84c 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             filter: 'drop-shadow(0 0 24px rgba(201,168,76,0.4))',
           }}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.4, ease: EASE.out as [number,number,number,number] }}
+          transition={{
+            delay: 0.15,
+            duration: 0.4,
+            ease: EASE.out as [number, number, number, number],
+          }}
         >
           WORLD LEGENDS
         </motion.h1>
@@ -152,7 +162,11 @@ function FullScreenLoader({ message }: { message?: string | undefined }) {
             }}
             initial={{ width: '0%', x: '-100%' }}
             animate={{ width: '100%', x: '0%' }}
-            transition={{ duration: 1.4, delay: 0.5, ease: EASE.smooth as [number,number,number,number] }}
+            transition={{
+              duration: 1.4,
+              delay: 0.5,
+              ease: EASE.smooth as [number, number, number, number],
+            }}
           />
         </motion.div>
 
@@ -182,7 +196,7 @@ function FullScreenLoader({ message }: { message?: string | undefined }) {
               className="w-1.5 h-1.5 rounded-full"
               style={{ background: 'rgba(201,168,76,0.5)' }}
               animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+              transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, delay: i * 0.2 }}
             />
           ))}
         </motion.div>
@@ -205,11 +219,9 @@ function InlineLoader({ message }: { message?: string | undefined }) {
           boxShadow: '0 0 12px rgba(201,168,76,0.3)',
         }}
         animate={{ rotate: 360 }}
-        transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
+        transition={{ duration: 0.9, repeat: Number.POSITIVE_INFINITY, ease: 'linear' }}
       />
-      {message && (
-        <p className="text-muted text-xs tracking-wider">{message}</p>
-      )}
+      {message && <p className="text-muted text-xs tracking-wider">{message}</p>}
     </div>
   );
 }

@@ -5,12 +5,12 @@
  * No DB, no Server Actions — pure domain logic.
  */
 
-import { describe, expect, it } from 'vitest';
 import {
   ACHIEVEMENT_CATALOG,
-  AchievementService,
   type AchievementCheckInput,
+  AchievementService,
 } from '@world-legends/achievements';
+import { describe, expect, it } from 'vitest';
 
 const svc = new AchievementService();
 
@@ -99,7 +99,7 @@ describe('ACHIEVEMENT_CATALOG', () => {
   it('GOAT rarity count is 1 (goat_supreme)', () => {
     const goatRarities = ACHIEVEMENT_CATALOG.filter((a) => a.rarity === 'goat');
     expect(goatRarities.length).toBe(1);
-    expect(goatRarities[0]!.id).toBe('goat_supreme');
+    expect(goatRarities[0]?.id).toBe('goat_supreme');
   });
 
   it('goat_supreme requires all 4 ultra/wcH cards', () => {
@@ -159,7 +159,10 @@ describe('AchievementService.checkCondition', () => {
 
   it('all_sets_completed: passes when all 6 sets in completedSetCodes', () => {
     expect(
-      svc.checkCondition({ type: 'all_sets_completed' }, { ...EMPTY_INPUT, completedSetCodes: ALL_SETS }),
+      svc.checkCondition(
+        { type: 'all_sets_completed' },
+        { ...EMPTY_INPUT, completedSetCodes: ALL_SETS },
+      ),
     ).toBe(true);
   });
 
@@ -173,8 +176,15 @@ describe('AchievementService.checkCondition', () => {
   });
 
   it('matches_played: boundary check', () => {
-    expect(svc.checkCondition({ type: 'matches_played', min: 10 }, { ...EMPTY_INPUT, matchesPlayed: 10 })).toBe(true);
-    expect(svc.checkCondition({ type: 'matches_played', min: 10 }, { ...EMPTY_INPUT, matchesPlayed: 9 })).toBe(false);
+    expect(
+      svc.checkCondition(
+        { type: 'matches_played', min: 10 },
+        { ...EMPTY_INPUT, matchesPlayed: 10 },
+      ),
+    ).toBe(true);
+    expect(
+      svc.checkCondition({ type: 'matches_played', min: 10 }, { ...EMPTY_INPUT, matchesPlayed: 9 }),
+    ).toBe(false);
   });
 
   it('win_streak: passes at threshold', () => {
@@ -184,8 +194,12 @@ describe('AchievementService.checkCondition', () => {
   });
 
   it('starter_claimed: reflects input flag', () => {
-    expect(svc.checkCondition({ type: 'starter_claimed' }, { ...EMPTY_INPUT, starterClaimed: true })).toBe(true);
-    expect(svc.checkCondition({ type: 'starter_claimed' }, { ...EMPTY_INPUT, starterClaimed: false })).toBe(false);
+    expect(
+      svc.checkCondition({ type: 'starter_claimed' }, { ...EMPTY_INPUT, starterClaimed: true }),
+    ).toBe(true);
+    expect(
+      svc.checkCondition({ type: 'starter_claimed' }, { ...EMPTY_INPUT, starterClaimed: false }),
+    ).toBe(false);
   });
 });
 
@@ -219,7 +233,10 @@ describe('AchievementService.computeNewlyUnlocked', () => {
   it('goat_supreme requires all 4 cards', () => {
     // Only 3 cards — should NOT unlock goat_supreme
     const partial = svc.computeNewlyUnlocked(
-      { ...EMPTY_INPUT, cardsOwnedIds: ['pelé-world_cup_hero', 'ronaldo-ultra', 'ronaldinho-ultra'] },
+      {
+        ...EMPTY_INPUT,
+        cardsOwnedIds: ['pelé-world_cup_hero', 'ronaldo-ultra', 'ronaldinho-ultra'],
+      },
       new Set(),
     );
     expect(partial.some((d) => d.id === 'goat_supreme')).toBe(false);

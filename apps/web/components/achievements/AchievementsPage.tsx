@@ -1,15 +1,15 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import {
-  getAchievementsAction,
-  claimAchievementRewardAction,
-  type AchievementsData,
   type AchievementView,
+  type AchievementsData,
   type NewTrophyNotice,
+  claimAchievementRewardAction,
+  getAchievementsAction,
 } from '@/lib/actions/achievements';
 import type { AchievementCategory } from '@world-legends/achievements';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { AchievementCard } from './AchievementCard';
 import { AchievementUnlockToast } from './AchievementUnlockToast';
 
@@ -17,12 +17,12 @@ import { AchievementUnlockToast } from './AchievementUnlockToast';
 
 const CATEGORIES: Array<{ id: AchievementCategory; label: string; icon: string }> = [
   { id: 'collection', label: 'Coleção', icon: '📚' },
-  { id: 'gameplay',   label: 'Jogabilidade', icon: '⚽' },
-  { id: 'seasons',    label: 'Temporadas', icon: '🗓️' },
-  { id: 'events',     label: 'Eventos', icon: '🎯' },
-  { id: 'packs',      label: 'Packs', icon: '📦' },
-  { id: 'legends',    label: 'Lendas', icon: '🌟' },
-  { id: 'goat',       label: 'GOAT', icon: '🐐' },
+  { id: 'gameplay', label: 'Jogabilidade', icon: '⚽' },
+  { id: 'seasons', label: 'Temporadas', icon: '🗓️' },
+  { id: 'events', label: 'Eventos', icon: '🎯' },
+  { id: 'packs', label: 'Packs', icon: '📦' },
+  { id: 'legends', label: 'Lendas', icon: '🌟' },
+  { id: 'goat', label: 'GOAT', icon: '🐐' },
 ];
 
 // ─── Main page ────────────────────────────────────────────────────────────────
@@ -44,7 +44,9 @@ export function AchievementsPage() {
       setData(d);
       setLoading(false);
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleClaim = useCallback((achievementId: string) => {
@@ -80,7 +82,11 @@ export function AchievementsPage() {
           ))}
         </div>
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-28 bg-surface rounded-2xl animate-pulse" style={{ animationDelay: `${i * 0.08}s` }} />
+          <div
+            key={i}
+            className="h-28 bg-surface rounded-2xl animate-pulse"
+            style={{ animationDelay: `${i * 0.08}s` }}
+          />
         ))}
       </div>
     );
@@ -112,8 +118,14 @@ export function AchievementsPage() {
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3">
           <StatPill label="Desbloqueadas" value={`${data?.totalUnlocked ?? 0}/42`} />
-          <StatPill label="XP Total" value={`${(data?.totalXpEarned ?? 0).toLocaleString('pt-BR')}`} />
-          <StatPill label="Progresso" value={`${Math.round(((data?.totalUnlocked ?? 0) / 42) * 100)}%`} />
+          <StatPill
+            label="XP Total"
+            value={`${(data?.totalXpEarned ?? 0).toLocaleString('pt-BR')}`}
+          />
+          <StatPill
+            label="Progresso"
+            value={`${Math.round(((data?.totalUnlocked ?? 0) / 42) * 100)}%`}
+          />
         </div>
       </div>
 
@@ -139,7 +151,9 @@ export function AchievementsPage() {
             >
               <span>{cat.icon}</span>
               <span>{cat.label}</span>
-              <span className={`text-[8px] rounded-full px-1 ${isActive ? 'bg-gold/30 text-gold' : 'bg-white/5 text-muted'}`}>
+              <span
+                className={`text-[8px] rounded-full px-1 ${isActive ? 'bg-gold/30 text-gold' : 'bg-white/5 text-muted'}`}
+              >
                 {catUnlocked}/{catViews.length}
               </span>
             </motion.button>
@@ -150,8 +164,8 @@ export function AchievementsPage() {
       {/* Category header */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-muted text-xs">
-          <span className="text-emerald-400 font-bold">{unlockedInCategory}</span>
-          /{viewsForCategory.length} nesta categoria
+          <span className="text-emerald-400 font-bold">{unlockedInCategory}</span>/
+          {viewsForCategory.length} nesta categoria
         </p>
         {unlockedInCategory === viewsForCategory.length && viewsForCategory.length > 0 && (
           <motion.span
@@ -181,11 +195,7 @@ export function AchievementsPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.04 }}
             >
-              <AchievementCard
-                view={view}
-                onClaim={handleClaim}
-                claiming={isPending}
-              />
+              <AchievementCard view={view} onClaim={handleClaim} claiming={isPending} />
             </motion.div>
           ))}
         </motion.div>

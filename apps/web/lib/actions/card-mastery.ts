@@ -1,16 +1,14 @@
 'use server';
 
+import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
 import {
   CardMasteryService,
-  MASTERY_LEVELS,
   type CardMasteryState,
+  MASTERY_LEVELS,
   type MasteryLevelConfig,
   type XpGainSource,
 } from '@world-legends/card-mastery';
-import {
-  SupabaseCardMasteryRepository,
-} from '@world-legends/db';
-import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
+import { SupabaseCardMasteryRepository } from '@world-legends/db';
 
 const svc = new CardMasteryService();
 
@@ -87,7 +85,5 @@ export async function awardMatchXpInternal(
   const db = getServiceDb();
   const repo = new SupabaseCardMasteryRepository(db);
 
-  await Promise.all(
-    cardIds.map((cardId) => repo.addXp(userId, cardId, gain.totalXp)),
-  );
+  await Promise.all(cardIds.map((cardId) => repo.addXp(userId, cardId, gain.totalXp)));
 }

@@ -128,15 +128,18 @@ const INITIAL: State = {
 // ─── Collection progress header ───────────────────────────────────────────────
 
 const RARITY_META: Array<{ key: string; label: string; color: string }> = [
-  { key: 'world_cup_hero', label: 'WCH',       color: '#e2e8f0' },
-  { key: 'ultra',          label: 'Ultra',      color: '#ec4899' },
-  { key: 'legendary',      label: 'Lendária',   color: '#c9a84c' },
-  { key: 'elite',          label: 'Elite',      color: '#3b82f6' },
-  { key: 'rare',           label: 'Rara',       color: '#a855f7' },
-  { key: 'common',         label: 'Comum',      color: '#6b7280' },
+  { key: 'world_cup_hero', label: 'WCH', color: '#e2e8f0' },
+  { key: 'ultra', label: 'Ultra', color: '#ec4899' },
+  { key: 'legendary', label: 'Lendária', color: '#c9a84c' },
+  { key: 'elite', label: 'Elite', color: '#3b82f6' },
+  { key: 'rare', label: 'Rara', color: '#a855f7' },
+  { key: 'common', label: 'Comum', color: '#6b7280' },
 ];
 
-function CollectionProgressHeader({ allCards, filteredCount }: { allCards: CollectionCard[]; filteredCount: number }) {
+function CollectionProgressHeader({
+  allCards,
+  filteredCount,
+}: { allCards: CollectionCard[]; filteredCount: number }) {
   const total = allCards.length;
   const byRarity = useMemo(() => {
     const map: Record<string, number> = {};
@@ -155,7 +158,10 @@ function CollectionProgressHeader({ allCards, filteredCount }: { allCards: Colle
       {/* Page title + count */}
       <div className="flex items-end justify-between mb-3">
         <div>
-          <p className="text-[9px] font-bold uppercase tracking-[0.22em] mb-1" style={{ color: '#6a7090' }}>
+          <p
+            className="text-[9px] font-bold uppercase tracking-[0.22em] mb-1"
+            style={{ color: '#6a7090' }}
+          >
             World Legends
           </p>
           <h1 className="font-display text-4xl gold-text tracking-wider leading-none">COLEÇÃO</h1>
@@ -170,7 +176,9 @@ function CollectionProgressHeader({ allCards, filteredCount }: { allCards: Colle
           >
             {filteredCount < total ? filteredCount : total}
           </motion.p>
-          <p className="text-muted text-[9px]">{filteredCount < total ? `de ${total} cartas` : 'cartas'}</p>
+          <p className="text-muted text-[9px]">
+            {filteredCount < total ? `de ${total} cartas` : 'cartas'}
+          </p>
         </div>
       </div>
 
@@ -270,13 +278,10 @@ export function CollectionExperience({ allCards }: Props) {
 
   const handleReset = useCallback(() => dispatch({ type: 'RESET_FILTERS' }), []);
 
-  const handleSetOverall = useCallback(
-    (min: number, max: number) => {
-      dispatch({ type: 'SET_FILTER', key: 'overallMin', value: min });
-      dispatch({ type: 'SET_FILTER', key: 'overallMax', value: max });
-    },
-    [],
-  );
+  const handleSetOverall = useCallback((min: number, max: number) => {
+    dispatch({ type: 'SET_FILTER', key: 'overallMin', value: min });
+    dispatch({ type: 'SET_FILTER', key: 'overallMax', value: max });
+  }, []);
 
   return (
     <div className="flex flex-col h-full">

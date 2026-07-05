@@ -4,7 +4,7 @@ import type { CollectionCard } from '@/lib/collection-data';
 import { RARITY_VISUAL } from '@/lib/collection-data';
 import { getPositionCompat } from '@/lib/squad-builder';
 import type { DragSource } from '@/lib/squad-builder';
-import { useDroppable, useDraggable } from '@dnd-kit/core';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import type { Position } from '@world-legends/types';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -98,8 +98,11 @@ function PoolCard({
         <motion.div
           className="absolute inset-0 rounded-xl pointer-events-none"
           animate={{ opacity: [0.3, 0.7, 0.3] }}
-          transition={{ duration: 1.2, repeat: Infinity }}
-          style={{ background: 'radial-gradient(ellipse at 50% 30%, rgba(201,168,76,0.3), transparent 70%)' }}
+          transition={{ duration: 1.2, repeat: Number.POSITIVE_INFINITY }}
+          style={{
+            background:
+              'radial-gradient(ellipse at 50% 30%, rgba(201,168,76,0.3), transparent 70%)',
+          }}
         />
       )}
 
@@ -111,7 +114,10 @@ function PoolCard({
           {card.overall}
         </p>
       </div>
-      <div className="pb-1 px-0.5" style={{ background: 'linear-gradient(0deg,rgba(0,0,0,0.85),transparent)' }}>
+      <div
+        className="pb-1 px-0.5"
+        style={{ background: 'linear-gradient(0deg,rgba(0,0,0,0.85),transparent)' }}
+      >
         <p className="text-parchment text-[6px] font-bold text-center truncate leading-tight">
           {card.displayName.split(' ').pop()}
         </p>
@@ -166,9 +172,7 @@ export function CardPoolSheet({ cards, selectedSlotPos, dragOver, onTapCard }: P
       data-squad-pool
       className="border-t border-white/5"
       style={{
-        background: isDropActive
-          ? 'rgba(201,168,76,0.06)'
-          : 'rgba(0,0,0,0.5)',
+        background: isDropActive ? 'rgba(201,168,76,0.06)' : 'rgba(0,0,0,0.5)',
         transition: 'background 0.2s',
       }}
     >
@@ -206,7 +210,10 @@ export function CardPoolSheet({ cards, selectedSlotPos, dragOver, onTapCard }: P
                   <button
                     key={s}
                     data-squad-pool
-                    onClick={(e) => { e.stopPropagation(); setSector(s); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSector(s);
+                    }}
                     className={[
                       'px-2 py-0.5 rounded-full border text-[9px] font-bold transition-all',
                       sector === s ? SECTOR_ACTIVE[s] : SECTOR_COLOR[s],
@@ -231,10 +238,15 @@ export function CardPoolSheet({ cards, selectedSlotPos, dragOver, onTapCard }: P
             </div>
 
             {/* Cards scroll */}
-            <div className="flex gap-2 overflow-x-auto px-3 pb-3 scroll-smooth" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div
+              className="flex gap-2 overflow-x-auto px-3 pb-3 scroll-smooth"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
               {filtered.length === 0 ? (
                 <p className="text-white/20 text-xs py-4 w-full text-center">
-                  {search || sector !== 'all' ? 'Nenhum resultado' : 'Todos os jogadores estão no campo!'}
+                  {search || sector !== 'all'
+                    ? 'Nenhum resultado'
+                    : 'Todos os jogadores estão no campo!'}
                 </p>
               ) : (
                 filtered.map((card) => (

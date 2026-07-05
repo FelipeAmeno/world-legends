@@ -17,21 +17,21 @@ import type { UserRecord } from '@world-legends/persistence';
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
 export type ReconcileResult<T> = {
-  merged:  T;
-  changed: string[];   // campos que foram alterados pela reconciliação
+  merged: T;
+  changed: string[]; // campos que foram alterados pela reconciliação
 };
 
 export type LocalUserSnapshot = {
-  level:       number;
-  current_xp:  number;
+  level: number;
+  current_xp: number;
   xp_for_next: number;
-  credits:     number;
-  fragments:   number;
-  wins:        number;
-  draws:       number;
-  losses:      number;
+  credits: number;
+  fragments: number;
+  wins: number;
+  draws: number;
+  losses: number;
   total_cards: number;
-  packs_opened:number;
+  packs_opened: number;
 };
 
 // ─── User reconciliation ──────────────────────────────────────────────────────
@@ -47,11 +47,11 @@ export type LocalUserSnapshot = {
  * Chamado ao voltar online após período offline.
  */
 export function reconcileUser(
-  local:  LocalUserSnapshot,
+  local: LocalUserSnapshot,
   server: UserRecord,
 ): ReconcileResult<Partial<UserRecord>> {
-  const merged:  Partial<UserRecord> = {};
-  const changed: string[]            = [];
+  const merged: Partial<UserRecord> = {};
+  const changed: string[] = [];
 
   // server_wins: XP, level, créditos (protege contra exploits)
   for (const field of ['level', 'current_xp', 'xp_for_next', 'credits', 'fragments'] as const) {
@@ -76,11 +76,11 @@ export function reconcileUser(
  * summary: Record<achievementId, maxStage>
  */
 export function reconcileAchievements(
-  local:  Record<string, number>,
+  local: Record<string, number>,
   server: Record<string, number>,
 ): ReconcileResult<Record<string, number>> {
-  const merged:  Record<string, number> = { ...server };
-  const changed: string[]               = [];
+  const merged: Record<string, number> = { ...server };
+  const changed: string[] = [];
 
   for (const [id, stage] of Object.entries(local)) {
     if ((merged[id] ?? 0) < stage) {
@@ -99,13 +99,13 @@ export function reconcileAchievements(
  * Retorna sempre o estado local — mas registra se são diferentes.
  */
 export function reconcileSquad<T extends { updated_at?: string }>(
-  local:  T,
+  local: T,
   server: T | null,
 ): ReconcileResult<T> {
   if (!server) return { merged: local, changed: [] };
 
   // Comparar timestamps se disponíveis
-  const localTs  = local.updated_at  ? new Date(local.updated_at).getTime()  : Date.now();
+  const localTs = local.updated_at ? new Date(local.updated_at).getTime() : Date.now();
   const serverTs = server.updated_at ? new Date(server.updated_at).getTime() : 0;
 
   if (localTs >= serverTs) {
@@ -125,32 +125,34 @@ export function reconcileSquad<T extends { updated_at?: string }>(
  */
 export class OfflineDeltaTracker {
   private deltas: {
-    wins:   number;
-    draws:  number;
+    wins: number;
+    draws: number;
     losses: number;
-    xp:     number;
-    credits:number;
-  } = { wins:0, draws:0, losses:0, xp:0, credits:0 };
+    xp: number;
+    credits: number;
+  } = { wins: 0, draws: 0, losses: 0, xp: 0, credits: 0 };
 
   addMatch(outcome: 'win' | 'draw' | 'loss', xp: number, credits: number): void {
     const key = outcome === 'win' ? 'wins' : outcome === 'draw' ? 'draws' : 'losses';
     this.deltas[key]++;
-    this.deltas.xp      += xp;
+    this.deltas.xp += xp;
     this.deltas.credits += credits;
   }
 
   addReward(xp: number, credits: number): void {
-    this.deltas.xp      += xp;
+    this.deltas.xp += xp;
     this.deltas.credits += credits;
   }
 
-  get snapshot() { return { ...this.deltas }; }
+  get snapshot() {
+    return { ...this.deltas };
+  }
 
   hasChanges(): boolean {
-    return Object.values(this.deltas).some(v => v > 0);
+    return Object.values(this.deltas).some((v) => v > 0);
   }
 
   reset(): void {
-    this.deltas = { wins:0, draws:0, losses:0, xp:0, credits:0 };
+    this.deltas = { wins: 0, draws: 0, losses: 0, xp: 0, credits: 0 };
   }
 }

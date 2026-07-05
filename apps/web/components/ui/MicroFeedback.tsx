@@ -35,19 +35,19 @@ type RippleItem = { id: number; x: number; y: number; size: number };
 type GlowColor = 'gold' | 'green' | 'red' | 'blue' | 'none';
 
 const GLOW_COLORS: Record<GlowColor, string> = {
-  gold:  'rgba(201,168,76,0.35)',
+  gold: 'rgba(201,168,76,0.35)',
   green: 'rgba(16,185,129,0.35)',
-  red:   'rgba(239,68,68,0.35)',
-  blue:  'rgba(59,130,246,0.35)',
-  none:  'transparent',
+  red: 'rgba(239,68,68,0.35)',
+  blue: 'rgba(59,130,246,0.35)',
+  none: 'transparent',
 };
 
 const RIPPLE_COLORS: Record<GlowColor, string> = {
-  gold:  'rgba(201,168,76,0.25)',
+  gold: 'rgba(201,168,76,0.25)',
   green: 'rgba(16,185,129,0.25)',
-  red:   'rgba(239,68,68,0.25)',
-  blue:  'rgba(59,130,246,0.25)',
-  none:  'rgba(255,255,255,0.12)',
+  red: 'rgba(239,68,68,0.25)',
+  blue: 'rgba(59,130,246,0.25)',
+  none: 'rgba(255,255,255,0.12)',
 };
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -55,66 +55,77 @@ const RIPPLE_COLORS: Record<GlowColor, string> = {
 type TapVariant = 'default' | 'hero' | 'subtle' | 'none';
 
 type Props = {
-  children:   ReactNode;
-  variant?:   TapVariant;
-  glow?:      GlowColor;
-  haptic?:    HapticKey;
-  ripple?:    boolean;
+  children: ReactNode;
+  variant?: TapVariant;
+  glow?: GlowColor;
+  haptic?: HapticKey;
+  ripple?: boolean;
   className?: string;
-  disabled?:  boolean;
-  onClick?:   (e: React.MouseEvent) => void;
-  as?:        'div' | 'button' | 'li';
+  disabled?: boolean;
+  onClick?: (e: React.MouseEvent) => void;
+  as?: 'div' | 'button' | 'li';
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function Tap({
   children,
-  variant   = 'default',
-  glow      = 'none',
+  variant = 'default',
+  glow = 'none',
   haptic,
-  ripple    = true,
+  ripple = true,
   className = '',
-  disabled  = false,
+  disabled = false,
   onClick,
-  as        = 'div',
+  as = 'div',
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [ripples, setRipples]       = useState<RippleItem[]>([]);
-  const [isHovered, setIsHovered]   = useState(false);
+  const [ripples, setRipples] = useState<RippleItem[]>([]);
+  const [isHovered, setIsHovered] = useState(false);
   const counterRef = useRef(0);
 
-  const addRipple = useCallback((e: React.MouseEvent) => {
-    const container = containerRef.current;
-    if (!container || !ripple || disabled) return;
+  const addRipple = useCallback(
+    (e: React.MouseEvent) => {
+      const container = containerRef.current;
+      if (!container || !ripple || disabled) return;
 
-    const rect = container.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const size = Math.max(rect.width, rect.height) * 2;
-    const id = ++counterRef.current;
+      const rect = container.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const size = Math.max(rect.width, rect.height) * 2;
+      const id = ++counterRef.current;
 
-    setRipples((prev) => [...prev, { id, x, y, size }]);
-    setTimeout(() => {
-      setRipples((prev) => prev.filter((r) => r.id !== id));
-    }, 700);
-  }, [ripple, disabled]);
+      setRipples((prev) => [...prev, { id, x, y, size }]);
+      setTimeout(() => {
+        setRipples((prev) => prev.filter((r) => r.id !== id));
+      }, 700);
+    },
+    [ripple, disabled],
+  );
 
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    if (disabled) return;
-    addRipple(e);
-    if (haptic) vibrate(haptic);
-    onClick?.(e);
-  }, [disabled, addRipple, haptic, onClick]);
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (disabled) return;
+      addRipple(e);
+      if (haptic) vibrate(haptic);
+      onClick?.(e);
+    },
+    [disabled, addRipple, haptic, onClick],
+  );
 
-  const pressProps = variant === 'none' ? {} :
-    variant === 'hero'   ? { whileHover: PRESS.heroHover,   whileTap: PRESS.heroTap } :
-    variant === 'subtle' ? { whileHover: PRESS.subtleHover, whileTap: PRESS.subtleTap } :
-                           { whileHover: PRESS.whileHover,  whileTap: PRESS.whileTap };
+  const pressProps =
+    variant === 'none'
+      ? {}
+      : variant === 'hero'
+        ? { whileHover: PRESS.heroHover, whileTap: PRESS.heroTap }
+        : variant === 'subtle'
+          ? { whileHover: PRESS.subtleHover, whileTap: PRESS.subtleTap }
+          : { whileHover: PRESS.whileHover, whileTap: PRESS.whileTap };
 
-  const glowStyle: React.CSSProperties = isHovered && glow !== 'none'
-    ? { boxShadow: `0 0 20px ${GLOW_COLORS[glow]}`, transition: 'box-shadow 0.2s ease' }
-    : { transition: 'box-shadow 0.2s ease' };
+  const glowStyle: React.CSSProperties =
+    isHovered && glow !== 'none'
+      ? { boxShadow: `0 0 20px ${GLOW_COLORS[glow]}`, transition: 'box-shadow 0.2s ease' }
+      : { transition: 'box-shadow 0.2s ease' };
 
   const MotionEl = motion[as] as typeof motion.div;
 
@@ -138,7 +149,7 @@ export function Tap({
           className="absolute rounded-full pointer-events-none"
           style={{
             left: r.x - r.size / 2,
-            top:  r.y - r.size / 2,
+            top: r.y - r.size / 2,
             width: r.size,
             height: r.size,
             background: RIPPLE_COLORS[glow],
@@ -154,14 +165,14 @@ export function Tap({
 
 export function Press({
   children,
-  scale    = 0.96,
+  scale = 0.96,
   className = '',
   onClick,
 }: {
-  children:   ReactNode;
-  scale?:     number;
+  children: ReactNode;
+  scale?: number;
   className?: string;
-  onClick?:   () => void;
+  onClick?: () => void;
 }) {
   return (
     <motion.div

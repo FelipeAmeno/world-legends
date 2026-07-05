@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest';
 import {
   COLLECTION_SETS,
   detectNewlyCompletedSets,
   getSetByCode,
   setCompletionPct,
 } from '@/lib/collection-sets';
+import { describe, expect, it } from 'vitest';
 
 // ─── COLLECTION_SETS ──────────────────────────────────────────────────────────
 

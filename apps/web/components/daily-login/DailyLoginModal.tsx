@@ -75,16 +75,29 @@ export function DailyLoginModal({ view, claiming, lastClaim, onClaim, onClose }:
         transition={{ ...SPRING.smooth }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="h-0.5 w-full" style={{ background: 'linear-gradient(90deg, transparent, #c9a84c, transparent)' }} />
+        <div
+          className="h-0.5 w-full"
+          style={{ background: 'linear-gradient(90deg, transparent, #c9a84c, transparent)' }}
+        />
 
         <div className="p-5 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 4px)' }}>
           <AnimatePresence mode="wait">
             {showReveal ? (
-              <motion.div key="reveal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.div
+                key="reveal"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
                 <RewardReveal payload={lastClaim} onContinue={onClose} />
               </motion.div>
             ) : (
-              <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.div
+                key="calendar"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
                 <CalendarView view={view} claiming={claiming} onClaim={onClaim} onClose={onClose} />
               </motion.div>
             )}
@@ -98,7 +111,10 @@ export function DailyLoginModal({ view, claiming, lastClaim, onClaim, onClose }:
 // ─── Calendar view ────────────────────────────────────────────────────────────
 
 function CalendarView({
-  view, claiming, onClaim, onClose,
+  view,
+  claiming,
+  onClaim,
+  onClose,
 }: {
   view: DailyLoginView;
   claiming: boolean;
@@ -155,7 +171,10 @@ function CalendarView({
         </div>
 
         {/* Progress bar */}
-        <div className="h-1 rounded-full overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.06)' }}>
+        <div
+          className="h-1 rounded-full overflow-hidden mb-3"
+          style={{ background: 'rgba(255,255,255,0.06)' }}
+        >
           <motion.div
             className="h-full rounded-full"
             style={{ background: 'linear-gradient(90deg, #8c6f27, #c9a84c, #e6c85a)' }}
@@ -217,7 +236,9 @@ function CalendarView({
           <span className="text-2xl">👑</span>
           <div>
             <p className="text-amber-300 text-xs font-bold">30 dias completos!</p>
-            <p className="text-amber-400/60 text-[10px]">Você é uma lenda. Novo ciclo em andamento.</p>
+            <p className="text-amber-400/60 text-[10px]">
+              Você é uma lenda. Novo ciclo em andamento.
+            </p>
           </div>
         </motion.div>
       )}
@@ -237,9 +258,17 @@ function CalendarView({
           }}
           whileHover={claiming ? {} : { scale: 1.02 }}
           whileTap={claiming ? {} : { scale: 0.98 }}
-          animate={claiming ? {} : {
-            boxShadow: ['0 0 20px rgba(201,168,76,0.4)', '0 0 36px rgba(201,168,76,0.7)', '0 0 20px rgba(201,168,76,0.4)'],
-          }}
+          animate={
+            claiming
+              ? {}
+              : {
+                  boxShadow: [
+                    '0 0 20px rgba(201,168,76,0.4)',
+                    '0 0 36px rgba(201,168,76,0.7)',
+                    '0 0 20px rgba(201,168,76,0.4)',
+                  ],
+                }
+          }
           transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
         >
           {claiming ? '✨ Coletando...' : '🎁 COLETAR RECOMPENSA'}
@@ -263,13 +292,29 @@ function CalendarView({
 // ─── Day slot ─────────────────────────────────────────────────────────────────
 
 const THEME_STYLES = {
-  normal:    { border: 'rgba(255,255,255,0.08)', activeBorder: '#c9a84c', glow: 'rgba(201,168,76,0.4)' },
-  premium:   { border: 'rgba(168,85,247,0.2)',   activeBorder: '#a855f7', glow: 'rgba(168,85,247,0.45)' },
-  milestone: { border: 'rgba(251,191,36,0.25)',  activeBorder: '#fbbf24', glow: 'rgba(251,191,36,0.55)' },
+  normal: {
+    border: 'rgba(255,255,255,0.08)',
+    activeBorder: '#c9a84c',
+    glow: 'rgba(201,168,76,0.4)',
+  },
+  premium: {
+    border: 'rgba(168,85,247,0.2)',
+    activeBorder: '#a855f7',
+    glow: 'rgba(168,85,247,0.45)',
+  },
+  milestone: {
+    border: 'rgba(251,191,36,0.25)',
+    activeBorder: '#fbbf24',
+    glow: 'rgba(251,191,36,0.55)',
+  },
 } as const;
 
 function DaySlot({
-  day, isPast, isCurrent, isClaimedToday, isLocked,
+  day,
+  isPast,
+  isCurrent,
+  isClaimedToday,
+  isLocked,
 }: {
   day: CalendarDay;
   isPast: boolean;
@@ -325,7 +370,10 @@ function DaySlot({
       </span>
 
       {/* Icon */}
-      <div className="flex-1 flex items-center justify-center" style={{ fontSize: day.isMilestone ? 22 : 18 }}>
+      <div
+        className="flex-1 flex items-center justify-center"
+        style={{ fontSize: day.isMilestone ? 22 : 18 }}
+      >
         {isPast || isClaimedToday ? (
           <motion.span
             style={{ fontSize: 14, color: '#34d399' }}
@@ -353,9 +401,7 @@ function DaySlot({
           }}
         >
           {day.label}
-          {day.extraCount > 0 && (
-            <span style={{ opacity: 0.5 }}> +{day.extraCount}</span>
-          )}
+          {day.extraCount > 0 && <span style={{ opacity: 0.5 }}> +{day.extraCount}</span>}
         </p>
       )}
 

@@ -3,7 +3,7 @@
 import { useAuth } from '@/lib/auth-context';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, Suspense } from 'react';
+import { Suspense, useState } from 'react';
 
 type LoginPhase =
   | 'choose'
@@ -16,83 +16,100 @@ type LoginPhase =
 
 // Deterministic positions — avoids hydration mismatch entre server/client
 const SPARKS = [
-  { x: 12, y: 18, size: 2,   dur: 4.2, delay: 0,   color: 0 },
-  { x: 78, y: 8,  size: 1.5, dur: 5.8, delay: 1.1, color: 1 },
+  { x: 12, y: 18, size: 2, dur: 4.2, delay: 0, color: 0 },
+  { x: 78, y: 8, size: 1.5, dur: 5.8, delay: 1.1, color: 1 },
   { x: 34, y: 72, size: 2.5, dur: 3.9, delay: 0.7, color: 2 },
   { x: 91, y: 45, size: 1.5, dur: 6.1, delay: 2.3, color: 0 },
-  { x: 55, y: 22, size: 2,   dur: 4.5, delay: 0.4, color: 1 },
-  { x: 23, y: 60, size: 1,   dur: 5.2, delay: 1.8, color: 2 },
-  { x: 67, y: 83, size: 2,   dur: 4.0, delay: 0.9, color: 0 },
-  { x: 8,  y: 88, size: 1.5, dur: 6.5, delay: 3.1, color: 1 },
-  { x: 86, y: 15, size: 2,   dur: 3.7, delay: 0.2, color: 2 },
-  { x: 45, y: 92, size: 1,   dur: 5.0, delay: 2.6, color: 0 },
+  { x: 55, y: 22, size: 2, dur: 4.5, delay: 0.4, color: 1 },
+  { x: 23, y: 60, size: 1, dur: 5.2, delay: 1.8, color: 2 },
+  { x: 67, y: 83, size: 2, dur: 4.0, delay: 0.9, color: 0 },
+  { x: 8, y: 88, size: 1.5, dur: 6.5, delay: 3.1, color: 1 },
+  { x: 86, y: 15, size: 2, dur: 3.7, delay: 0.2, color: 2 },
+  { x: 45, y: 92, size: 1, dur: 5.0, delay: 2.6, color: 0 },
   { x: 19, y: 35, size: 2.5, dur: 4.8, delay: 1.5, color: 1 },
   { x: 73, y: 58, size: 1.5, dur: 5.5, delay: 0.6, color: 2 },
-  { x: 38, y: 12, size: 2,   dur: 4.3, delay: 2.0, color: 0 },
-  { x: 94, y: 70, size: 1,   dur: 6.2, delay: 1.3, color: 1 },
-  { x: 62, y: 48, size: 2,   dur: 3.8, delay: 0.8, color: 2 },
-  { x: 5,  y: 55, size: 1.5, dur: 5.7, delay: 2.9, color: 0 },
-  { x: 83, y: 32, size: 2,   dur: 4.1, delay: 0.3, color: 1 },
-  { x: 28, y: 78, size: 1,   dur: 5.3, delay: 1.7, color: 2 },
+  { x: 38, y: 12, size: 2, dur: 4.3, delay: 2.0, color: 0 },
+  { x: 94, y: 70, size: 1, dur: 6.2, delay: 1.3, color: 1 },
+  { x: 62, y: 48, size: 2, dur: 3.8, delay: 0.8, color: 2 },
+  { x: 5, y: 55, size: 1.5, dur: 5.7, delay: 2.9, color: 0 },
+  { x: 83, y: 32, size: 2, dur: 4.1, delay: 0.3, color: 1 },
+  { x: 28, y: 78, size: 1, dur: 5.3, delay: 1.7, color: 2 },
   { x: 50, y: 65, size: 2.5, dur: 4.6, delay: 2.4, color: 0 },
   { x: 15, y: 95, size: 1.5, dur: 6.0, delay: 0.5, color: 1 },
 ] as const;
 
 const SPARK_COLORS = [
-  'rgba(201,168,76,0.65)',   // gold
-  'rgba(255,255,255,0.45)',  // white floodlight
-  'rgba(22,163,74,0.55)',    // pitch green
+  'rgba(201,168,76,0.65)', // gold
+  'rgba(255,255,255,0.45)', // white floodlight
+  'rgba(22,163,74,0.55)', // pitch green
 ];
 
 function LoginContent() {
   const { signInGoogle, signInApple, signInEmail, signUp, resetPassword, configured } = useAuth();
-  const router       = useRouter();
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect     = searchParams.get('redirect') ?? '/';
-  const errorParam   = searchParams.get('error');
+  const redirect = searchParams.get('redirect') ?? '/';
+  const errorParam = searchParams.get('error');
 
-  const [phase,    setPhase]    = useState<LoginPhase>('choose');
-  const [email,    setEmail]    = useState('');
+  const [phase, setPhase] = useState<LoginPhase>('choose');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error,    setError]    = useState<string | null>(errorParam);
+  const [error, setError] = useState<string | null>(errorParam);
 
   const handleGoogle = async () => {
-    setPhase('loading'); setError(null);
+    setPhase('loading');
+    setError(null);
     const { error } = await signInGoogle(redirect);
-    if (error) { setError(error.message); setPhase('choose'); }
+    if (error) {
+      setError(error.message);
+      setPhase('choose');
+    }
   };
 
   const handleApple = async () => {
-    setPhase('loading'); setError(null);
+    setPhase('loading');
+    setError(null);
     const { error } = await signInApple(redirect);
-    if (error) { setError(error.message); setPhase('choose'); }
+    if (error) {
+      setError(error.message);
+      setPhase('choose');
+    }
   };
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) return;
-    setPhase('loading'); setError(null);
+    setPhase('loading');
+    setError(null);
     const { error } = await signInEmail(email, password);
-    if (error) { setError(error.message); setPhase('email'); }
-    else router.push(redirect);
+    if (error) {
+      setError(error.message);
+      setPhase('email');
+    } else router.push(redirect);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) return;
-    setPhase('loading'); setError(null);
+    setPhase('loading');
+    setError(null);
     const { error } = await signUp(email, password);
-    if (error) { setError(error.message); setPhase('signup'); }
-    else setPhase('verify_sent');
+    if (error) {
+      setError(error.message);
+      setPhase('signup');
+    } else setPhase('verify_sent');
   };
 
   const handleForgot = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
-    setPhase('loading'); setError(null);
+    setPhase('loading');
+    setError(null);
     const { error } = await resetPassword(email);
-    if (error) { setError(error.message); setPhase('forgot'); }
-    else setPhase('reset_sent');
+    if (error) {
+      setError(error.message);
+      setPhase('forgot');
+    } else setPhase('reset_sent');
   };
 
   return (
@@ -123,20 +140,49 @@ function LoginContent() {
           preserveAspectRatio="xMidYMax slice"
         >
           {/* Upper tier stands */}
-          <path d="M0 280 L0 120 Q80 30 200 60 Q320 30 400 120 L400 280 Z" fill="rgba(200,200,220,0.9)" />
+          <path
+            d="M0 280 L0 120 Q80 30 200 60 Q320 30 400 120 L400 280 Z"
+            fill="rgba(200,200,220,0.9)"
+          />
           {/* Inner bowl */}
-          <path d="M20 280 L20 140 Q90 65 200 90 Q310 65 380 140 L380 280 Z" fill="rgba(5,5,8,0.95)" />
+          <path
+            d="M20 280 L20 140 Q90 65 200 90 Q310 65 380 140 L380 280 Z"
+            fill="rgba(5,5,8,0.95)"
+          />
           {/* Pitch surface */}
           <rect x="35" y="200" width="330" height="80" rx="4" fill="rgba(22,101,52,0.7)" />
           {/* Pitch markings */}
-          <rect x="35" y="200" width="330" height="80" rx="4" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
-          <line x1="200" y1="200" x2="200" y2="280" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
-          <circle cx="200" cy="240" r="22" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="1.5" />
+          <rect
+            x="35"
+            y="200"
+            width="330"
+            height="80"
+            rx="4"
+            fill="none"
+            stroke="rgba(255,255,255,0.3)"
+            strokeWidth="2"
+          />
+          <line
+            x1="200"
+            y1="200"
+            x2="200"
+            y2="280"
+            stroke="rgba(255,255,255,0.25)"
+            strokeWidth="1.5"
+          />
+          <circle
+            cx="200"
+            cy="240"
+            r="22"
+            fill="none"
+            stroke="rgba(255,255,255,0.22)"
+            strokeWidth="1.5"
+          />
           {/* Floodlight towers */}
-          <rect x="8"  y="30" width="6" height="90" fill="rgba(220,220,240,0.8)" />
+          <rect x="8" y="30" width="6" height="90" fill="rgba(220,220,240,0.8)" />
           <rect x="386" y="30" width="6" height="90" fill="rgba(220,220,240,0.8)" />
           {/* Floodlight heads */}
-          <rect x="0"  y="24" width="22" height="9" rx="2" fill="rgba(255,243,210,0.9)" />
+          <rect x="0" y="24" width="22" height="9" rx="2" fill="rgba(255,243,210,0.9)" />
           <rect x="378" y="24" width="22" height="9" rx="2" fill="rgba(255,243,210,0.9)" />
           {/* Light beams */}
           <polygon points="0,33 22,33 80,200 0,200" fill="rgba(255,243,210,0.04)" />
@@ -148,7 +194,8 @@ function LoginContent() {
       <div
         className="fixed bottom-0 left-0 right-0 pointer-events-none h-14"
         style={{
-          background: 'linear-gradient(to top, rgba(22,101,52,0.55) 0%, rgba(22,101,52,0.25) 50%, transparent 100%)',
+          background:
+            'linear-gradient(to top, rgba(22,101,52,0.55) 0%, rgba(22,101,52,0.25) 50%, transparent 100%)',
           backdropFilter: 'none',
         }}
       />
@@ -160,14 +207,19 @@ function LoginContent() {
             key={i}
             className="absolute rounded-full"
             style={{
-              left:       `${s.x}%`,
-              top:        `${s.y}%`,
-              width:      s.size,
-              height:     s.size,
+              left: `${s.x}%`,
+              top: `${s.y}%`,
+              width: s.size,
+              height: s.size,
               background: SPARK_COLORS[s.color],
             }}
             animate={{ y: [-8, 8, -8], opacity: [0.25, 0.85, 0.25], scale: [0.7, 1.4, 0.7] }}
-            transition={{ duration: s.dur, delay: s.delay, repeat: Infinity, ease: 'easeInOut' }}
+            transition={{
+              duration: s.dur,
+              delay: s.delay,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: 'easeInOut',
+            }}
           />
         ))}
       </div>
@@ -182,7 +234,7 @@ function LoginContent() {
         <motion.div
           className="text-5xl mb-3 select-none"
           animate={{ y: [-5, 5, -5] }}
-          transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 3.5, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
         >
           🏆
         </motion.div>
@@ -190,10 +242,11 @@ function LoginContent() {
         <h1
           className="font-display text-6xl sm:text-7xl tracking-widest"
           style={{
-            background:             'linear-gradient(140deg, #f7e794 0%, #c9a84c 38%, #f5e08a 68%, #9a6f20 100%)',
-            WebkitBackgroundClip:   'text',
-            WebkitTextFillColor:    'transparent',
-            filter:                 'drop-shadow(0 0 28px rgba(201,168,76,0.55))',
+            background:
+              'linear-gradient(140deg, #f7e794 0%, #c9a84c 38%, #f5e08a 68%, #9a6f20 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            filter: 'drop-shadow(0 0 28px rgba(201,168,76,0.55))',
           }}
         >
           WORLD
@@ -236,7 +289,6 @@ function LoginContent() {
 
           <div className="p-6">
             <AnimatePresence mode="wait">
-
               {/* ── CHOOSE ──────────────────────────────────────── */}
               {phase === 'choose' && (
                 <motion.div
@@ -252,14 +304,26 @@ function LoginContent() {
 
                   {configured ? (
                     <>
-                      <OAuthButton icon={<GoogleIcon />} label="Continuar com Google" onClick={handleGoogle} />
-                      <OAuthButton icon={<AppleIcon />}  label="Continuar com Apple"  onClick={handleApple} dark />
+                      <OAuthButton
+                        icon={<GoogleIcon />}
+                        label="Continuar com Google"
+                        onClick={handleGoogle}
+                      />
+                      <OAuthButton
+                        icon={<AppleIcon />}
+                        label="Continuar com Apple"
+                        onClick={handleApple}
+                        dark
+                      />
 
                       <Divider />
 
                       <div className="flex gap-2">
                         <button
-                          onClick={() => { setPhase('email');  setError(null); }}
+                          onClick={() => {
+                            setPhase('email');
+                            setError(null);
+                          }}
                           className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl
                                      border border-white/10 bg-white/4 text-parchment text-sm
                                      hover:bg-white/8 transition-all"
@@ -268,7 +332,10 @@ function LoginContent() {
                           <span>Entrar</span>
                         </button>
                         <button
-                          onClick={() => { setPhase('signup'); setError(null); }}
+                          onClick={() => {
+                            setPhase('signup');
+                            setError(null);
+                          }}
                           className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl
                                      border border-white/10 bg-white/4 text-parchment text-sm
                                      hover:bg-white/8 transition-all"
@@ -284,7 +351,8 @@ function LoginContent() {
                         Supabase não configurado
                       </p>
                       <p className="text-amber-400/70 text-[9px] text-center">
-                        Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY para ativar auth.
+                        Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY para ativar
+                        auth.
                       </p>
                     </div>
                   )}
@@ -299,7 +367,12 @@ function LoginContent() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0 }}
                 >
-                  <BackButton onClick={() => { setPhase('choose'); setError(null); }} />
+                  <BackButton
+                    onClick={() => {
+                      setPhase('choose');
+                      setError(null);
+                    }}
+                  />
 
                   <form onSubmit={handleEmail} className="space-y-3">
                     <EmailField value={email} onChange={setEmail} />
@@ -310,14 +383,20 @@ function LoginContent() {
                     <div className="flex items-center justify-between text-xs pt-1">
                       <button
                         type="button"
-                        onClick={() => { setPhase('forgot'); setError(null); }}
+                        onClick={() => {
+                          setPhase('forgot');
+                          setError(null);
+                        }}
                         className="text-white/30 hover:text-white/60 transition-colors"
                       >
                         Esqueci a senha
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setPhase('signup'); setError(null); }}
+                        onClick={() => {
+                          setPhase('signup');
+                          setError(null);
+                        }}
                         className="text-white/30 hover:text-white/60 transition-colors"
                       >
                         Criar conta →
@@ -335,7 +414,12 @@ function LoginContent() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0 }}
                 >
-                  <BackButton onClick={() => { setPhase('choose'); setError(null); }} />
+                  <BackButton
+                    onClick={() => {
+                      setPhase('choose');
+                      setError(null);
+                    }}
+                  />
 
                   <form onSubmit={handleSignUp} className="space-y-3">
                     <EmailField value={email} onChange={setEmail} />
@@ -346,7 +430,10 @@ function LoginContent() {
                     <div className="text-center pt-1">
                       <button
                         type="button"
-                        onClick={() => { setPhase('email'); setError(null); }}
+                        onClick={() => {
+                          setPhase('email');
+                          setError(null);
+                        }}
                         className="text-white/30 text-xs hover:text-white/60 transition-colors"
                       >
                         Já tenho conta
@@ -364,7 +451,12 @@ function LoginContent() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0 }}
                 >
-                  <BackButton onClick={() => { setPhase('email'); setError(null); }} />
+                  <BackButton
+                    onClick={() => {
+                      setPhase('email');
+                      setError(null);
+                    }}
+                  />
 
                   <p className="text-parchment text-sm font-bold mb-1">Recuperar senha</p>
                   <p className="text-white/35 text-xs mb-4">
@@ -389,7 +481,7 @@ function LoginContent() {
                   <motion.div
                     className="w-10 h-10 rounded-full border-2 border-gold/30 border-t-gold mx-auto"
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: 'linear' }}
                   />
                   <p className="text-white/40 text-sm">Conectando…</p>
                 </motion.div>
@@ -400,7 +492,12 @@ function LoginContent() {
                 <ConfirmationScreen
                   emoji="🔑"
                   title="Email enviado!"
-                  body={<>Link de recuperação enviado para{' '}<strong className="text-white/70">{email}</strong>.</>}
+                  body={
+                    <>
+                      Link de recuperação enviado para{' '}
+                      <strong className="text-white/70">{email}</strong>.
+                    </>
+                  }
                   onBack={() => setPhase('choose')}
                 />
               )}
@@ -410,11 +507,16 @@ function LoginContent() {
                 <ConfirmationScreen
                   emoji="✉️"
                   title="Verifique seu email!"
-                  body={<>Link de verificação enviado para{' '}<strong className="text-white/70">{email}</strong>. Clique para ativar sua conta.</>}
+                  body={
+                    <>
+                      Link de verificação enviado para{' '}
+                      <strong className="text-white/70">{email}</strong>. Clique para ativar sua
+                      conta.
+                    </>
+                  }
                   onBack={() => setPhase('choose')}
                 />
               )}
-
             </AnimatePresence>
           </div>
         </div>
@@ -575,10 +677,22 @@ function Divider() {
 function GoogleIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18">
-      <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18Z" />
-      <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17Z" />
-      <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18L4.5 10.52Z" />
-      <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3Z" />
+      <path
+        fill="#4285F4"
+        d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18Z"
+      />
+      <path
+        fill="#34A853"
+        d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18L4.5 10.52Z"
+      />
+      <path
+        fill="#EA4335"
+        d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3Z"
+      />
     </svg>
   );
 }

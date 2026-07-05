@@ -1,8 +1,8 @@
 'use server';
 
 import {
-  ALL_MISSION_DEFS,
   ACHIEVEMENT_IDS,
+  ALL_MISSION_DEFS,
   type MissionDef,
   type MissionProgress,
   type MissionReward,
@@ -38,7 +38,10 @@ export type ClaimMissionResult =
 export async function getMissionsAction(): Promise<MissionsData> {
   const userId = await getAuthenticatedUserId();
   if (!userId) {
-    return { views: buildEmptyViews(), periodKeys: { daily: dailyPeriodKey(), weekly: weeklyPeriodKey() } };
+    return {
+      views: buildEmptyViews(),
+      periodKeys: { daily: dailyPeriodKey(), weekly: weeklyPeriodKey() },
+    };
   }
 
   const db = getServiceDb();

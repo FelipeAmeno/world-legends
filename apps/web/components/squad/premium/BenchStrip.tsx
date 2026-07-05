@@ -4,7 +4,7 @@ import type { CollectionCard } from '@/lib/collection-data';
 import { RARITY_VISUAL } from '@/lib/collection-data';
 import { MAX_BENCH } from '@/lib/squad-builder';
 import type { DragSource } from '@/lib/squad-builder';
-import { useDroppable, useDraggable } from '@dnd-kit/core';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'framer-motion';
 import { useCallback } from 'react';
@@ -24,14 +24,20 @@ const RARITY_GLOW: Record<string, string> = {
   world_cup_hero: 'rgba(240,244,255,1)',
 };
 
-function BenchCard({ card, idx, onRemove }: { card: CollectionCard; idx: number; onRemove: () => void }) {
+function BenchCard({
+  card,
+  idx,
+  onRemove,
+}: { card: CollectionCard; idx: number; onRemove: () => void }) {
   const visual = RARITY_VISUAL[card.rarityCode];
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `bench-card-${idx}`,
     data: { source: { kind: 'bench', benchIdx: idx, cardId: card.cardId } satisfies DragSource },
   });
 
-  const style = transform ? { transform: CSS.Translate.toString(transform), zIndex: 50, opacity: 0.3 } : {};
+  const style = transform
+    ? { transform: CSS.Translate.toString(transform), zIndex: 50, opacity: 0.3 }
+    : {};
 
   return (
     <motion.div
@@ -47,12 +53,20 @@ function BenchCard({ card, idx, onRemove }: { card: CollectionCard; idx: number;
       <div className="flex-1 flex items-center justify-center">
         <p className={`font-display text-xl leading-none ${visual.textClass}`}>{card.overall}</p>
       </div>
-      <div className="pb-1 px-0.5" style={{ background: 'linear-gradient(0deg,rgba(0,0,0,0.8),transparent)' }}>
-        <p className="text-[6px] font-bold text-parchment text-center truncate">{card.displayName.split(' ').pop()}</p>
+      <div
+        className="pb-1 px-0.5"
+        style={{ background: 'linear-gradient(0deg,rgba(0,0,0,0.8),transparent)' }}
+      >
+        <p className="text-[6px] font-bold text-parchment text-center truncate">
+          {card.displayName.split(' ').pop()}
+        </p>
         <p className={`text-[5px] text-center ${visual.textClass}`}>{card.position}</p>
       </div>
       <button
-        onClick={(e) => { e.stopPropagation(); onRemove(); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
         className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-600 text-white text-[7px] font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
       >
         ✕
@@ -89,12 +103,19 @@ export function BenchStrip({ bench, dragOver, onRemove }: Props) {
     <div className="border-t border-white/5 bg-black/40 px-3 py-2">
       <div className="flex items-center gap-1 mb-1.5">
         <span className="text-[9px] text-white/30 uppercase tracking-widest">BANCO</span>
-        <span className="text-[8px] text-white/20">({bench.filter(Boolean).length}/{MAX_BENCH})</span>
+        <span className="text-[8px] text-white/20">
+          ({bench.filter(Boolean).length}/{MAX_BENCH})
+        </span>
       </div>
       <div className="flex gap-2 overflow-x-auto pb-1">
         {slots.map((card, idx) =>
           card ? (
-            <BenchCard key={`bench-${idx}-${card.cardId}`} card={card} idx={idx} onRemove={() => onRemove(idx)} />
+            <BenchCard
+              key={`bench-${idx}-${card.cardId}`}
+              card={card}
+              idx={idx}
+              onRemove={() => onRemove(idx)}
+            />
           ) : (
             <BenchSlot key={`bench-empty-${idx}`} idx={idx} dragOver={dragOver} />
           ),
