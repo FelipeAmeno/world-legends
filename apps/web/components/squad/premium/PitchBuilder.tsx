@@ -270,76 +270,136 @@ export function PitchBuilder({ allCards, initialState }: Props) {
         <Particles preset="confetti" count={28} origin={{ x: 50, y: 8 }} trigger={saveBurst} />
 
         {/* ── Top bar ─── */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 gap-2 flex-wrap">
-          <FormationSelect
-            current={state.formation}
-            options={Object.keys(FORMATION_LABELS) as FormationKey[]}
-            labels={FORMATION_LABELS}
-            onChange={handleFormation}
-          />
+        <div className="border-b border-white/5">
+          {/* Row 1: formation + actions */}
+          <div className="flex items-center justify-between px-3 pt-2 pb-1.5 gap-2">
+            <FormationSelect
+              current={state.formation}
+              options={Object.keys(FORMATION_LABELS) as FormationKey[]}
+              labels={FORMATION_LABELS}
+              onChange={handleFormation}
+            />
 
-          {/* Quick stats */}
-          <div className="flex items-center gap-3">
-            <QuickStat label="OVR" value={snapshot.rating.overall || '—'} color="gold-text" />
-            <QuickStat
-              label="QUÍM"
-              value={snapshot.chemistry.total || '—'}
-              color="text-emerald-400"
-            />
-            <QuickStat
-              label="TITULARES"
-              value={`${snapshot.starterCount}/11`}
-              color="text-muted"
-            />
+            <div className="flex items-center gap-1.5 ml-auto">
+              {saveDot && (
+                <div className="flex items-center gap-1.5">
+                  <motion.span
+                    className={`w-1.5 h-1.5 rounded-full ${saveDot.color}`}
+                    animate={saveStatus === 'saving' ? { opacity: [1, 0.3, 1] } : { opacity: 1 }}
+                    transition={{ duration: 0.8, repeat: saveStatus === 'saving' ? Number.POSITIVE_INFINITY : 0 }}
+                  />
+                  <span className="text-[9px] text-white/40">{saveDot.label}</span>
+                </div>
+              )}
+              <AnimatePresence>
+                {saveStatus === 'saved' && snapshot.starterCount >= 11 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+                  >
+                    <Link
+                      href="/match"
+                      className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-lg font-bold transition-all"
+                      style={{
+                        background: 'linear-gradient(135deg, #064e3b, #065f46)',
+                        border: '1px solid rgba(16,185,129,0.4)',
+                        color: '#34d399',
+                        boxShadow: '0 0 10px rgba(16,185,129,0.25)',
+                      }}
+                    >
+                      ⚽ Jogar
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <button
+                onClick={handleAutoFill}
+                className="text-[10px] px-2 py-1 rounded-lg border border-gold-dim/40 text-gold hover:bg-gold/10 transition-colors"
+              >
+                auto-fill
+              </button>
+              <button
+                onClick={handleClear}
+                className="text-[10px] text-muted hover:text-red-400 transition-colors px-1"
+              >
+                limpar
+              </button>
+            </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-1.5">
-            {saveDot && (
-              <div className="flex items-center gap-1.5">
+          {/* Row 2: OVR gigante + setores + química */}
+          <div className="flex items-center gap-3 px-3 pb-2">
+            {/* OVR principal */}
+            <div className="flex items-baseline gap-1.5">
+              <AnimatePresence mode="wait">
                 <motion.span
-                  className={`w-1.5 h-1.5 rounded-full ${saveDot.color}`}
-                  animate={saveStatus === 'saving' ? { opacity: [1, 0.3, 1] } : { opacity: 1 }}
-                  transition={{ duration: 0.8, repeat: saveStatus === 'saving' ? Number.POSITIVE_INFINITY : 0 }}
-                />
-                <span className="text-[9px] text-white/40">{saveDot.label}</span>
+                  key={snapshot.rating.overall}
+                  className="font-display leading-none"
+                  style={{
+                    fontSize: 48,
+                    background: snapshot.rating.overall
+                      ? 'linear-gradient(180deg, #fff 0%, #c9a84c 100%)'
+                      : 'rgba(255,255,255,0.15)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    textShadow: snapshot.rating.overall ? '0 0 20px rgba(201,168,76,0.5)' : 'none',
+                  }}
+                  initial={{ scale: 1.25, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 320, damping: 20 }}
+                >
+                  {snapshot.rating.overall || '—'}
+                </motion.span>
+              </AnimatePresence>
+              <div className="flex flex-col gap-0.5 pb-1">
+                <span className="text-[8px] text-gold/60 uppercase tracking-widest font-bold">OVR</span>
+                <span className="text-[8px] text-muted">{snapshot.starterCount}/11</span>
+              </div>
+            </div>
+
+            {/* Divisor */}
+            <div className="w-px h-10 bg-white/8 shrink-0" />
+
+            {/* Setores */}
+            {snapshot.rating.overall > 0 && (
+              <div className="flex gap-3 flex-1">
+                <SectorMini label="ATK" value={snapshot.rating.attack} color="#ef4444" />
+                <SectorMini label="MID" value={snapshot.rating.midfield} color="#10b981" />
+                <SectorMini label="DEF" value={snapshot.rating.defense} color="#3b82f6" />
               </div>
             )}
-            <AnimatePresence>
-              {saveStatus === 'saved' && snapshot.starterCount >= 11 && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+
+            {/* Divisor */}
+            {snapshot.rating.overall > 0 && (
+              <div className="w-px h-10 bg-white/8 shrink-0" />
+            )}
+
+            {/* Química */}
+            <div className="flex flex-col items-center">
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={snapshot.chemistry.total}
+                  className="font-display text-2xl leading-none"
+                  style={{
+                    color:
+                      snapshot.chemistry.total >= 80
+                        ? '#34d399'
+                        : snapshot.chemistry.total >= 60
+                          ? '#60a5fa'
+                          : snapshot.chemistry.total >= 40
+                            ? '#fbbf24'
+                            : 'rgba(255,255,255,0.3)',
+                  }}
+                  initial={{ scale: 1.2, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
                 >
-                  <Link
-                    href="/match"
-                    className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-lg font-bold transition-all"
-                    style={{
-                      background: 'linear-gradient(135deg, #064e3b, #065f46)',
-                      border: '1px solid rgba(16,185,129,0.4)',
-                      color: '#34d399',
-                      boxShadow: '0 0 10px rgba(16,185,129,0.25)',
-                    }}
-                  >
-                    ⚽ Jogar
-                  </Link>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <button
-              onClick={handleAutoFill}
-              className="text-[10px] px-2 py-1 rounded-lg border border-gold-dim/40 text-gold hover:bg-gold/10 transition-colors"
-            >
-              auto-fill
-            </button>
-            <button
-              onClick={handleClear}
-              className="text-[10px] text-muted hover:text-red-400 transition-colors px-1"
-            >
-              limpar
-            </button>
+                  {snapshot.chemistry.total || '—'}
+                </motion.span>
+              </AnimatePresence>
+              <span className="text-[8px] text-muted uppercase tracking-wider">QUÍM</span>
+            </div>
           </div>
         </div>
 
@@ -423,14 +483,32 @@ export function PitchBuilder({ allCards, initialState }: Props) {
   );
 }
 
-// ─── QuickStat ───────────────────────────────────────────────────────────────
+// ─── SectorMini ─────────────────────────────────────────────────────────────
 
-function QuickStat({ label, value, color }: { label: string; value: string | number; color: string }) {
+function SectorMini({ label, value, color }: { label: string; value: number; color: string }) {
+  const pct = Math.round((value / 99) * 100);
   return (
-    <motion.div key={String(value)} initial={{ scale: 1.15, opacity: 0.6 }} animate={{ scale: 1, opacity: 1 }} className="text-center">
-      <p className={`font-display text-base leading-none ${color}`}>{value}</p>
-      <p className="text-[8px] text-white/25 uppercase tracking-wider mt-0.5">{label}</p>
-    </motion.div>
+    <div className="flex flex-col gap-0.5 min-w-[32px]">
+      <div className="flex items-baseline justify-between gap-1">
+        <span className="text-[8px] font-bold" style={{ color }}>{label}</span>
+        <motion.span
+          key={value}
+          className="font-display text-xs leading-none text-white/70"
+          initial={{ opacity: 0.4 }}
+          animate={{ opacity: 1 }}
+        >
+          {value || '—'}
+        </motion.span>
+      </div>
+      <div className="h-1 bg-white/8 rounded-full overflow-hidden">
+        <motion.div
+          className="h-full rounded-full"
+          style={{ background: color }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+        />
+      </div>
+    </div>
   );
 }
 

@@ -110,30 +110,32 @@ export function RevealSummary({ cards, pack, onOpenAnother, onBack, isWelcome }:
 
       {/* Ações */}
       {isWelcome ? (
-        <Link
-          href="/squad"
-          className="block w-full py-4 rounded-2xl font-display text-xl tracking-wider text-center
-                     transition-all hover:scale-[1.02]"
-          style={{
-            background: 'linear-gradient(135deg, #8c6f27, #c9a84c, #e6c85a)',
-            color: '#07080f',
-            boxShadow: '0 0 32px rgba(201,168,76,0.45), 0 4px 16px rgba(0,0,0,0.4)',
-          }}
-        >
-          ⚽ MONTAR MEU SQUAD →
-        </Link>
-      ) : (
-        <div className="flex gap-3">
-          <button
-            onClick={onBack}
-            className="px-5 py-3 rounded-xl border border-border text-muted text-sm
-                       hover:text-parchment hover:bg-white/5 transition-all"
+        <div className="space-y-3">
+          <Link
+            href="/squad"
+            className="block w-full py-4 rounded-2xl font-display text-xl tracking-wider text-center
+                       transition-all hover:scale-[1.02]"
+            style={{
+              background: 'linear-gradient(135deg, #8c6f27, #c9a84c, #e6c85a)',
+              color: '#07080f',
+              boxShadow: '0 0 32px rgba(201,168,76,0.45), 0 4px 16px rgba(0,0,0,0.4)',
+            }}
           >
-            ← Loja
-          </button>
+            ⚽ MONTAR MEU SQUAD →
+          </Link>
+          <Link
+            href="/collection"
+            className="block w-full py-2.5 rounded-xl text-center text-sm text-white/40
+                       border border-white/8 hover:text-parchment hover:bg-white/5 transition-all"
+          >
+            Ver minha coleção →
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-2.5">
           <button
             onClick={onOpenAnother}
-            className="flex-1 py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.02]"
+            className="w-full py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.02]"
             style={{
               background: `linear-gradient(135deg, ${pack.gradientFrom.replace('1a', '2a')}, ${pack.borderColor.replace(/[\d.]+\)$/, '0.3)')})`,
               border: `1px solid ${pack.borderColor}`,
@@ -143,6 +145,27 @@ export function RevealSummary({ cards, pack, onOpenAnother, onBack, isWelcome }:
           >
             📦 Abrir Outro {pack.name}
           </button>
+          <div className="flex gap-2.5">
+            <Link
+              href="/collection"
+              className="flex-1 py-2.5 rounded-xl text-center text-sm font-medium transition-all
+                         hover:scale-[1.02]"
+              style={{
+                background: 'rgba(201,168,76,0.08)',
+                border: '1px solid rgba(201,168,76,0.2)',
+                color: '#c9a84c',
+              }}
+            >
+              🃏 Ver Coleção
+            </Link>
+            <button
+              onClick={onBack}
+              className="px-5 py-2.5 rounded-xl border border-border text-muted text-sm
+                         hover:text-parchment hover:bg-white/5 transition-all"
+            >
+              ← Loja
+            </button>
+          </div>
         </div>
       )}
     </div>

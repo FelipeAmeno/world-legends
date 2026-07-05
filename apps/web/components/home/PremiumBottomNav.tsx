@@ -37,6 +37,8 @@ type NavItem = {
   glow: string;
 };
 
+const HIDDEN_ROUTES = ['/login', '/enter', '/packs', '/match', '/rewards'];
+
 const ITEMS: NavItem[] = [
   {
     href: '/',
@@ -47,7 +49,7 @@ const ITEMS: NavItem[] = [
   },
   {
     href: '/collection',
-    label: 'Cartas',
+    label: 'Coleção',
     icon: ['M4 6h16M4 12h16M4 18h16', 'M8 3l4 3 4-3'],
     color: '#f59e0b',
     glow: 'rgba(245,158,11,0.55)',
@@ -60,18 +62,21 @@ const ITEMS: NavItem[] = [
     glow: 'rgba(59,130,246,0.55)',
   },
   {
-    href: '/packs',
-    label: 'Packs',
-    icon: 'M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12',
-    color: '#a855f7',
-    glow: 'rgba(168,85,247,0.55)',
+    href: '/match',
+    label: 'Partida',
+    icon: [
+      'M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10z',
+      'M10 8l6 4-6 4V8z',
+    ],
+    color: '#10b981',
+    glow: 'rgba(16,185,129,0.55)',
   },
   {
-    href: '/profile',
-    label: 'Perfil',
-    icon: ['M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2', 'M12 11a4 4 0 100-8 4 4 0 000 8z'],
-    color: '#ec4899',
-    glow: 'rgba(236,72,153,0.55)',
+    href: '/missions',
+    label: 'Missões',
+    icon: 'M9 11l3 3L22 4 M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11',
+    color: '#a855f7',
+    glow: 'rgba(168,85,247,0.55)',
   },
 ];
 
@@ -80,7 +85,7 @@ const ITEMS: NavItem[] = [
 export function PremiumBottomNav() {
   const pathname = usePathname();
 
-  if (pathname === '/enter') return null;
+  if (HIDDEN_ROUTES.includes(pathname)) return null;
 
   return (
     <nav

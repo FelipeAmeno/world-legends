@@ -172,8 +172,25 @@ function LoginContent() {
                   exit={{ opacity: 0, x: 10 }}
                   className="space-y-3"
                 >
-                  <p className="text-white/50 text-xs text-center mb-5">
-                    {configured ? 'Escolha como entrar' : 'Modo demonstração ativo'}
+                  {/* Value promise */}
+                  {configured && (
+                    <div
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1"
+                      style={{
+                        background: 'rgba(201,168,76,0.06)',
+                        border: '1px solid rgba(201,168,76,0.15)',
+                      }}
+                    >
+                      <span className="text-2xl shrink-0">📦</span>
+                      <div>
+                        <p className="text-[11px] font-bold text-parchment leading-tight">Founder Pack — grátis ao entrar</p>
+                        <p className="text-[10px] text-white/35 leading-tight mt-0.5">11 lendas históricas · ao menos 1 Legendary</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="text-white/40 text-[11px] text-center">
+                    {configured ? 'Entrar com' : 'Modo demonstração ativo'}
                   </p>
 
                   {/* Google */}
@@ -199,27 +216,41 @@ function LoginContent() {
                   {configured && (
                     <>
                       <Divider />
-                      <button
-                        onClick={() => {
-                          setPhase('email');
-                          setError(null);
-                        }}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl
-                                   border border-white/10 bg-white/4 text-parchment text-sm
-                                   hover:bg-white/8 transition-all"
-                      >
-                        <span>✉️</span>
-                        <span>Entrar com Email</span>
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setPhase('email');
+                            setError(null);
+                          }}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl
+                                     border border-white/10 bg-white/4 text-parchment text-sm
+                                     hover:bg-white/8 transition-all"
+                        >
+                          <span>✉️</span>
+                          <span>Entrar</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setPhase('signup');
+                            setError(null);
+                          }}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl
+                                     border border-white/10 bg-white/4 text-parchment text-sm
+                                     hover:bg-white/8 transition-all"
+                        >
+                          <span>✨</span>
+                          <span>Criar Conta</span>
+                        </button>
+                      </div>
                     </>
                   )}
 
                   {/* Guest */}
                   <button
                     onClick={handleGuest}
-                    className="w-full py-3 rounded-xl text-white/30 text-sm hover:text-white/60 transition-colors text-center"
+                    className="w-full py-2.5 rounded-xl border border-white/8 text-white/45 text-xs hover:text-white/70 hover:border-white/14 transition-all text-center"
                   >
-                    {configured ? 'Jogar sem conta →' : '▶ Entrar como Visitante'}
+                    {configured ? '👤 Continuar sem conta' : '▶ Entrar como Visitante'}
                   </button>
 
                   {!configured && (

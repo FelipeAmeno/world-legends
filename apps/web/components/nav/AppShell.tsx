@@ -3,14 +3,8 @@
 import { FlowProgress } from '@/components/flow/FlowProgress';
 import { GameTopBar } from '@/components/flow/GameTopBar';
 import { PageTransition } from '@/components/fx/PageTransition';
-/**
- * AppShell — wrapper que decide qual shell usar.
- *
- * Home (/):     sem shell → PremiumHome renderiza seu próprio layout fullscreen
- * Outras:       shell normal (sidebar desktop / mobile header + bottom nav)
- */
+import { PremiumBottomNav } from '@/components/home/PremiumBottomNav';
 import { usePathname } from 'next/navigation';
-import { BottomNav } from './BottomNav';
 import { MobileHeader } from './MobileHeader';
 import { Sidebar } from './Sidebar';
 
@@ -35,13 +29,13 @@ export function AppShell({ children }: Props) {
         <FlowProgress />
         <main
           className="flex-1 overflow-y-auto px-4 py-4"
-          style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom))' }}
+          style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}
         >
           <PageTransition key={pathname}>
             {children}
           </PageTransition>
         </main>
-        <BottomNav />
+        <PremiumBottomNav />
       </div>
 
       {/* Desktop */}

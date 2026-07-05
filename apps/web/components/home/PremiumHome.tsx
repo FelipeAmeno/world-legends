@@ -14,9 +14,10 @@ type Props = {
   isNewUser?: boolean;
   collectionCount?: number;
   squadFormation?: FormationKey | null | undefined;
+  activeEventCount?: number;
 };
 
-export function PremiumHome({ serverBalance, isNewUser, collectionCount = 0, squadFormation }: Props) {
+export function PremiumHome({ serverBalance, isNewUser, collectionCount = 0, squadFormation, activeEventCount = 0 }: Props) {
   if (isNewUser) {
     return <NewUserWelcome />;
   }
@@ -51,11 +52,11 @@ export function PremiumHome({ serverBalance, isNewUser, collectionCount = 0, squ
         style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}
       >
         <PlayerHeader serverBalance={serverBalance} />
-        <EventBanner />
+        <GameGrid collectionCount={collectionCount} squadFormation={squadFormation} activeEventCount={activeEventCount} />
         <QuickStats />
         <RetentionPanel />
         <ProgressTracker />
-        <GameGrid collectionCount={collectionCount} squadFormation={squadFormation} />
+        <EventBanner />
 
         {/* Spacer */}
         <div className="h-2" />

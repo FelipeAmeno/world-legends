@@ -3,6 +3,7 @@
 import { RARITY_VISUAL } from '@/lib/collection-data';
 import type { MatchExperienceData } from '@/lib/match-experience';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ScoreDisplay } from './ScoreDisplay';
 
@@ -18,6 +19,7 @@ export function MatchResultScreen({ data, onRematch, onBack }: Props) {
   const { display, opponent, rich } = data;
   const [tab, setTab] = useState<ResultTab>('stats');
   const [mvpPhase, setMvpPhase] = useState<'hidden' | 'reveal' | 'shown'>('hidden');
+  const router = useRouter();
 
   useEffect(() => {
     if (tab === 'mvp') {
@@ -357,19 +359,35 @@ export function MatchResultScreen({ data, onRematch, onBack }: Props) {
       </div>
 
       {/* Ações */}
-      <div className="flex gap-3 px-4 py-4 border-t border-white/5 bg-black/30">
-        <button
-          onClick={onBack}
-          className="px-4 py-2.5 rounded-xl border border-white/10 text-white/40 text-xs hover:text-parchment transition-all"
-        >
-          ← Trocar adversário
-        </button>
+      <div className="px-4 pt-3 pb-4 border-t border-white/5 bg-black/30 space-y-2.5">
+        {/* Primary: Rematch */}
         <button
           onClick={onRematch}
-          className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-gold-dim to-gold text-obsidian font-bold text-sm hover:opacity-90 transition-all"
+          className="w-full py-3 rounded-xl bg-gradient-to-r from-gold-dim to-gold text-obsidian font-bold text-sm hover:opacity-90 transition-all"
         >
-          🔄 Revanche
+          🔄 Jogar Novamente
         </button>
+        {/* Secondary row */}
+        <div className="flex gap-2">
+          <button
+            onClick={onBack}
+            className="flex-1 py-2.5 rounded-xl border border-white/10 text-white/40 text-xs hover:text-parchment transition-all"
+          >
+            ← Trocar adversário
+          </button>
+          <button
+            onClick={() => router.push('/')}
+            className="flex-1 py-2.5 rounded-xl border border-white/10 text-white/40 text-xs hover:text-parchment transition-all"
+          >
+            🏠 Home
+          </button>
+          <button
+            onClick={() => router.push('/missions')}
+            className="flex-1 py-2.5 rounded-xl border border-white/10 text-white/40 text-xs hover:text-parchment transition-all"
+          >
+            🎯 Missões
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -21,7 +21,7 @@
 
 import type { PackReward, RewardData } from '@/lib/rewards-data';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { CreditsSection } from './CreditsSection';
 import { LevelUpCelebration } from './LevelUpCelebration';
 import { XpSection } from './XpSection';
@@ -317,10 +317,10 @@ function SumBox({
 }
 
 function PacksDisplay({ packs, onComplete }: { packs: PackReward[]; onComplete: () => void }) {
-  // Auto-complete
-  useState(() => {
-    setTimeout(onComplete, 2500);
-  });
+  useEffect(() => {
+    const t = setTimeout(onComplete, 2500);
+    return () => clearTimeout(t);
+  }, [onComplete]);
 
   return (
     <div className="flex flex-col items-center gap-4">

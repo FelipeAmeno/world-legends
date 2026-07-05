@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/supabase/server';
 import { getUserActiveSquad, getUserCollection, getUserProfile } from '@/lib/server/game-data';
+import { getEvents } from '@/lib/events/mock-events';
 import { PremiumHome } from '@/components/home/PremiumHome';
 
 export default async function HomePage() {
@@ -18,12 +19,18 @@ export default async function HomePage() {
   const collectionCount = collection.length;
   const squadFormation = squad?.formation ?? null;
 
+  const now = Date.now();
+  const activeEventCount = getEvents().filter(
+    (e) => now >= new Date(e.startsAt).getTime() && now < new Date(e.endsAt).getTime(),
+  ).length;
+
   return (
     <PremiumHome
       serverBalance={serverBalance}
       isNewUser={isNewUser}
       collectionCount={collectionCount}
       squadFormation={squadFormation}
+      activeEventCount={activeEventCount}
     />
   );
 }

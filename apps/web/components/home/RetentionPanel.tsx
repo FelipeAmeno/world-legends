@@ -134,13 +134,7 @@ export function RetentionPanel() {
 
             <div className="mt-2 flex items-center gap-1">
               <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{ background: 'linear-gradient(90deg,#3b82f6,#60a5fa)' }}
-                  initial={{ width: '0%' }}
-                  animate={{ width: '33%' }}
-                  transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
-                />
+                <div className="h-full rounded-full" style={{ background: 'linear-gradient(90deg,#3b82f6,#60a5fa)', width: 0 }} />
               </div>
               <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)' }}>→</p>
             </div>

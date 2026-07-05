@@ -1,8 +1,35 @@
 'use client';
 
 import type { SBSnapshot, SBState } from '@/lib/squad-builder';
+import type { SquadRating } from '@world-legends/squad-rating';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useMemo } from 'react';
+
+// ─── Strength/Weakness analysis ───────────────────────────────────────────────
+
+function getStrengthsWeaknesses(
+  r: SquadRating,
+  chemTotal: number,
+): { strengths: string[]; weaknesses: string[] } {
+  const strengths: string[] = [];
+  const weaknesses: string[] = [];
+
+  if (r.attack >= 82) strengths.push('💥 Ataque Explosivo');
+  else if (r.attack < 68 && r.attack > 0) weaknesses.push('⚠️ Ataque Fraco');
+
+  if (r.midfield >= 80) strengths.push('🎯 Meio Dominante');
+  else if (r.midfield < 68 && r.midfield > 0) weaknesses.push('⚠️ Meio Fraco');
+
+  if (r.defense >= 82) strengths.push('🛡️ Defesa Sólida');
+  else if (r.defense < 68 && r.defense > 0) weaknesses.push('⚠️ Defesa Exposta');
+
+  if (chemTotal >= 85) strengths.push('⚡ Química Perfeita');
+  else if (chemTotal < 45 && chemTotal > 0) weaknesses.push('💔 Baixa Química');
+
+  if (r.overall >= 85) strengths.push('🌟 Time de Elite');
+
+  return { strengths, weaknesses };
+}
 
 type Props = {
   snapshot: SBSnapshot;
@@ -28,6 +55,11 @@ export function SquadOvrPanel({ snapshot, state }: Props) {
     : 'from-gray-700 to-gray-900';
 
   // Collect active traits from starters
+  const { strengths, weaknesses } = useMemo(
+    () => getStrengthsWeaknesses(r, c.total),
+    [r, c.total],
+  );
+
   const activeTraits = useMemo(() => {
     const map = new Map<string, { name: string; tier: 1 | 2 | 3; count: number }>();
     for (const card of Object.values(state.slots)) {
@@ -109,6 +141,47 @@ export function SquadOvrPanel({ snapshot, state }: Props) {
           </motion.p>
         )}
       </div>
+
+      {/* Forças e fraquezas */}
+      {r.overall > 0 && (strengths.length > 0 || weaknesses.length > 0) && (
+        <div className="glass rounded-xl p-3">
+          {strengths.length > 0 && (
+            <div className="mb-2">
+              <p className="text-muted text-[9px] uppercase tracking-wider mb-1.5">Forças</p>
+              <div className="space-y-1">
+                {strengths.map((s) => (
+                  <motion.div
+                    key={s}
+                    initial={{ opacity: 0, x: -6 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="text-[10px] text-emerald-300 font-semibold"
+                  >
+                    {s}
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+          {weaknesses.length > 0 && (
+            <div>
+              {strengths.length > 0 && <div className="border-t border-white/5 my-2" />}
+              <p className="text-muted text-[9px] uppercase tracking-wider mb-1.5">Fraquezas</p>
+              <div className="space-y-1">
+                {weaknesses.map((w) => (
+                  <motion.div
+                    key={w}
+                    initial={{ opacity: 0, x: -6 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="text-[10px] text-amber-300 font-semibold"
+                  >
+                    {w}
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Traits ativos */}
       {activeTraits.length > 0 && (

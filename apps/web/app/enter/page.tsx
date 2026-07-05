@@ -27,7 +27,7 @@ export default function EnterPage() {
   const handleEnter = () => {
     if (!name.trim()) return;
     onboard(name.trim());
-    router.push('/collection');
+    router.push('/packs');
   };
 
   return (

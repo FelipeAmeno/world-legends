@@ -89,7 +89,7 @@ export function EventBanner() {
   const slide = SLIDES[current]!;
 
   return (
-    <div className="px-5 stagger-2">
+    <div className="px-4 stagger-2">
       <div
         className="relative h-36 rounded-2xl overflow-hidden cursor-pointer noise"
         style={{

@@ -117,7 +117,7 @@ export function PreMatchScreen({ data, onKickoff, onBack }: Props) {
   const userLineup = getUserLineup();
   const userOvr    = data.display.userOvr || 80;
   const prob       = computeWinProbability(userOvr, opponent.avgOvr);
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(8);
 
   useEffect(() => {
     if (countdown <= 0) { onKickoff(); return; }
@@ -297,7 +297,7 @@ export function PreMatchScreen({ data, onKickoff, onBack }: Props) {
             boxShadow: '0 0 16px rgba(201,168,76,0.3)',
           }}
         >
-          ▶ Pular contagem
+          ▶ JOGAR AGORA
         </button>
       </motion.div>
     </div>

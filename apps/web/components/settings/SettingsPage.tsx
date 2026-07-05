@@ -455,9 +455,8 @@ export function SettingsPage() {
                   variant="warning"
                   onClick={() => {
                     if (typeof window !== 'undefined') {
-                      // Limpar game state
                       localStorage.removeItem('wl-game-state-v1');
-                      window.location.href = '/enter';
+                      window.location.href = '/login';
                     }
                   }}
                 />
@@ -474,7 +473,7 @@ export function SettingsPage() {
                     if (confirm('Isso apagará TODO o progresso. Tem certeza?')) {
                       if (typeof window !== 'undefined') {
                         localStorage.clear();
-                        window.location.href = '/enter';
+                        window.location.href = '/login';
                       }
                     }
                   }}
