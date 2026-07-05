@@ -11,29 +11,34 @@ import { type CollectionCard, enrichWithUserCards } from '@/lib/collection-data'
 import { getServiceDb } from '@/lib/server/db';
 import type { SBState } from '@/lib/squad-builder';
 import type { FormationKey } from '@/lib/squad-data';
-import { SupabaseProfileRepository, SupabaseRankingRepository, SupabaseSeasonRepository, SupabaseUserCardRepository } from '@world-legends/db';
+import {
+  SupabaseProfileRepository,
+  SupabaseRankingRepository,
+  SupabaseSeasonRepository,
+  SupabaseUserCardRepository,
+} from '@world-legends/db';
 import type { ProfileRow } from '@world-legends/db';
 
 // ─── Tipos de match history ───────────────────────────────────────────────────
 
 export type MatchRecord = {
-  id:         string;
-  opponent:   string;
-  homeScore:  number;
-  awayScore:  number;
-  isHome:     boolean;
-  outcome:    'win' | 'draw' | 'loss';
-  credits:    number;
-  xp:         number;
-  date:       string;
+  id: string;
+  opponent: string;
+  homeScore: number;
+  awayScore: number;
+  isHome: boolean;
+  outcome: 'win' | 'draw' | 'loss';
+  credits: number;
+  xp: number;
+  date: string;
 };
 
 export type UserMatchStats = {
-  wins:          number;
-  draws:         number;
-  losses:        number;
+  wins: number;
+  draws: number;
+  losses: number;
   recentMatches: MatchRecord[];
-  eloRating:     number;
+  eloRating: number;
 };
 
 // ─── Coleção do usuário ───────────────────────────────────────────────────────
@@ -48,7 +53,12 @@ export async function getUserCollection(userId: string): Promise<CollectionCard[
   const result = await repo.findByProfile(userId);
   if (!result.ok) return [];
   return enrichWithUserCards(
-    result.value.map((uc) => ({ cardId: uc.cardId, userCardId: uc.id, acquiredAt: uc.acquiredAt instanceof Date ? uc.acquiredAt.toISOString() : String(uc.acquiredAt) })),
+    result.value.map((uc) => ({
+      cardId: uc.cardId,
+      userCardId: uc.id,
+      acquiredAt:
+        uc.acquiredAt instanceof Date ? uc.acquiredAt.toISOString() : String(uc.acquiredAt),
+    })),
   );
 }
 
@@ -136,7 +146,13 @@ export async function getUserActiveSquad(userId: string): Promise<SavedSquad | n
  */
 export async function getUserMatchStats(userId: string): Promise<UserMatchStats> {
   const db = getServiceDb();
-  const empty: UserMatchStats = { wins: 0, draws: 0, losses: 0, recentMatches: [], eloRating: 1000 };
+  const empty: UserMatchStats = {
+    wins: 0,
+    draws: 0,
+    losses: 0,
+    recentMatches: [],
+    eloRating: 1000,
+  };
 
   // Perfil → elo_rating atual
   const profileRepo = new SupabaseProfileRepository(db);
@@ -144,22 +160,29 @@ export async function getUserMatchStats(userId: string): Promise<UserMatchStats>
   const eloRating = profileResult.ok && profileResult.value ? profileResult.value.eloRating : 1000;
 
   // Temporada ativa → wins/draws/losses
-  const seasonRepo  = new SupabaseSeasonRepository(db);
+  const seasonRepo = new SupabaseSeasonRepository(db);
   const rankingRepo = new SupabaseRankingRepository(db);
   const seasonResult = await seasonRepo.findActive();
-  let wins = 0, draws = 0, losses = 0;
+  let wins = 0;
+  let draws = 0;
+  let losses = 0;
 
   if (seasonResult.ok && seasonResult.value) {
     const rankResult = await rankingRepo.findBySeasonAndProfile(seasonResult.value.id, userId);
     if (rankResult.ok && rankResult.value) {
-      wins   = rankResult.value.wins;
-      draws  = rankResult.value.draws;
+      wins = rankResult.value.wins;
+      draws = rankResult.value.draws;
       losses = rankResult.value.losses;
     }
   } else {
     // Sem temporada ativa → contar das partidas diretamente
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    type MatchRow = { id: string; home_profile_id: string | null; home_score: number | null; away_score: number | null };
+    type MatchRow = {
+      id: string;
+      home_profile_id: string | null;
+      home_score: number | null;
+      away_score: number | null;
+    };
     const { data } = (await (db as any)
       .from('matches')
       .select('id, home_profile_id, home_score, away_score')
@@ -170,7 +193,7 @@ export async function getUserMatchStats(userId: string): Promise<UserMatchStats>
       const hs = m.home_score ?? 0;
       const as_ = m.away_score ?? 0;
       const isHome = m.home_profile_id === userId;
-      const myScore    = isHome ? hs : as_;
+      const myScore = isHome ? hs : as_;
       const theirScore = isHome ? as_ : hs;
       if (myScore > theirScore) wins++;
       else if (myScore === theirScore) draws++;
@@ -192,19 +215,21 @@ export async function getUserMatchStats(userId: string): Promise<UserMatchStats>
   };
   const { data: matchRows } = (await (db as any)
     .from('matches')
-    .select('id, home_profile_id, away_profile_id, home_score, away_score, simulated_at, home_profile:profiles!home_profile_id(username), away_profile:profiles!away_profile_id(username)')
+    .select(
+      'id, home_profile_id, away_profile_id, home_score, away_score, simulated_at, home_profile:profiles!home_profile_id(username), away_profile:profiles!away_profile_id(username)',
+    )
     .or(`home_profile_id.eq.${userId},away_profile_id.eq.${userId}`)
     .eq('status', 'simulated')
     .order('simulated_at', { ascending: false })
     .limit(10)) as { data: FullMatchRow[] | null };
 
   const recentMatches: MatchRecord[] = (matchRows ?? []).map((m) => {
-    const isHome     = m.home_profile_id === userId;
-    const homeScore  = m.home_score  ?? 0;
-    const awayScore  = m.away_score  ?? 0;
-    const myScore    = isHome ? homeScore : awayScore;
+    const isHome = m.home_profile_id === userId;
+    const homeScore = m.home_score ?? 0;
+    const awayScore = m.away_score ?? 0;
+    const myScore = isHome ? homeScore : awayScore;
     const theirScore = isHome ? awayScore : homeScore;
-    const opponent   = isHome
+    const opponent = isHome
       ? (m.away_profile?.username ?? 'Adversário')
       : (m.home_profile?.username ?? 'Adversário');
 
@@ -213,7 +238,7 @@ export async function getUserMatchStats(userId: string): Promise<UserMatchStats>
     else if (myScore < theirScore) outcome = 'loss';
 
     const when = m.simulated_at ? new Date(m.simulated_at) : null;
-    const now  = new Date();
+    const now = new Date();
     let date = 'Recente';
     if (when) {
       const diffDays = Math.floor((now.getTime() - when.getTime()) / 86_400_000);
@@ -242,13 +267,13 @@ export async function getUserMatchStats(userId: string): Promise<UserMatchStats>
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
 
 export type LeaderboardUserRow = {
-  profileId:     string;
-  username:      string;
-  countryCode:   string;
-  eloRating:     number;
-  wins:          number;
-  draws:         number;
-  losses:        number;
+  profileId: string;
+  username: string;
+  countryCode: string;
+  eloRating: number;
+  wins: number;
+  draws: number;
+  losses: number;
   matchesPlayed: number;
 };
 
@@ -257,8 +282,11 @@ export type LeaderboardUserRow = {
  * Usa rankings da temporada ativa; fallback para profiles se sem temporada.
  */
 export async function getLeaderboardData(): Promise<LeaderboardUserRow[]> {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return [];
+  }
   const db = getServiceDb();
-  const seasonRepo  = new SupabaseSeasonRepository(db);
+  const seasonRepo = new SupabaseSeasonRepository(db);
   const rankingRepo = new SupabaseRankingRepository(db);
 
   const seasonResult = await seasonRepo.findActive();
@@ -280,13 +308,13 @@ export async function getLeaderboardData(): Promise<LeaderboardUserRow[]> {
       return result.value.map((r) => {
         const p = profileMap.get(r.profileId);
         return {
-          profileId:     r.profileId,
-          username:      p?.username ?? 'Jogador',
-          countryCode:   p?.country_code ?? 'BR',
-          eloRating:     r.eloRating,
-          wins:          r.wins,
-          draws:         r.draws,
-          losses:        r.losses,
+          profileId: r.profileId,
+          username: p?.username ?? 'Jogador',
+          countryCode: p?.country_code ?? 'BR',
+          eloRating: r.eloRating,
+          wins: r.wins,
+          draws: r.draws,
+          losses: r.losses,
           matchesPlayed: r.matchesPlayed,
         };
       });
@@ -303,13 +331,13 @@ export async function getLeaderboardData(): Promise<LeaderboardUserRow[]> {
     .limit(100)) as { data: ProfileFallback[] | null };
 
   return (profileFallback ?? []).map((p) => ({
-    profileId:     p.id,
-    username:      p.username,
-    countryCode:   p.country_code,
-    eloRating:     p.elo_rating,
-    wins:          0,
-    draws:         0,
-    losses:        0,
+    profileId: p.id,
+    username: p.username,
+    countryCode: p.country_code,
+    eloRating: p.elo_rating,
+    wins: 0,
+    draws: 0,
+    losses: 0,
     matchesPlayed: 0,
   }));
 }

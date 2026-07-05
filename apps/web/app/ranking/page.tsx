@@ -1,12 +1,11 @@
-import { getCurrentUser } from '@/lib/supabase/server';
-import { getLeaderboardData } from '@/lib/server/game-data';
 import { LeaderboardExperience } from '@/components/ranking/LeaderboardExperience';
+import { getLeaderboardData } from '@/lib/server/game-data';
+import { getCurrentUser } from '@/lib/supabase/server';
+
+export const dynamic = 'force-dynamic';
 
 export default async function RankingPage() {
-  const [user, leaderboardRows] = await Promise.all([
-    getCurrentUser(),
-    getLeaderboardData(),
-  ]);
+  const [user, leaderboardRows] = await Promise.all([getCurrentUser(), getLeaderboardData()]);
 
   return (
     <div className="flex flex-col h-full">
@@ -23,10 +22,7 @@ export default async function RankingPage() {
         </div>
       </div>
       <div className="flex-1 min-h-0">
-        <LeaderboardExperience
-          realData={leaderboardRows}
-          currentUserId={user?.id}
-        />
+        <LeaderboardExperience realData={leaderboardRows} currentUserId={user?.id} />
       </div>
     </div>
   );
