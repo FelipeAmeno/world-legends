@@ -42,6 +42,8 @@ type AuthContextValue = {
   signInMagicLink:(email: string) => Promise<SignInResult>;
   /** Signup com email/senha */
   signUp:       (email: string, password: string) => Promise<SignInResult>;
+  /** Envia email de recuperação de senha */
+  resetPassword:(email: string) => Promise<SignInResult>;
   /** Logout */
   signOut:      () => Promise<void>;
 };
@@ -50,12 +52,13 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue>({
   user:null, session:null, loading:true, isGuest:true, configured:false,
-  signInGoogle:async(_r?: string)=>({error:null}),
-  signInApple: async(_r?: string)=>({error:null}),
-  signInEmail: async()=>({error:null}),
+  signInGoogle:   async(_r?: string)=>({error:null}),
+  signInApple:    async(_r?: string)=>({error:null}),
+  signInEmail:    async()=>({error:null}),
   signInMagicLink:async()=>({error:null}),
-  signUp:      async()=>({error:null}),
-  signOut:     async()=>{},
+  signUp:         async()=>({error:null}),
+  resetPassword:  async()=>({error:null}),
+  signOut:        async()=>{},
 });
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -153,6 +156,14 @@ export function SessionProvider({ children, initialUser=null, initialSession=nul
     return { error };
   }, [sb]);
 
+  const resetPassword = useCallback(async (email: string): Promise<SignInResult> => {
+    if (!sb) return { error: null };
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    });
+    return { error };
+  }, [sb]);
+
   const signOut = useCallback(async () => {
     if (!sb) return;
     await sb.auth.signOut();
@@ -162,7 +173,7 @@ export function SessionProvider({ children, initialUser=null, initialSession=nul
     user, session, loading,
     isGuest:   !configured || !user,
     configured,
-    signInGoogle, signInApple, signInEmail, signInMagicLink, signUp, signOut,
+    signInGoogle, signInApple, signInEmail, signInMagicLink, signUp, resetPassword, signOut,
   };
 
   return (

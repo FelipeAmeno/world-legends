@@ -15,6 +15,7 @@
  * Framer Motion nos toggles e nas transições de seções.
  */
 
+import { useAuth } from '@/lib/auth-context';
 import { useGameState } from '@/lib/game-context';
 import { USER_PROFILE } from '@/lib/mock-data';
 import {
@@ -54,6 +55,7 @@ export function SettingsPage() {
   const [resetConfirm, setResetConfirm] = useState(false);
   const savedTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
   const state = useGameState();
+  const { signOut } = useAuth();
 
   // Carregar do localStorage no cliente
   useEffect(() => {
@@ -453,9 +455,10 @@ export function SettingsPage() {
                   desc="Encerrar sessão atual (dados locais permanecem)"
                   buttonLabel="Logout"
                   variant="warning"
-                  onClick={() => {
+                  onClick={async () => {
                     if (typeof window !== 'undefined') {
                       localStorage.removeItem('wl-game-state-v1');
+                      await signOut();
                       window.location.href = '/login';
                     }
                   }}
@@ -469,10 +472,11 @@ export function SettingsPage() {
                   desc="Apaga permanentemente todo o progresso local"
                   buttonLabel="Apagar Tudo"
                   variant="destructive"
-                  onClick={() => {
+                  onClick={async () => {
                     if (confirm('Isso apagará TODO o progresso. Tem certeza?')) {
                       if (typeof window !== 'undefined') {
                         localStorage.clear();
+                        await signOut();
                         window.location.href = '/login';
                       }
                     }

@@ -123,19 +123,29 @@ export async function openPackAction(packId: string): Promise<OpenPackResult> {
   // ── Simular abertura (puro, sem efeitos colaterais) ───────────────────────
 
   const seed = String(Date.now() ^ Math.trunc(Math.random() * 0xffffffff));
-  const usedCardIds = new Set<string>();
+  const usedCardIds   = new Set<string>();
+  const usedPlayerIds = new Set<string>(); // previne mesmo jogador em editions diferentes
   const packResult = openPack({
     packOpeningId: `opening-${userId}-${Date.now()}`,
     pack:  packDef.pack,
     seed,
     pityState,
     cardResolver: (rarityCode) => {
-      const pool = (byRarity.get(rarityCode as RarityCode) ?? []).filter((id) => !usedCardIds.has(id));
-      const fallbackPool = [...catalogMap.keys()].filter((id) => !usedCardIds.has(id));
+      const notUsed = (id: string) => {
+        if (usedCardIds.has(id)) return false;
+        const pid = catalogMap.get(id)?.playerId;
+        return !pid || !usedPlayerIds.has(pid);
+      };
+      const pool        = (byRarity.get(rarityCode as RarityCode) ?? []).filter(notUsed);
+      const fallbackPool = [...catalogMap.keys()].filter(notUsed);
       const source = pool.length > 0 ? pool : fallbackPool;
       if (source.length === 0) return null;
       const picked = source[Math.floor(Math.random() * source.length)] ?? null;
-      if (picked) usedCardIds.add(picked);
+      if (picked) {
+        usedCardIds.add(picked);
+        const pid = catalogMap.get(picked)?.playerId;
+        if (pid) usedPlayerIds.add(pid);
+      }
       return picked;
     },
   });

@@ -1,151 +1,183 @@
 'use client';
 
-/**
- * app/login/page.tsx — T060
- *
- * Tela de login World Legends com:
- *   - Google OAuth
- *   - Apple OAuth
- *   - Email / Senha
- *   - Magic Link (apenas email)
- *   - Modo guest (sem Supabase configurado)
- *
- * Estados:
- *   'choose'     → métodos de login disponíveis
- *   'email'      → formulário email/senha
- *   'magic'      → magic link enviado
- *   'loading'    → aguardando resposta
- */
-
 import { useAuth } from '@/lib/auth-context';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useState } from 'react';
-import { Suspense } from 'react';
+import { useState, Suspense } from 'react';
 
-type LoginPhase = 'choose' | 'email' | 'signup' | 'magic_sent' | 'loading';
+type LoginPhase =
+  | 'choose'
+  | 'email'
+  | 'signup'
+  | 'forgot'
+  | 'reset_sent'
+  | 'verify_sent'
+  | 'loading';
+
+// Deterministic positions — avoids hydration mismatch entre server/client
+const SPARKS = [
+  { x: 12, y: 18, size: 2,   dur: 4.2, delay: 0,   color: 0 },
+  { x: 78, y: 8,  size: 1.5, dur: 5.8, delay: 1.1, color: 1 },
+  { x: 34, y: 72, size: 2.5, dur: 3.9, delay: 0.7, color: 2 },
+  { x: 91, y: 45, size: 1.5, dur: 6.1, delay: 2.3, color: 0 },
+  { x: 55, y: 22, size: 2,   dur: 4.5, delay: 0.4, color: 1 },
+  { x: 23, y: 60, size: 1,   dur: 5.2, delay: 1.8, color: 2 },
+  { x: 67, y: 83, size: 2,   dur: 4.0, delay: 0.9, color: 0 },
+  { x: 8,  y: 88, size: 1.5, dur: 6.5, delay: 3.1, color: 1 },
+  { x: 86, y: 15, size: 2,   dur: 3.7, delay: 0.2, color: 2 },
+  { x: 45, y: 92, size: 1,   dur: 5.0, delay: 2.6, color: 0 },
+  { x: 19, y: 35, size: 2.5, dur: 4.8, delay: 1.5, color: 1 },
+  { x: 73, y: 58, size: 1.5, dur: 5.5, delay: 0.6, color: 2 },
+  { x: 38, y: 12, size: 2,   dur: 4.3, delay: 2.0, color: 0 },
+  { x: 94, y: 70, size: 1,   dur: 6.2, delay: 1.3, color: 1 },
+  { x: 62, y: 48, size: 2,   dur: 3.8, delay: 0.8, color: 2 },
+  { x: 5,  y: 55, size: 1.5, dur: 5.7, delay: 2.9, color: 0 },
+  { x: 83, y: 32, size: 2,   dur: 4.1, delay: 0.3, color: 1 },
+  { x: 28, y: 78, size: 1,   dur: 5.3, delay: 1.7, color: 2 },
+  { x: 50, y: 65, size: 2.5, dur: 4.6, delay: 2.4, color: 0 },
+  { x: 15, y: 95, size: 1.5, dur: 6.0, delay: 0.5, color: 1 },
+] as const;
+
+const SPARK_COLORS = [
+  'rgba(201,168,76,0.65)',   // gold
+  'rgba(255,255,255,0.45)',  // white floodlight
+  'rgba(22,163,74,0.55)',    // pitch green
+];
 
 function LoginContent() {
-  const { signInGoogle, signInApple, signInEmail, signInMagicLink, signUp, configured } = useAuth();
-  const router = useRouter();
+  const { signInGoogle, signInApple, signInEmail, signUp, resetPassword, configured } = useAuth();
+  const router       = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect') ?? '/';
-  const errorParam = searchParams.get('error');
+  const redirect     = searchParams.get('redirect') ?? '/';
+  const errorParam   = searchParams.get('error');
 
-  const [phase, setPhase] = useState<LoginPhase>('choose');
-  const [email, setEmail] = useState('');
+  const [phase,    setPhase]    = useState<LoginPhase>('choose');
+  const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(errorParam);
-  const [magicMode, setMagicMode] = useState(false);
+  const [error,    setError]    = useState<string | null>(errorParam);
 
   const handleGoogle = async () => {
-    setPhase('loading');
-    setError(null);
+    setPhase('loading'); setError(null);
     const { error } = await signInGoogle(redirect);
-    if (error) {
-      setError(error.message);
-      setPhase('choose');
-    }
-    // Redirect é feito pelo OAuth callback
+    if (error) { setError(error.message); setPhase('choose'); }
   };
 
   const handleApple = async () => {
-    setPhase('loading');
-    setError(null);
+    setPhase('loading'); setError(null);
     const { error } = await signInApple(redirect);
-    if (error) {
-      setError(error.message);
-      setPhase('choose');
-    }
+    if (error) { setError(error.message); setPhase('choose'); }
   };
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
-    setPhase('loading');
-    setError(null);
-
-    if (magicMode) {
-      const { error } = await signInMagicLink(email);
-      if (error) {
-        setError(error.message);
-        setPhase('email');
-      } else setPhase('magic_sent');
-      return;
-    }
-
+    if (!email.trim() || !password.trim()) return;
+    setPhase('loading'); setError(null);
     const { error } = await signInEmail(email, password);
-    if (error) {
-      setError(error.message);
-      setPhase('email');
-    } else {
-      router.push(redirect);
-    }
+    if (error) { setError(error.message); setPhase('email'); }
+    else router.push(redirect);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) return;
-    setPhase('loading');
-    setError(null);
+    setPhase('loading'); setError(null);
     const { error } = await signUp(email, password);
-    if (error) {
-      setError(error.message);
-      setPhase('signup');
-    } else setPhase('magic_sent');
+    if (error) { setError(error.message); setPhase('signup'); }
+    else setPhase('verify_sent');
   };
 
-  const handleGuest = () => {
-    router.push('/enter');
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setPhase('loading'); setError(null);
+    const { error } = await resetPassword(email);
+    if (error) { setError(error.message); setPhase('forgot'); }
+    else setPhase('reset_sent');
   };
 
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-6"
       style={{
-        background:
-          'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(201,168,76,0.12), transparent 60%), #050508',
+        background: [
+          /* pitch glow from bottom */
+          'radial-gradient(ellipse 90% 55% at 50% 115%, rgba(22,101,52,0.50) 0%, transparent 60%)',
+          /* floodlight — left corner */
+          'radial-gradient(ellipse 38% 72% at -6% -6%, rgba(255,243,210,0.20) 0%, transparent 52%)',
+          /* floodlight — right corner */
+          'radial-gradient(ellipse 38% 72% at 106% -6%, rgba(255,243,210,0.20) 0%, transparent 52%)',
+          /* golden center haze */
+          'radial-gradient(ellipse 65% 42% at 50% 18%, rgba(201,168,76,0.10) 0%, transparent 62%)',
+          '#050508',
+        ].join(', '),
       }}
     >
-      {/* Background grid */}
-      <div
-        className="fixed inset-0 pointer-events-none opacity-5"
-        style={{
-          backgroundImage:
-            'repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(201,168,76,0.4) 40px, rgba(201,168,76,0.4) 41px)',
-        }}
-      />
+      {/* ── Spark particles ─────────────────────────────────────────── */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        {SPARKS.map((s, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              left:       `${s.x}%`,
+              top:        `${s.y}%`,
+              width:      s.size,
+              height:     s.size,
+              background: SPARK_COLORS[s.color],
+            }}
+            animate={{ y: [-8, 8, -8], opacity: [0.25, 0.85, 0.25], scale: [0.7, 1.4, 0.7] }}
+            transition={{ duration: s.dur, delay: s.delay, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        ))}
+      </div>
 
-      {/* Logo */}
+      {/* ── Logo ──────────────────────────────────────────────────────── */}
       <motion.div
-        className="text-center mb-10"
-        initial={{ opacity: 0, y: -20 }}
+        className="text-center mb-8"
+        initial={{ opacity: 0, y: -28 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.6, type: 'spring', stiffness: 180, damping: 20 }}
       >
+        <motion.div
+          className="text-5xl mb-3 select-none"
+          animate={{ y: [-5, 5, -5] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          🏆
+        </motion.div>
+
         <h1
-          className="font-display text-6xl sm:text-7xl gold-text tracking-widest"
-          style={{ textShadow: '0 0 40px rgba(201,168,76,0.4)' }}
+          className="font-display text-6xl sm:text-7xl tracking-widest"
+          style={{
+            background:             'linear-gradient(140deg, #f7e794 0%, #c9a84c 38%, #f5e08a 68%, #9a6f20 100%)',
+            WebkitBackgroundClip:   'text',
+            WebkitTextFillColor:    'transparent',
+            filter:                 'drop-shadow(0 0 28px rgba(201,168,76,0.55))',
+          }}
         >
           WORLD
           <br />
           LEGENDS
         </h1>
-        <p className="text-white/30 text-xs tracking-[0.4em] uppercase mt-2">
+
+        <p
+          className="text-[10px] tracking-[0.48em] uppercase mt-2"
+          style={{ color: 'rgba(201,168,76,0.45)' }}
+        >
           Collectible Football Card Game
         </p>
       </motion.div>
 
-      {/* Card de login */}
+      {/* ── Login card ─────────────────────────────────────────────── */}
       <motion.div
         className="w-full max-w-sm"
-        initial={{ opacity: 0, y: 20, scale: 0.97 }}
+        initial={{ opacity: 0, y: 24, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 18 }}
+        transition={{ delay: 0.18, type: 'spring', stiffness: 200, damping: 18 }}
       >
         <div
           className="glass rounded-3xl border border-white/8 overflow-hidden"
-          style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}
+          style={{ boxShadow: '0 8px 48px rgba(0,0,0,0.65), 0 0 80px rgba(201,168,76,0.06)' }}
         >
           {/* Error banner */}
           <AnimatePresence>
@@ -163,7 +195,8 @@ function LoginContent() {
 
           <div className="p-6">
             <AnimatePresence mode="wait">
-              {/* ── CHOOSE ─────────────────────────────────────── */}
+
+              {/* ── CHOOSE ──────────────────────────────────────── */}
               {phase === 'choose' && (
                 <motion.div
                   key="choose"
@@ -172,56 +205,20 @@ function LoginContent() {
                   exit={{ opacity: 0, x: 10 }}
                   className="space-y-3"
                 >
-                  {/* Value promise */}
-                  {configured && (
-                    <div
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1"
-                      style={{
-                        background: 'rgba(201,168,76,0.06)',
-                        border: '1px solid rgba(201,168,76,0.15)',
-                      }}
-                    >
-                      <span className="text-2xl shrink-0">📦</span>
-                      <div>
-                        <p className="text-[11px] font-bold text-parchment leading-tight">Founder Pack — grátis ao entrar</p>
-                        <p className="text-[10px] text-white/35 leading-tight mt-0.5">11 lendas históricas · ao menos 1 Legendary</p>
-                      </div>
-                    </div>
-                  )}
-
-                  <p className="text-white/40 text-[11px] text-center">
-                    {configured ? 'Entrar com' : 'Modo demonstração ativo'}
+                  <p className="text-white/30 text-[11px] text-center tracking-[0.35em] uppercase mb-4">
+                    {configured ? 'Entre na arena' : 'Modo demonstração'}
                   </p>
 
-                  {/* Google */}
-                  {configured && (
-                    <OAuthButton
-                      icon={<GoogleIcon />}
-                      label="Continuar com Google"
-                      onClick={handleGoogle}
-                    />
-                  )}
-
-                  {/* Apple */}
-                  {configured && (
-                    <OAuthButton
-                      icon={<AppleIcon />}
-                      label="Continuar com Apple"
-                      onClick={handleApple}
-                      dark
-                    />
-                  )}
-
-                  {/* Email */}
-                  {configured && (
+                  {configured ? (
                     <>
+                      <OAuthButton icon={<GoogleIcon />} label="Continuar com Google" onClick={handleGoogle} />
+                      <OAuthButton icon={<AppleIcon />}  label="Continuar com Apple"  onClick={handleApple} dark />
+
                       <Divider />
+
                       <div className="flex gap-2">
                         <button
-                          onClick={() => {
-                            setPhase('email');
-                            setError(null);
-                          }}
+                          onClick={() => { setPhase('email');  setError(null); }}
                           className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl
                                      border border-white/10 bg-white/4 text-parchment text-sm
                                      hover:bg-white/8 transition-all"
@@ -230,10 +227,7 @@ function LoginContent() {
                           <span>Entrar</span>
                         </button>
                         <button
-                          onClick={() => {
-                            setPhase('signup');
-                            setError(null);
-                          }}
+                          onClick={() => { setPhase('signup'); setError(null); }}
                           className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl
                                      border border-white/10 bg-white/4 text-parchment text-sm
                                      hover:bg-white/8 transition-all"
@@ -243,137 +237,107 @@ function LoginContent() {
                         </button>
                       </div>
                     </>
-                  )}
-
-                  {/* Guest */}
-                  <button
-                    onClick={handleGuest}
-                    className="w-full py-2.5 rounded-xl border border-white/8 text-white/45 text-xs hover:text-white/70 hover:border-white/14 transition-all text-center"
-                  >
-                    {configured ? '👤 Continuar sem conta' : '▶ Entrar como Visitante'}
-                  </button>
-
-                  {!configured && (
-                    <div className="mt-4 p-3 rounded-xl border border-amber-800/30 bg-amber-900/15">
+                  ) : (
+                    <div className="mt-2 p-3 rounded-xl border border-amber-800/30 bg-amber-900/15">
                       <p className="text-amber-400 text-[10px] text-center font-bold uppercase tracking-wider mb-1">
                         Supabase não configurado
                       </p>
                       <p className="text-amber-400/70 text-[9px] text-center">
-                        Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY para ativar
-                        auth.
+                        Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY para ativar auth.
                       </p>
                     </div>
                   )}
                 </motion.div>
               )}
 
-              {/* ── EMAIL FORM ──────────────────────────────────── */}
-              {(phase === 'email' || phase === 'signup') && (
+              {/* ── EMAIL LOGIN ──────────────────────────────────── */}
+              {phase === 'email' && (
                 <motion.div
                   key="email"
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0 }}
                 >
-                  <button
-                    onClick={() => {
-                      setPhase('choose');
-                      setError(null);
-                    }}
-                    className="text-white/30 text-xs mb-4 hover:text-white/60 transition-colors"
-                  >
-                    ← Voltar
-                  </button>
+                  <BackButton onClick={() => { setPhase('choose'); setError(null); }} />
 
-                  <form
-                    onSubmit={phase === 'signup' ? handleSignUp : handleEmail}
-                    className="space-y-3"
-                  >
-                    <div>
-                      <label className="text-white/40 text-[10px] uppercase tracking-wider block mb-1">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="seu@email.com"
-                        required
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3
-                                   text-parchment text-sm placeholder:text-white/20
-                                   focus:outline-none focus:border-gold/40 transition-colors"
-                      />
-                    </div>
+                  <form onSubmit={handleEmail} className="space-y-3">
+                    <EmailField value={email} onChange={setEmail} />
+                    <PasswordField value={password} onChange={setPassword} />
 
-                    {!magicMode && (
-                      <div>
-                        <label className="text-white/40 text-[10px] uppercase tracking-wider block mb-1">
-                          Senha
-                        </label>
-                        <input
-                          type="password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          placeholder="••••••••"
-                          minLength={6}
-                          required={!magicMode}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3
-                                     text-parchment text-sm placeholder:text-white/20
-                                     focus:outline-none focus:border-gold/40 transition-colors"
-                        />
-                      </div>
-                    )}
-
-                    <button
-                      type="submit"
-                      className="w-full py-3 rounded-xl font-display text-base tracking-wider text-obsidian
-                                 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                      style={{ background: 'linear-gradient(135deg, #8c6f27, #c9a84c)' }}
-                    >
-                      {magicMode
-                        ? 'Enviar Magic Link'
-                        : phase === 'signup'
-                          ? 'Criar Conta'
-                          : 'Entrar'}
-                    </button>
+                    <GoldButton label="Entrar" />
 
                     <div className="flex items-center justify-between text-xs pt-1">
                       <button
                         type="button"
-                        onClick={() => setMagicMode((m) => !m)}
+                        onClick={() => { setPhase('forgot'); setError(null); }}
                         className="text-white/30 hover:text-white/60 transition-colors"
                       >
-                        {magicMode ? 'Usar senha' : 'Magic Link (sem senha)'}
+                        Esqueci a senha
                       </button>
-                      {phase === 'email' ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPhase('signup');
-                            setError(null);
-                          }}
-                          className="text-white/30 hover:text-white/60 transition-colors"
-                        >
-                          Criar conta →
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPhase('email');
-                            setError(null);
-                          }}
-                          className="text-white/30 hover:text-white/60 transition-colors"
-                        >
-                          Já tenho conta
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => { setPhase('signup'); setError(null); }}
+                        className="text-white/30 hover:text-white/60 transition-colors"
+                      >
+                        Criar conta →
+                      </button>
                     </div>
                   </form>
                 </motion.div>
               )}
 
-              {/* ── LOADING ────────────────────────────────────── */}
+              {/* ── SIGNUP ──────────────────────────────────────── */}
+              {phase === 'signup' && (
+                <motion.div
+                  key="signup"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <BackButton onClick={() => { setPhase('choose'); setError(null); }} />
+
+                  <form onSubmit={handleSignUp} className="space-y-3">
+                    <EmailField value={email} onChange={setEmail} />
+                    <PasswordField value={password} onChange={setPassword} />
+
+                    <GoldButton label="Criar Conta" />
+
+                    <div className="text-center pt-1">
+                      <button
+                        type="button"
+                        onClick={() => { setPhase('email'); setError(null); }}
+                        className="text-white/30 text-xs hover:text-white/60 transition-colors"
+                      >
+                        Já tenho conta
+                      </button>
+                    </div>
+                  </form>
+                </motion.div>
+              )}
+
+              {/* ── FORGOT PASSWORD ──────────────────────────────── */}
+              {phase === 'forgot' && (
+                <motion.div
+                  key="forgot"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <BackButton onClick={() => { setPhase('email'); setError(null); }} />
+
+                  <p className="text-parchment text-sm font-bold mb-1">Recuperar senha</p>
+                  <p className="text-white/35 text-xs mb-4">
+                    Enviaremos um link para redefinir sua senha.
+                  </p>
+
+                  <form onSubmit={handleForgot} className="space-y-3">
+                    <EmailField value={email} onChange={setEmail} />
+                    <GoldButton label="Enviar Link de Recuperação" />
+                  </form>
+                </motion.div>
+              )}
+
+              {/* ── LOADING ──────────────────────────────────────── */}
               {phase === 'loading' && (
                 <motion.div
                   key="loading"
@@ -384,47 +348,38 @@ function LoginContent() {
                   <motion.div
                     className="w-10 h-10 rounded-full border-2 border-gold/30 border-t-gold mx-auto"
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: 'linear' }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                   />
                   <p className="text-white/40 text-sm">Conectando…</p>
                 </motion.div>
               )}
 
-              {/* ── MAGIC SENT ─────────────────────────────────── */}
-              {phase === 'magic_sent' && (
-                <motion.div
-                  key="magic_sent"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="py-6 text-center space-y-3"
-                >
-                  <motion.span
-                    className="text-5xl block"
-                    animate={{ rotate: [0, 10, -8, 5, 0], scale: [1, 1.2, 1] }}
-                    transition={{ duration: 0.6 }}
-                  >
-                    ✉️
-                  </motion.span>
-                  <p className="text-parchment font-bold">Verifique seu email!</p>
-                  <p className="text-white/40 text-xs">
-                    Enviamos um link para <strong className="text-white/70">{email}</strong>. Clique
-                    para entrar.
-                  </p>
-                  <button
-                    onClick={() => setPhase('choose')}
-                    className="text-white/30 text-xs hover:text-white/60 transition-colors mt-2"
-                  >
-                    ← Voltar
-                  </button>
-                </motion.div>
+              {/* ── RESET SENT ────────────────────────────────────── */}
+              {phase === 'reset_sent' && (
+                <ConfirmationScreen
+                  emoji="🔑"
+                  title="Email enviado!"
+                  body={<>Link de recuperação enviado para{' '}<strong className="text-white/70">{email}</strong>.</>}
+                  onBack={() => setPhase('choose')}
+                />
               )}
+
+              {/* ── VERIFY SENT ───────────────────────────────────── */}
+              {phase === 'verify_sent' && (
+                <ConfirmationScreen
+                  emoji="✉️"
+                  title="Verifique seu email!"
+                  body={<>Link de verificação enviado para{' '}<strong className="text-white/70">{email}</strong>. Clique para ativar sua conta.</>}
+                  onBack={() => setPhase('choose')}
+                />
+              )}
+
             </AnimatePresence>
           </div>
         </div>
       </motion.div>
 
-      {/* Footer */}
-      <p className="text-white/15 text-[9px] mt-8 text-center">
+      <p className="text-white/12 text-[9px] mt-8 text-center">
         Ao entrar você concorda com os Termos de Uso e Política de Privacidade.
       </p>
     </div>
@@ -440,6 +395,104 @@ export default function LoginPage() {
 }
 
 // ─── Sub-componentes ──────────────────────────────────────────────────────────
+
+function BackButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="text-white/30 text-xs mb-4 hover:text-white/60 transition-colors"
+    >
+      ← Voltar
+    </button>
+  );
+}
+
+function EmailField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="text-white/40 text-[10px] uppercase tracking-wider block mb-1">Email</label>
+      <input
+        type="email"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="seu@email.com"
+        required
+        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3
+                   text-parchment text-sm placeholder:text-white/20
+                   focus:outline-none focus:border-gold/40 transition-colors"
+      />
+    </div>
+  );
+}
+
+function PasswordField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="text-white/40 text-[10px] uppercase tracking-wider block mb-1">Senha</label>
+      <input
+        type="password"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="••••••••"
+        minLength={6}
+        required
+        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3
+                   text-parchment text-sm placeholder:text-white/20
+                   focus:outline-none focus:border-gold/40 transition-colors"
+      />
+    </div>
+  );
+}
+
+function GoldButton({ label }: { label: string }) {
+  return (
+    <button
+      type="submit"
+      className="w-full py-3 rounded-xl font-display text-base tracking-wider text-obsidian
+                 transition-all hover:scale-[1.02] active:scale-[0.98]"
+      style={{ background: 'linear-gradient(135deg, #8c6f27, #c9a84c 55%, #8c6f27)' }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function ConfirmationScreen({
+  emoji,
+  title,
+  body,
+  onBack,
+}: {
+  emoji: string;
+  title: string;
+  body: React.ReactNode;
+  onBack: () => void;
+}) {
+  return (
+    <motion.div
+      key="confirm"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="py-6 text-center space-y-3"
+    >
+      <motion.span
+        className="text-5xl block"
+        animate={{ rotate: [0, 10, -8, 5, 0], scale: [1, 1.2, 1] }}
+        transition={{ duration: 0.6 }}
+      >
+        {emoji}
+      </motion.span>
+      <p className="text-parchment font-bold">{title}</p>
+      <p className="text-white/40 text-xs">{body}</p>
+      <button
+        onClick={onBack}
+        className="text-white/30 text-xs hover:text-white/60 transition-colors mt-2"
+      >
+        ← Voltar ao início
+      </button>
+    </motion.div>
+  );
+}
 
 function OAuthButton({
   icon,
@@ -481,22 +534,10 @@ function Divider() {
 function GoogleIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18">
-      <path
-        fill="#4285F4"
-        d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18Z"
-      />
-      <path
-        fill="#34A853"
-        d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17Z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18L4.5 10.52Z"
-      />
-      <path
-        fill="#EA4335"
-        d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3Z"
-      />
+      <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18Z" />
+      <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17Z" />
+      <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18L4.5 10.52Z" />
+      <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3Z" />
     </svg>
   );
 }
