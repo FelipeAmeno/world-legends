@@ -6,7 +6,6 @@ import { motion } from 'framer-motion';
 import { DreamTeamWidget } from './DreamTeamWidget';
 import { EventBanner } from './EventBanner';
 import { GameGrid } from './GameGrid';
-import { NextBestAction } from './NextBestAction';
 import { PlayerHeader } from './PlayerHeader';
 import { PremiumBottomNav } from './PremiumBottomNav';
 import { ProgressTracker } from './ProgressTracker';
@@ -18,7 +17,6 @@ type Props = {
   collectionCount?: number;
   squadFormation?: FormationKey | null | undefined;
   activeEventCount?: number;
-  wins?: number;
 };
 
 export function PremiumHome({
@@ -26,7 +24,6 @@ export function PremiumHome({
   collectionCount = 0,
   squadFormation,
   activeEventCount = 0,
-  wins = 0,
 }: Props) {
   return (
     <div
@@ -104,12 +101,6 @@ export function PremiumHome({
         style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}
       >
         <PlayerHeader serverBalance={serverBalance} />
-        <NextBestAction
-          collectionCount={collectionCount}
-          squadFormation={squadFormation}
-          balance={serverBalance}
-          wins={wins}
-        />
         <DreamTeamWidget />
         <GameGrid
           collectionCount={collectionCount}

@@ -33,12 +33,12 @@ type PackDef = { pack: Pack; price: number; nationalityFilter?: string };
 
 const PACK_DEFS: Record<string, PackDef> = {
   starter: { pack: STARTER_PACK, price: 75 },
-  classic: { pack: CLASSIC_PACK, price: 150 },
-  national: { pack: NATIONAL_PACK, price: 250, nationalityFilter: 'BR' },
-  elite: { pack: ELITE_PACK, price: 400 },
-  hero: { pack: HERO_PACK, price: 700 },
-  legend: { pack: LEGEND_PACK, price: 1000 },
-  goat: { pack: GOAT_PACK, price: 2500 },
+  classic: { pack: CLASSIC_PACK, price: 250 },
+  national: { pack: NATIONAL_PACK, price: 800, nationalityFilter: 'BR' },
+  elite: { pack: ELITE_PACK, price: 2500 },
+  hero: { pack: HERO_PACK, price: 7000 },
+  legend: { pack: LEGEND_PACK, price: 20000 },
+  goat: { pack: GOAT_PACK, price: 75000 },
 };
 
 const RARITY_ORDER: Record<RarityCode, number> = {

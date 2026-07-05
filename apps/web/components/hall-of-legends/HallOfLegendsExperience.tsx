@@ -1,5 +1,7 @@
 'use client';
 
+import { PlayerCard } from '@/components/cards/PlayerCard';
+import { toggleFavoriteCardAction } from '@/lib/actions';
 import type { CollectionCard } from '@/lib/collection-data';
 import {
   type AlbumSlotData,
@@ -8,7 +10,6 @@ import {
   type RarityProgress,
   buildHallData,
 } from '@/lib/hall-of-legends-data';
-import { toggleFavoriteCardAction } from '@/lib/actions';
 import type { RarityCode } from '@world-legends/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
@@ -1196,117 +1197,84 @@ function AlbumSlot({
   const bg = RARITY_BG[card.rarityCode] ?? RARITY_BG.common!;
   const meta = RARITY_META[card.rarityCode];
 
+  if (owned) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: Math.min(index * 0.025, 0.5), duration: 0.2 }}
+        whileTap={{ scale: 0.92 }}
+        className="relative cursor-pointer rounded-[10px] overflow-hidden"
+        style={{ boxShadow: `0 0 12px ${glow}45` }}
+        onClick={onSelect}
+      >
+        <PlayerCard card={card} size="sm" glow />
+
+        {/* Action buttons */}
+        <div className="absolute bottom-0.5 right-0.5 flex gap-0.5 z-20">
+          <motion.button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleDreamTeam();
+            }}
+            className="w-4 h-4 flex items-center justify-center rounded-full"
+            style={{ background: isDreamTeam ? 'rgba(245,158,11,0.3)' : 'rgba(0,0,0,0.55)' }}
+            whileTap={{ scale: 0.8 }}
+            title={isDreamTeam ? 'Remover do Dream Team' : 'Adicionar ao Dream Team'}
+          >
+            <motion.span
+              style={{ fontSize: 7, lineHeight: 1 }}
+              animate={isDreamTeam ? { scale: [1, 1.4, 1] } : {}}
+              transition={{ duration: 0.3 }}
+            >
+              {isDreamTeam ? '⭐' : '☆'}
+            </motion.span>
+          </motion.button>
+
+          <motion.button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite();
+            }}
+            className="w-4 h-4 flex items-center justify-center rounded-full"
+            style={{ background: isFavorite ? 'rgba(236,72,153,0.25)' : 'rgba(0,0,0,0.55)' }}
+            whileTap={{ scale: 0.85 }}
+            title={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+          >
+            <motion.span
+              style={{ fontSize: 8, lineHeight: 1 }}
+              animate={isFavorite ? { scale: [1, 1.4, 1] } : {}}
+              transition={{ duration: 0.3 }}
+            >
+              {isFavorite ? '❤️' : '🤍'}
+            </motion.span>
+          </motion.button>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: Math.min(index * 0.025, 0.5), duration: 0.2 }}
       whileTap={{ scale: 0.92 }}
-      className={[
-        'relative aspect-[2/3] rounded-xl overflow-hidden border transition-all duration-200 cursor-pointer',
-        owned ? 'border-white/20' : 'border-white/5 bg-black/40',
-      ].join(' ')}
-      style={owned ? { boxShadow: `0 0 12px ${glow}45` } : {}}
+      className="relative cursor-pointer rounded-xl overflow-hidden border border-white/5 bg-black/40"
+      style={{ width: 88, height: 117 }}
       onClick={onSelect}
     >
-      {owned ? (
-        <div className={`w-full h-full flex flex-col bg-gradient-to-br ${bg} p-1 relative`}>
-          {/* Rarity label */}
-          <div className="absolute top-0.5 right-0.5">
-            <span
-              className="text-[6px] font-black px-0.5 rounded"
-              style={{
-                background: `${meta?.color ?? '#fff'}25`,
-                color: meta?.color ?? '#fff',
-                border: `1px solid ${meta?.color ?? '#fff'}50`,
-              }}
-            >
-              {card.rarityCode === 'world_cup_hero'
-                ? 'WCH'
-                : (meta?.label ?? '').slice(0, 3).toUpperCase()}
-            </span>
-          </div>
-
-          {/* OVR */}
-          <div className="absolute top-0.5 left-0.5">
-            <span
-              className="text-[8px] font-black"
-              style={{
-                background: `linear-gradient(180deg, #fff 0%, ${glow} 100%)`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              {card.overall}
-            </span>
-          </div>
-
-          {/* Flag */}
-          <div className="flex-1 flex items-center justify-center mt-2">
-            <span style={{ fontSize: 22 }}>{card.flagEmoji}</span>
-          </div>
-
-          {/* Name + position */}
-          <p className="text-white text-[7px] font-bold text-center leading-tight truncate mt-0.5">
-            {card.displayName.split(' ')[0]}
-          </p>
-          <p className="text-white/50 text-[6px] text-center">{card.position}</p>
-
-          {/* Action buttons */}
-          <div className="absolute bottom-0.5 right-0.5 flex gap-0.5">
-            {/* Dream Team star */}
-            <motion.button
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleDreamTeam();
-              }}
-              className="w-4 h-4 flex items-center justify-center rounded-full"
-              style={{ background: isDreamTeam ? 'rgba(245,158,11,0.3)' : 'rgba(0,0,0,0.4)' }}
-              whileTap={{ scale: 0.8 }}
-              title={isDreamTeam ? 'Remover do Dream Team' : 'Adicionar ao Dream Team'}
-            >
-              <motion.span
-                style={{ fontSize: 7, lineHeight: 1 }}
-                animate={isDreamTeam ? { scale: [1, 1.4, 1] } : {}}
-                transition={{ duration: 0.3 }}
-              >
-                {isDreamTeam ? '⭐' : '☆'}
-              </motion.span>
-            </motion.button>
-
-            {/* Favorite heart */}
-            <motion.button
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleFavorite();
-              }}
-              className="w-4 h-4 flex items-center justify-center rounded-full"
-              style={{ background: isFavorite ? 'rgba(236,72,153,0.25)' : 'rgba(0,0,0,0.4)' }}
-              whileTap={{ scale: 0.85 }}
-              title={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-            >
-              <motion.span
-                style={{ fontSize: 8, lineHeight: 1 }}
-                animate={isFavorite ? { scale: [1, 1.4, 1] } : {}}
-                transition={{ duration: 0.3 }}
-              >
-                {isFavorite ? '❤️' : '🤍'}
-              </motion.span>
-            </motion.button>
-          </div>
+      <div className="w-full h-full flex flex-col items-center justify-center p-1">
+        <div className="flex-1 flex items-center justify-center opacity-10">
+          <svg viewBox="0 0 40 60" fill="currentColor" className="w-7 h-10 text-white">
+            <circle cx="20" cy="13" r="7" />
+            <path d="M6 55 Q8 34 20 32 Q32 34 34 55 Z" />
+          </svg>
         </div>
-      ) : (
-        /* ─ Slot vazio / silhueta ─ */
-        <div className="w-full h-full flex flex-col items-center justify-center p-1">
-          <div className="flex-1 flex items-center justify-center opacity-10">
-            <svg viewBox="0 0 40 60" fill="currentColor" className="w-7 h-10 text-white">
-              <circle cx="20" cy="13" r="7" />
-              <path d="M6 55 Q8 34 20 32 Q32 34 34 55 Z" />
-            </svg>
-          </div>
-          <p className="text-[7px] text-white/15 font-bold">{String(index + 1).padStart(2, '0')}</p>
-        </div>
-      )}
+        <p className="text-[7px] text-white/15 font-bold">{String(index + 1).padStart(2, '0')}</p>
+      </div>
     </motion.div>
   );
 }

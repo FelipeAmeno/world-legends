@@ -5,7 +5,6 @@
  *
  * Fases (state machine):
  *   SELECT  → escolha do pack (PackSelector)
- *   FLOAT   → pack flutuando com Framer Motion, aguardando toque
  *   CHARGE  → toque recebido: vibração + glow crescente (1.4s)
  *   BURST   → flash de explosão + partículas (0.7s)
  *   REVEAL  → cartas aparecem escalonadas, face-down
@@ -20,7 +19,7 @@ import { openPackAction } from '@/lib/actions';
 import type { CollectionCard } from '@/lib/collection-data';
 import { getCollection } from '@/lib/collection-data';
 import { vibrate } from '@/lib/haptics';
-import { type DrawnCard, PACK_DEFS, type PackDefinitionUI, drawPack } from '@/lib/pack-logic';
+import { type DrawnCard, PACK_DEFS, type PackDefinitionUI } from '@/lib/pack-logic';
 import { SFX } from '@/lib/sound-manager';
 import { toast } from '@/lib/wl-toast';
 import type { RarityCode } from '@world-legends/types';
@@ -35,7 +34,7 @@ import { useCameraShake } from './hooks/useCameraShake';
 
 export type Phase = 'SELECT' | 'FLOAT' | 'CHARGE' | 'BURST' | 'REVEAL' | 'DONE';
 
-// ─── Visual maps (duplication intencional — evita export de internals de pack-logic) ─────
+// ─── Visual maps ──────────────────────────────────────────────────────────────
 
 const GLOW_MAP: Record<RarityCode, string> = {
   common: 'rgba(107,114,128,0.5)',
@@ -113,8 +112,6 @@ export function PackExperience({
   const [balance, setBalance] = useState(initialBalance);
   const [fragments, setFragments] = useState(initialFragments);
   const [totalFragmentsGained, setTotalFragmentsGained] = useState(0);
-  const [seed, setSeed] = useState(Date.now());
-  const [selected, setSelected] = useState<PackDefinitionUI | null>(null);
   const [insufficientFunds, setInsufficientFunds] = useState(false);
 
   const { elRef: shakeRef, shake } = useCameraShake();
@@ -129,7 +126,7 @@ export function PackExperience({
     return () => clearTimeout(t);
   }, [insufficientFunds]);
 
-  // ── Selecionar pack e ir para FLOAT ──────────────────────────────────────────
+  // ── Toque no pack → CHARGE imediatamente ─────────────────────────────────────
   const handleChoosePack = useCallback(
     (p: PackDefinitionUI) => {
       if (balance < p.price) {
@@ -139,33 +136,26 @@ export function PackExperience({
       }
       setInsufficientFunds(false);
       setPack(p);
-      setSeed((s) => s + 1);
-      setPhase('FLOAT');
+      setCards([]);
+      setPhase('CHARGE');
+
+      // Otimista: debitar saldo localmente para resposta imediata na UI
+      setBalance((b) => b - p.price);
+      vibrate('packCharge');
+      SFX.packCharge();
+
+      // Iniciar server action em paralelo com a animação (1.4s charge + 0.7s burst)
+      pendingOpenRef.current = openPackAction(p.id);
+
+      setTimeout(() => {
+        setPhase('BURST');
+        SFX.packOpen();
+        shake(14, 550);
+        vibrate('packOpen');
+      }, 1400);
     },
-    [balance],
+    [balance, shake],
   );
-
-  // ── Toque no pack → CHARGE ──────────────────────────────────────────────────
-  const handlePackTap = useCallback(() => {
-    if (phase !== 'FLOAT' || !pack) return;
-    setPhase('CHARGE');
-
-    // Otimista: debitar saldo localmente para resposta imediata na UI
-    setBalance((b) => b - pack.price);
-
-    vibrate('packCharge');
-    SFX.packCharge();
-
-    // Iniciar server action em paralelo com a animação (1.4s charge + 0.7s burst)
-    pendingOpenRef.current = openPackAction(pack.id);
-
-    setTimeout(() => {
-      setPhase('BURST');
-      SFX.packOpen();
-      shake(14, 550);
-      vibrate('packOpen');
-    }, 1400);
-  }, [phase, pack, shake]);
 
   // ── BURST → REVEAL ───────────────────────────────────────────────────────────
   const handleBurstComplete = useCallback(() => {
@@ -174,14 +164,9 @@ export function PackExperience({
     const pending = pendingOpenRef.current;
     pendingOpenRef.current = null;
 
-    const fallback = () => {
-      const drawn = drawPack(pack, seed);
-      setCards(drawn);
-      setPhase('REVEAL');
-    };
-
     if (!pending) {
-      fallback();
+      toast.error('Erro ao abrir pack. Tente novamente.');
+      setPhase('SELECT');
       return;
     }
 
@@ -211,7 +196,7 @@ export function PackExperience({
         toast.error(msg);
         setPhase('SELECT');
       });
-  }, [pack, seed]);
+  }, [pack]);
 
   // ── Todas reveladas → DONE ──────────────────────────────────────────────────
   const handleAllFlipped = useCallback(() => {
@@ -220,14 +205,12 @@ export function PackExperience({
 
   // ── Abrir outro do mesmo pack ───────────────────────────────────────────────
   const handleOpenAnother = useCallback(() => {
-    if (!pack || balance < pack.price) {
+    if (!pack) {
       setPhase('SELECT');
       return;
     }
-    setSeed((s) => s + 1);
-    setCards([]);
-    setPhase('FLOAT');
-  }, [pack, balance]);
+    handleChoosePack(pack);
+  }, [pack, handleChoosePack]);
 
   // ── Voltar à seleção ────────────────────────────────────────────────────────
   const handleBack = useCallback(() => {
@@ -297,7 +280,7 @@ export function PackExperience({
                 </a>
               </div>
               <div className="flex items-center justify-between mt-1">
-                <p className="text-muted text-xs">Escolha seu pack e descubra as lendas</p>
+                <p className="text-muted text-xs">Toque no pack para abrir</p>
                 <div className="glass rounded-lg px-3 py-1.5 text-xs flex items-center gap-3">
                   <span>
                     <span className="gold-text font-bold">{balance.toLocaleString('pt-BR')}c</span>
@@ -334,13 +317,7 @@ export function PackExperience({
               </AnimatePresence>
             </div>
 
-            <PackSelector
-              packs={PACK_DEFS}
-              selected={selected}
-              balance={balance}
-              onSelect={setSelected}
-              onOpen={() => selected && handleChoosePack(selected)}
-            />
+            <PackSelector packs={PACK_DEFS} balance={balance} onOpen={handleChoosePack} />
           </motion.div>
         )}
 
@@ -353,7 +330,7 @@ export function PackExperience({
             transition={{ duration: 0.4 }}
             className="absolute inset-0 flex flex-col items-center justify-center"
           >
-            <PackFloatScene pack={pack} phase={phase} onTap={handlePackTap} onBack={handleBack} />
+            <PackFloatScene pack={pack} phase={phase} onTap={() => {}} onBack={handleBack} />
           </motion.div>
         )}
 
