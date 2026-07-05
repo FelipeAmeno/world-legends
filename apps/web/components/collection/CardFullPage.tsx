@@ -1,6 +1,7 @@
 'use client';
 
 import type { CollectionCard } from '@/lib/collection-data';
+import { toggleFavoriteCardAction } from '@/lib/actions';
 import { RARITY_META } from '@/lib/hall-of-legends-data';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -97,6 +98,7 @@ export function CardFullPage({ card, owned }: Props) {
   }, [card.cardId]);
 
   const toggleFav = useCallback(() => {
+    void toggleFavoriteCardAction(card.cardId);
     setIsFav((prev) => {
       const next = !prev;
       const favs = loadSet(FAV_KEY);

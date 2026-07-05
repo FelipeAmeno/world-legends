@@ -8,6 +8,7 @@ import {
   type RarityProgress,
   buildHallData,
 } from '@/lib/hall-of-legends-data';
+import { toggleFavoriteCardAction } from '@/lib/actions';
 import type { RarityCode } from '@world-legends/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
@@ -53,9 +54,26 @@ const POS_COLORS: Record<string, string> = {
   favorites: '#ec4899',
 };
 
+// ─── Country accent colours ───────────────────────────────────────────────────
+
+const COUNTRY_ACCENT: Record<string, string> = {
+  BR: '#009C3B',
+  AR: '#74ACDF',
+  DE: '#DD0000',
+  FR: '#0055A4',
+  IT: '#003399',
+  ES: '#C60B1E',
+  NL: '#FF6600',
+  PT: '#006600',
+  EN: '#CF111B',
+  UY: '#5BBFDF',
+  HR: '#FF0000',
+};
+const DEFAULT_COUNTRY_ACCENT = '#6b7280';
+
 // ─── Tab type ─────────────────────────────────────────────────────────────────
 
-type ActiveTab = 'museu' | 'album' | 'hall' | 'dream';
+type ActiveTab = 'museu' | 'album' | 'nacoes' | 'dream' | 'conquistas';
 
 // ─── localStorage ─────────────────────────────────────────────────────────────
 
@@ -87,11 +105,17 @@ type Props = {
   catalogCards: CollectionCard[];
   ownedCardIds: ReadonlySet<string>;
   isAuthenticated: boolean;
+  initialFavoriteIds?: readonly string[];
 };
 
 // ─── Component principal ──────────────────────────────────────────────────────
 
-export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenticated }: Props) {
+export function HallOfLegendsExperience({
+  catalogCards,
+  ownedCardIds,
+  isAuthenticated,
+  initialFavoriteIds = [],
+}: Props) {
   const router = useRouter();
 
   // UI state
@@ -102,16 +126,16 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
   const [posFilter, setPosFilter] = useState<PosFilter>('all');
   const [openCountry, setOpenCountry] = useState<string | null>(null);
 
-  // Favorites + Dream Team (client-only)
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  // Favorites (initialised from server prop) + Dream Team (client-only)
+  const [favorites, setFavorites] = useState<Set<string>>(() => new Set(initialFavoriteIds));
   const [dreamTeamIds, setDreamTeamIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    setFavorites(loadSet(FAV_KEY));
     setDreamTeamIds(loadSet(DREAM_KEY));
   }, []);
 
   const toggleFavorite = useCallback((cardId: string) => {
+    void toggleFavoriteCardAction(cardId);
     setFavorites((prev) => {
       const next = new Set(prev);
       if (next.has(cardId)) next.delete(cardId);
@@ -324,6 +348,112 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
         color: '#c9a84c',
         unlocked: countryComplete >= 3,
       },
+      {
+        id: 'goat',
+        name: 'Primeiro GOAT',
+        desc: 'Obtenha uma carta Ultra ou World Cup Hero',
+        icon: '🐐',
+        color: '#ec4899',
+        unlocked: hasUltra || hasWCH,
+      },
+      {
+        id: 'hero',
+        name: 'Primeiro Herói',
+        desc: 'Obtenha uma carta Lendária',
+        icon: '🦸',
+        color: '#c9a84c',
+        unlocked: hasLeg,
+      },
+      {
+        id: 'c250',
+        name: 'Enciclopédia',
+        desc: '250 cartas na coleção',
+        icon: '📚',
+        color: '#8b5cf6',
+        unlocked: own >= 250,
+      },
+      {
+        id: 'c500',
+        name: 'Lenda Viva',
+        desc: '500 cartas na coleção',
+        icon: '🌟',
+        color: '#c9a84c',
+        unlocked: own >= 500,
+      },
+      {
+        id: 'brasil',
+        name: 'Seleção Completa',
+        desc: 'Complete toda a coleção do Brasil',
+        icon: '🇧🇷',
+        color: '#009C3B',
+        unlocked: hallData.countryGroups.find((g) => g.nationality === 'BR')?.isComplete ?? false,
+      },
+      {
+        id: 'argentina',
+        name: 'La Albiceleste',
+        desc: 'Complete toda a coleção da Argentina',
+        icon: '🇦🇷',
+        color: '#74ACDF',
+        unlocked: hallData.countryGroups.find((g) => g.nationality === 'AR')?.isComplete ?? false,
+      },
+      {
+        id: 'europa',
+        name: 'O Continente',
+        desc: 'Complete coleções de 5 países europeus',
+        icon: '🇪🇺',
+        color: '#003399',
+        unlocked:
+          (
+            [
+              'DE',
+              'FR',
+              'IT',
+              'ES',
+              'NL',
+              'PT',
+              'EN',
+              'HR',
+              'PL',
+              'BE',
+              'SE',
+              'DK',
+              'CH',
+              'AT',
+              'CZ',
+              'SK',
+              'HU',
+              'RO',
+              'BG',
+              'GR',
+              'TR',
+              'UA',
+              'IS',
+              'RS',
+              'SI',
+            ] as string[]
+          ).filter((c) => hallData.countryGroups.find((g) => g.nationality === c)?.isComplete)
+            .length >= 5,
+      },
+      {
+        id: 'gk',
+        name: 'Guarda a Trave',
+        desc: 'Possua todos os goleiros do catálogo',
+        icon: '🧤',
+        color: '#6366f1',
+        unlocked: catalogCards
+          .filter((c) => c.position === 'GK')
+          .every((c) => ownedCardIds.has(c.cardId)),
+      },
+      {
+        id: 'fwd',
+        name: 'Artilheiro Total',
+        desc: 'Possua todos os atacantes do catálogo',
+        icon: '⚽',
+        color: '#ef4444',
+        unlocked: catalogCards
+          .filter((c) => ['LW', 'RW', 'CF', 'ST', 'SS'].includes(c.position))
+          .every((c) => ownedCardIds.has(c.cardId)),
+      },
     ];
   }, [hallData, catalogCards, ownedCardIds, dreamTeamIds]);
 
@@ -381,20 +511,6 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
     [],
   );
 
-  // Hall of Fame data
-  const hallOfFameSlots = useMemo(() => {
-    const makeSlots = (code: RarityCode) =>
-      catalogCards
-        .filter((c) => c.rarityCode === code)
-        .sort((a, b) => b.overall - a.overall)
-        .map((card) => ({ card, owned: ownedCardIds.has(card.cardId) }));
-    return {
-      goat: makeSlots('world_cup_hero'),
-      ultra: makeSlots('ultra'),
-      legendary: makeSlots('legendary'),
-    };
-  }, [catalogCards, ownedCardIds]);
-
   // Dream Team cards (preserving insertion order)
   const dreamTeamCards = useMemo(() => {
     const cardMap = new Map(catalogCards.map((c) => [c.cardId, c]));
@@ -431,7 +547,6 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
       {activeTab === 'museu' && (
         <MuseuTab
           categories={categoryData}
-          conquistas={conquistas}
           favorites={favorites}
           dreamTeamIds={dreamTeamIds}
           onToggleFavorite={toggleFavorite}
@@ -623,12 +738,10 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
         </>
       )}
 
-      {/* ── Tab: HALL OF FAME ── */}
-      {activeTab === 'hall' && (
-        <HallOfFameTab
-          goat={hallOfFameSlots.goat}
-          ultra={hallOfFameSlots.ultra}
-          legendary={hallOfFameSlots.legendary}
+      {/* ── Tab: NAÇÕES ── */}
+      {activeTab === 'nacoes' && (
+        <NacoesTab
+          hallData={hallData}
           favorites={favorites}
           dreamTeamIds={dreamTeamIds}
           onToggleFavorite={toggleFavorite}
@@ -644,6 +757,17 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
           maxSlots={DREAM_MAX}
           onSelectCard={handleSelectCard}
           onRemove={toggleDreamTeam}
+        />
+      )}
+
+      {/* ── Tab: CONQUISTAS ── */}
+      {activeTab === 'conquistas' && (
+        <ConquistasTab
+          conquistas={conquistas}
+          hallData={hallData}
+          catalogCards={catalogCards}
+          ownedCardIds={ownedCardIds}
+          dreamTeamIds={dreamTeamIds}
         />
       )}
     </div>
@@ -758,8 +882,9 @@ function TabBar({ activeTab, onTab }: { activeTab: ActiveTab; onTab: (t: ActiveT
   const tabs: { key: ActiveTab; label: string; icon: string }[] = [
     { key: 'museu', label: 'MUSEU', icon: '🏛️' },
     { key: 'album', label: 'ÁLBUM', icon: '📖' },
-    { key: 'hall', label: 'HALL', icon: '🏆' },
+    { key: 'nacoes', label: 'NAÇÕES', icon: '🌍' },
     { key: 'dream', label: 'DREAM', icon: '⭐' },
+    { key: 'conquistas', label: 'TROFÉUS', icon: '🏆' },
   ];
 
   return (
@@ -1900,7 +2025,6 @@ type ConquistaItem = {
 
 function MuseuTab({
   categories,
-  conquistas,
   favorites,
   dreamTeamIds,
   onToggleFavorite,
@@ -1908,7 +2032,6 @@ function MuseuTab({
   onSelectCard,
 }: {
   categories: CategoryItem[];
-  conquistas: ConquistaItem[];
   favorites: Set<string>;
   dreamTeamIds: Set<string>;
   onToggleFavorite: (id: string) => void;
@@ -1916,7 +2039,6 @@ function MuseuTab({
   onSelectCard: (card: CollectionCard) => void;
 }) {
   const [openSection, setOpenSection] = useState<string | null>('copa');
-  const unlockedCount = conquistas.filter((c) => c.unlocked).length;
 
   return (
     <div className="flex-1 overflow-y-auto pb-28">
@@ -1932,34 +2054,20 @@ function MuseuTab({
         >
           World Legends
         </p>
-        <div className="flex items-end justify-between">
-          <h2
-            className="font-display text-2xl tracking-widest leading-none"
-            style={{
-              background: 'linear-gradient(135deg, #ffffff 0%, #c9a84c 55%, #8c6f27 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            MUSEU
-          </h2>
-          <div
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-            style={{
-              background: 'rgba(201,168,76,0.12)',
-              border: '1px solid rgba(201,168,76,0.25)',
-            }}
-          >
-            <span style={{ fontSize: 10 }}>🏅</span>
-            <span className="text-[9px] font-bold" style={{ color: '#c9a84c' }}>
-              {unlockedCount}/{conquistas.length} conquistas
-            </span>
-          </div>
-        </div>
+        <h2
+          className="font-display text-2xl tracking-widest leading-none"
+          style={{
+            background: 'linear-gradient(135deg, #ffffff 0%, #c9a84c 55%, #8c6f27 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}
+        >
+          MUSEU
+        </h2>
       </motion.div>
 
       {/* Collections */}
-      <div className="px-4 space-y-2 mb-6">
+      <div className="px-4 space-y-2 pb-6">
         <p
           className="text-[8px] font-black uppercase tracking-[0.25em] mb-2"
           style={{ color: 'rgba(255,255,255,0.2)' }}
@@ -1980,21 +2088,6 @@ function MuseuTab({
             onSelectCard={onSelectCard}
           />
         ))}
-      </div>
-
-      {/* Conquistas */}
-      <div className="px-4 pb-4">
-        <p
-          className="text-[8px] font-black uppercase tracking-[0.25em] mb-3"
-          style={{ color: 'rgba(255,255,255,0.2)' }}
-        >
-          Conquistas
-        </p>
-        <div className="grid grid-cols-2 gap-2.5">
-          {conquistas.map((badge, i) => (
-            <BadgeCard key={badge.id} badge={badge} index={i} />
-          ))}
-        </div>
       </div>
     </div>
   );
@@ -2166,5 +2259,320 @@ function BadgeCard({ badge, index }: { badge: ConquistaItem; index: number }) {
         </div>
       </div>
     </motion.div>
+  );
+}
+
+// ─── Nações Tab ───────────────────────────────────────────────────────────────
+
+type HallDataShape = ReturnType<typeof buildHallData>;
+
+function NacoesTab({
+  hallData,
+  favorites,
+  dreamTeamIds,
+  onToggleFavorite,
+  onToggleDreamTeam,
+  onSelectCard,
+}: {
+  hallData: HallDataShape;
+  favorites: Set<string>;
+  dreamTeamIds: Set<string>;
+  onToggleFavorite: (cardId: string) => void;
+  onToggleDreamTeam: (cardId: string) => void;
+  onSelectCard: (card: CollectionCard) => void;
+}) {
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+
+  const sorted = useMemo(() => {
+    const inProgress = hallData.countryGroups.filter((g) => g.ownedCount > 0 && !g.isComplete);
+    const empty = hallData.countryGroups.filter((g) => g.ownedCount === 0 && !g.isComplete);
+    const complete = hallData.countryGroups.filter((g) => g.isComplete);
+    inProgress.sort((a, b) => b.ownedCount - a.ownedCount);
+    return [...inProgress, ...empty, ...complete];
+  }, [hallData.countryGroups]);
+
+  const selectedGroup = selectedCountry
+    ? (hallData.countryGroups.find((g) => g.nationality === selectedCountry) ?? null)
+    : null;
+
+  if (selectedGroup) {
+    return (
+      <CountryDetailView
+        group={selectedGroup}
+        favorites={favorites}
+        dreamTeamIds={dreamTeamIds}
+        onBack={() => setSelectedCountry(null)}
+        onToggleFavorite={onToggleFavorite}
+        onToggleDreamTeam={onToggleDreamTeam}
+        onSelectCard={onSelectCard}
+      />
+    );
+  }
+
+  const totalCountries = hallData.countryGroups.length;
+  const overallPct = hallData.completionPct;
+
+  return (
+    <div className="flex-1 overflow-y-auto pb-28">
+      {/* Header */}
+      <div className="px-4 pt-4 pb-3">
+        <p
+          className="text-[9px] font-black uppercase tracking-[0.25em] mb-0.5"
+          style={{ color: 'rgba(201,168,76,0.55)' }}
+        >
+          World Legends
+        </p>
+        <div className="flex items-end justify-between">
+          <h2
+            className="font-display text-2xl tracking-widest leading-none"
+            style={{
+              background: 'linear-gradient(135deg, #ffffff 0%, #c9a84c 55%, #8c6f27 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            🌍 NAÇÕES
+          </h2>
+          <div className="text-right">
+            <p className="font-display text-lg leading-none" style={{ color: '#c9a84c' }}>
+              {overallPct}%
+            </p>
+            <p className="text-muted text-[9px]">{totalCountries} países</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Country grid */}
+      <div className="px-4 grid grid-cols-2 gap-2.5">
+        {sorted.map((group, i) => {
+          const accent = COUNTRY_ACCENT[group.nationality] ?? DEFAULT_COUNTRY_ACCENT;
+          return (
+            <motion.button
+              key={group.nationality}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: Math.min(i * 0.03, 0.4) }}
+              onClick={() => setSelectedCountry(group.nationality)}
+              className="relative rounded-2xl border p-3 text-left flex flex-col gap-2 transition-all"
+              style={{
+                borderColor: group.isComplete
+                  ? 'rgba(201,168,76,0.4)'
+                  : group.ownedCount > 0
+                    ? `${accent}40`
+                    : 'rgba(255,255,255,0.06)',
+                background: group.isComplete
+                  ? 'rgba(201,168,76,0.06)'
+                  : group.ownedCount > 0
+                    ? `${accent}08`
+                    : 'rgba(255,255,255,0.02)',
+                boxShadow: group.isComplete ? '0 0 16px rgba(201,168,76,0.15)' : 'none',
+              }}
+            >
+              {/* Flag */}
+              <span style={{ fontSize: 32, lineHeight: 1 }}>{group.flag}</span>
+
+              {/* Country name */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="text-parchment text-xs font-bold leading-tight">{group.name}</p>
+                {group.isComplete && (
+                  <span
+                    className="text-[7px] font-black px-1 rounded-full"
+                    style={{
+                      background: 'rgba(201,168,76,0.2)',
+                      color: '#c9a84c',
+                      border: '1px solid rgba(201,168,76,0.4)',
+                    }}
+                  >
+                    ✓
+                  </span>
+                )}
+              </div>
+
+              {/* Count */}
+              <p className="text-muted text-[9px]">
+                {group.ownedCount}/{group.totalCount} cartas
+              </p>
+
+              {/* Progress bar */}
+              <div className="h-1 bg-black/40 rounded-full overflow-hidden w-full">
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{
+                    width: `${group.completionPct}%`,
+                    background: group.isComplete
+                      ? 'linear-gradient(90deg,#8c6f27,#c9a84c)'
+                      : `${accent}`,
+                  }}
+                />
+              </div>
+
+              {/* Percentage */}
+              <p
+                className="text-[9px] font-bold self-end"
+                style={{ color: group.isComplete ? '#c9a84c' : accent }}
+              >
+                {group.completionPct}%
+              </p>
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CountryDetailView({
+  group,
+  favorites,
+  dreamTeamIds,
+  onBack,
+  onToggleFavorite,
+  onToggleDreamTeam,
+  onSelectCard,
+}: {
+  group: CountryGroup;
+  favorites: Set<string>;
+  dreamTeamIds: Set<string>;
+  onBack: () => void;
+  onToggleFavorite: (cardId: string) => void;
+  onToggleDreamTeam: (cardId: string) => void;
+  onSelectCard: (card: CollectionCard) => void;
+}) {
+  const accent = COUNTRY_ACCENT[group.nationality] ?? DEFAULT_COUNTRY_ACCENT;
+
+  return (
+    <div className="flex-1 overflow-y-auto pb-28">
+      {/* Back button + header */}
+      <div className="px-4 pt-4 pb-4">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex items-center gap-1.5 text-muted text-xs mb-4 hover:text-parchment transition-colors"
+        >
+          <span>←</span>
+          <span>Nações</span>
+        </button>
+
+        <div className="flex items-center gap-4">
+          <span style={{ fontSize: 48, lineHeight: 1 }}>{group.flag}</span>
+          <div>
+            <h2
+              className="font-display text-2xl tracking-widest leading-none"
+              style={{ color: accent }}
+            >
+              {group.name.toUpperCase()}
+            </h2>
+            <p className="text-muted text-xs mt-1">
+              {group.ownedCount} de {group.totalCount} cartas ({group.completionPct}%)
+            </p>
+          </div>
+        </div>
+
+        {/* Completion bar */}
+        <div className="mt-3 h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
+          <div
+            className="h-full rounded-full transition-all duration-700"
+            style={{
+              width: `${group.completionPct}%`,
+              background: group.isComplete ? 'linear-gradient(90deg,#8c6f27,#c9a84c)' : accent,
+            }}
+          />
+        </div>
+
+        {/* Completion box */}
+        {group.isComplete && (
+          <div
+            className="mt-4 px-4 py-3 rounded-xl"
+            style={{
+              background: 'rgba(201,168,76,0.08)',
+              border: '1px solid rgba(201,168,76,0.3)',
+            }}
+          >
+            <p className="text-[11px] font-bold" style={{ color: '#c9a84c' }}>
+              🏆 Coleção Completa! +500c +100 frags (Em breve)
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Card grid */}
+      <div className="px-4">
+        <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5">
+          {group.slots.map((slot, i) => (
+            <AlbumSlot
+              key={slot.card.cardId}
+              slot={slot}
+              index={i}
+              isFavorite={favorites.has(slot.card.cardId)}
+              isDreamTeam={dreamTeamIds.has(slot.card.cardId)}
+              onToggleFavorite={() => onToggleFavorite(slot.card.cardId)}
+              onToggleDreamTeam={() => onToggleDreamTeam(slot.card.cardId)}
+              onSelect={() => onSelectCard(slot.card)}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Conquistas Tab ───────────────────────────────────────────────────────────
+
+function ConquistasTab({
+  conquistas,
+}: {
+  conquistas: ConquistaItem[];
+  hallData: HallDataShape;
+  catalogCards: CollectionCard[];
+  ownedCardIds: ReadonlySet<string>;
+  dreamTeamIds: Set<string>;
+}) {
+  const unlockedCount = conquistas.filter((c) => c.unlocked).length;
+
+  return (
+    <div className="flex-1 overflow-y-auto pb-28">
+      {/* Header */}
+      <div className="px-4 pt-4 pb-3">
+        <p
+          className="text-[9px] font-black uppercase tracking-[0.25em] mb-0.5"
+          style={{ color: 'rgba(201,168,76,0.55)' }}
+        >
+          World Legends
+        </p>
+        <div className="flex items-end justify-between">
+          <h2
+            className="font-display text-2xl tracking-widest leading-none"
+            style={{
+              background: 'linear-gradient(135deg, #ffffff 0%, #c9a84c 55%, #8c6f27 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            🏆 TROFÉUS
+          </h2>
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+            style={{
+              background: 'rgba(201,168,76,0.12)',
+              border: '1px solid rgba(201,168,76,0.25)',
+            }}
+          >
+            <span style={{ fontSize: 10 }}>🏅</span>
+            <span className="text-[9px] font-bold" style={{ color: '#c9a84c' }}>
+              {unlockedCount}/{conquistas.length} desbloqueados
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid */}
+      <div className="px-4 pb-4">
+        <div className="grid grid-cols-2 gap-2.5">
+          {conquistas.map((badge, i) => (
+            <BadgeCard key={badge.id} badge={badge} index={i} />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

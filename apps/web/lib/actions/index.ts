@@ -36,3 +36,5 @@ export type {
   ClaimDailyLoginResult,
 } from './daily-login';
 export { getDailyLoginAction, claimDailyLoginAction } from './daily-login';
+
+export { getFavoriteCardIds, toggleFavoriteCardAction } from './favorites';
