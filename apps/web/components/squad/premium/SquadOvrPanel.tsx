@@ -42,6 +42,7 @@ const SECTOR_GRAD = {
   defense: 'from-blue-600 to-blue-800',
 };
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: panel aggregates several independent display sections
 export function SquadOvrPanel({ snapshot, state }: Props) {
   const r = snapshot.rating;
   const c = snapshot.chemistry;
@@ -63,8 +64,35 @@ export function SquadOvrPanel({ snapshot, state }: Props) {
           ? 'from-yellow-700 to-yellow-900'
           : 'from-gray-700 to-gray-900';
 
-  // Collect active traits from starters
   const { strengths, weaknesses } = useMemo(() => getStrengthsWeaknesses(r, c.total), [r, c.total]);
+
+  const teamAnalysis = useMemo(() => {
+    const cards = Object.values(state.slots).filter(
+      (card): card is NonNullable<typeof card> => card !== null,
+    );
+    if (cards.length === 0) return null;
+
+    const natCount = new Map<string, { count: number; flag: string; code: string }>();
+    for (const card of cards) {
+      const ex = natCount.get(card.nationality);
+      if (ex) natCount.set(card.nationality, { ...ex, count: ex.count + 1 });
+      else
+        natCount.set(card.nationality, { count: 1, flag: card.flagEmoji, code: card.nationality });
+    }
+    const dominantNat = [...natCount.values()].sort((a, b) => b.count - a.count)[0];
+
+    const eraYears = cards.map((card) => {
+      const m = card.era.match(/\d+/);
+      return m ? Number(m[0]) : 1990;
+    });
+    const avgEraYear = Math.round(eraYears.reduce((a, b) => a + b, 0) / eraYears.length / 10) * 10;
+
+    const eraCount = new Map<string, number>();
+    for (const card of cards) eraCount.set(card.era, (eraCount.get(card.era) ?? 0) + 1);
+    const dominantEra = [...eraCount.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
+
+    return { dominantNat, avgEraYear, dominantEra };
+  }, [state.slots]);
 
   const activeTraits = useMemo(() => {
     const map = new Map<string, { name: string; tier: 1 | 2 | 3; count: number }>();
@@ -147,6 +175,36 @@ export function SquadOvrPanel({ snapshot, state }: Props) {
           </motion.p>
         )}
       </div>
+
+      {/* Análise do time */}
+      {teamAnalysis && (
+        <div className="glass rounded-xl p-3 space-y-2">
+          <p className="text-muted text-[9px] uppercase tracking-wider mb-1">Análise</p>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div>
+              <p className="text-parchment font-bold text-sm leading-tight">
+                {teamAnalysis.dominantNat?.flag ?? '—'}
+              </p>
+              <p className="text-muted text-[8px] mt-0.5">País</p>
+              <p className="text-white/60 text-[8px] font-semibold">
+                {teamAnalysis.dominantNat?.code ?? '—'}
+              </p>
+            </div>
+            <div>
+              <p className="text-parchment font-bold text-sm leading-tight">
+                {teamAnalysis.avgEraYear}s
+              </p>
+              <p className="text-muted text-[8px] mt-0.5">Geração</p>
+            </div>
+            <div>
+              <p className="text-parchment font-bold text-xs leading-tight">
+                {teamAnalysis.dominantEra}
+              </p>
+              <p className="text-muted text-[8px] mt-0.5">Década</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Forças e fraquezas */}
       {r.overall > 0 && (strengths.length > 0 || weaknesses.length > 0) && (

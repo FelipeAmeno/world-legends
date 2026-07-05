@@ -58,6 +58,8 @@ export function createSBState(formation: FormationKey = '4-3-3'): SBState {
 
 // ─── Actions ──────────────────────────────────────────────────────────────────
 
+export type AutoBuildMode = 'best' | 'chemistry' | 'brazilians' | 'goat' | 'dream';
+
 export type SBAction =
   | { type: 'DRAG_START'; source: DragSource }
   | { type: 'DRAG_OVER'; targetId: string }
@@ -70,7 +72,13 @@ export type SBAction =
   | { type: 'CLEAR_ALL' }
   | { type: 'PLACE_IN_SLOT'; cardId: string; slotId: string; allCards: CollectionCard[] }
   | { type: 'TAP_ADD'; cardId: string; allCards: CollectionCard[] }
-  | { type: 'AUTO_FILL'; allCards: CollectionCard[] };
+  | { type: 'AUTO_FILL'; allCards: CollectionCard[] }
+  | {
+      type: 'AUTO_BUILD';
+      mode: AutoBuildMode;
+      allCards: CollectionCard[];
+      favoriteIds?: ReadonlySet<string>;
+    };
 
 export function sbReducer(state: SBState, action: SBAction): SBState {
   switch (action.type) {
@@ -178,6 +186,16 @@ export function sbReducer(state: SBState, action: SBAction): SBState {
         }
       }
       return { ...state, slots };
+    }
+
+    case 'AUTO_BUILD': {
+      const newSlots = autoBuildSlots(
+        action.mode,
+        action.allCards,
+        state.formation,
+        action.favoriteIds,
+      );
+      return { ...state, slots: newSlots };
     }
 
     default:
@@ -355,4 +373,81 @@ export function getAutoSuggest(
     )
     .sort((a, b) => b.overall - a.overall)
     .slice(0, max);
+}
+
+// ─── Auto Build ───────────────────────────────────────────────────────────────
+
+function greedyFill(formation: FormationKey, ranked: CollectionCard[]): SquadSlots {
+  const slots: SquadSlots = {};
+  for (const sd of FORMATIONS[formation]) slots[sd.slotId] = null;
+  const used = new Set<string>();
+  for (const sd of FORMATIONS[formation]) {
+    const best = ranked.find(
+      (c) => !used.has(c.cardId) && getPositionCompat(c.position, sd.position) !== 'awkward',
+    );
+    if (best) {
+      slots[sd.slotId] = best;
+      used.add(best.cardId);
+    }
+  }
+  return slots;
+}
+
+export function autoBuildSlots(
+  mode: AutoBuildMode,
+  allCards: CollectionCard[],
+  formation: FormationKey,
+  favoriteIds?: ReadonlySet<string>,
+): SquadSlots {
+  let ranked: CollectionCard[];
+
+  switch (mode) {
+    case 'brazilians': {
+      const br = allCards
+        .filter((c) => c.nationality === 'BR')
+        .sort((a, b) => b.overall - a.overall);
+      const others = allCards
+        .filter((c) => c.nationality !== 'BR')
+        .sort((a, b) => b.overall - a.overall);
+      ranked = [...br, ...others];
+      break;
+    }
+    case 'goat': {
+      const goats = allCards
+        .filter((c) => c.rarityCode === 'ultra' || c.rarityCode === 'world_cup_hero')
+        .sort((a, b) => b.overall - a.overall);
+      const rest = allCards
+        .filter((c) => c.rarityCode !== 'ultra' && c.rarityCode !== 'world_cup_hero')
+        .sort((a, b) => b.overall - a.overall);
+      ranked = [...goats, ...rest];
+      break;
+    }
+    case 'dream': {
+      const fav = allCards
+        .filter((c) => favoriteIds?.has(c.cardId))
+        .sort((a, b) => b.overall - a.overall);
+      const notFav = allCards
+        .filter((c) => !favoriteIds?.has(c.cardId))
+        .sort((a, b) => b.overall - a.overall);
+      ranked = [...fav, ...notFav];
+      break;
+    }
+    case 'chemistry': {
+      const top = [...allCards].sort((a, b) => b.overall - a.overall).slice(0, 40);
+      const natCount = new Map<string, number>();
+      for (const c of top) natCount.set(c.nationality, (natCount.get(c.nationality) ?? 0) + 1);
+      const dominant = [...natCount.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
+      ranked = [...allCards].sort((a, b) => {
+        const aNat = a.nationality === dominant ? 1 : 0;
+        const bNat = b.nationality === dominant ? 1 : 0;
+        return bNat !== aNat ? bNat - aNat : b.overall - a.overall;
+      });
+      break;
+    }
+    default: {
+      ranked = [...allCards].sort((a, b) => b.overall - a.overall);
+    }
+  }
+
+  return greedyFill(formation, ranked);
 }

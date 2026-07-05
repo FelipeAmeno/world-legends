@@ -5,6 +5,7 @@ import { saveSquad } from '@/lib/actions';
 import type { CollectionCard } from '@/lib/collection-data';
 import { RARITY_VISUAL } from '@/lib/collection-data';
 import {
+  type AutoBuildMode,
   type DragSource,
   FORMATIONS,
   FORMATION_LABELS,
@@ -36,9 +37,11 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'r
 import { Particles, useBurst } from '@/components/fx/Particles';
 import { toast } from '@/lib/wl-toast';
 import Link from 'next/link';
+import { AutoBuildSheet } from './AutoBuildSheet';
 import { BenchStrip } from './BenchStrip';
 import { CardPoolSheet } from './CardPoolSheet';
 import { FormationSelect } from './FormationSelect';
+import { PlayerSelectModal } from './PlayerSelectModal';
 import { PremiumPitch } from './PremiumPitch';
 import { SquadOvrPanel } from './SquadOvrPanel';
 
@@ -58,9 +61,10 @@ function parseDropTarget(id: string): DropTarget {
 type Props = {
   allCards: CollectionCard[];
   initialState?: Partial<SBState>;
+  favoriteIds?: ReadonlySet<string>;
 };
 
-export function PitchBuilder({ allCards, initialState }: Props) {
+export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
   const [state, dispatch] = useReducer(sbReducer, initialState ?? null, (init) => {
     const base = createSBState('4-3-3');
     if (!init) return base;
@@ -172,8 +176,10 @@ export function PitchBuilder({ allCards, initialState }: Props) {
     [allCards],
   );
 
-  // ── Slot selection for suggestions ────────────────────────────────────────
+  // ── Slot selection & modals ───────────────────────────────────────────────
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  const [playerModalSlotId, setPlayerModalSlotId] = useState<string | null>(null);
+  const [autoBuildOpen, setAutoBuildOpen] = useState(false);
 
   const selectedSlotDef = useMemo(
     () =>
@@ -181,6 +187,14 @@ export function PitchBuilder({ allCards, initialState }: Props) {
         ? (FORMATIONS[state.formation].find((s) => s.slotId === selectedSlotId) ?? null)
         : null,
     [selectedSlotId, state.formation],
+  );
+
+  const playerModalSlotDef = useMemo(
+    () =>
+      playerModalSlotId
+        ? (FORMATIONS[state.formation].find((s) => s.slotId === playerModalSlotId) ?? null)
+        : null,
+    [playerModalSlotId, state.formation],
   );
 
   const suggestions = useMemo(
@@ -193,8 +207,19 @@ export function PitchBuilder({ allCards, initialState }: Props) {
       setSelectedSlotId(null);
       return;
     }
-    setSelectedSlotId((prev) => (prev === slotId ? null : slotId));
+    setPlayerModalSlotId(slotId);
+    setSelectedSlotId(slotId);
   }, []);
+
+  const handlePlayerModalSelect = useCallback(
+    (cardId: string) => {
+      if (!playerModalSlotId) return;
+      dispatch({ type: 'PLACE_IN_SLOT', cardId, slotId: playerModalSlotId, allCards });
+      setPlayerModalSlotId(null);
+      setSelectedSlotId(null);
+    },
+    [playerModalSlotId, allCards],
+  );
 
   const handleSuggestion = useCallback(
     (cardId: string) => {
@@ -217,10 +242,34 @@ export function PitchBuilder({ allCards, initialState }: Props) {
     [selectedSlotId, allCards],
   );
 
+  const handleAutoBuild = useCallback(
+    (mode: AutoBuildMode) => {
+      dispatch({
+        type: 'AUTO_BUILD',
+        mode,
+        allCards,
+        ...(favoriteIds !== undefined ? { favoriteIds } : {}),
+      });
+      setSelectedSlotId(null);
+    },
+    [allCards, favoriteIds],
+  );
+
   const handleAutoFill = useCallback(() => {
     dispatch({ type: 'AUTO_FILL', allCards });
     setSelectedSlotId(null);
   }, [allCards]);
+
+  // Derived flags for AutoBuildSheet
+  const hasBrazilians = useMemo(() => allCards.some((c) => c.nationality === 'BR'), [allCards]);
+  const hasGoats = useMemo(
+    () => allCards.some((c) => c.rarityCode === 'ultra' || c.rarityCode === 'world_cup_hero'),
+    [allCards],
+  );
+  const hasFavorites = useMemo(
+    () => favoriteIds != null && allCards.some((c) => favoriteIds.has(c.cardId)),
+    [allCards, favoriteIds],
+  );
 
   const handleClear = useCallback(() => {
     dispatch({ type: 'CLEAR_ALL' });
@@ -322,12 +371,14 @@ export function PitchBuilder({ allCards, initialState }: Props) {
                 )}
               </AnimatePresence>
               <button
-                onClick={handleAutoFill}
+                type="button"
+                onClick={() => setAutoBuildOpen(true)}
                 className="text-[10px] px-2 py-1 rounded-lg border border-gold-dim/40 text-gold hover:bg-gold/10 transition-colors"
               >
-                auto-fill
+                auto build
               </button>
               <button
+                type="button"
                 onClick={handleClear}
                 className="text-[10px] text-muted hover:text-red-400 transition-colors px-1"
               >
@@ -428,14 +479,15 @@ export function PitchBuilder({ allCards, initialState }: Props) {
                 }}
               >
                 <p className="text-[11px] text-gold/80">
-                  Toque em um slot · arraste cartas · ou use <strong>auto-fill</strong>
+                  Toque em um slot · arraste cartas · ou use <strong>auto build</strong>
                 </p>
                 <button
-                  onClick={handleAutoFill}
+                  type="button"
+                  onClick={() => setAutoBuildOpen(true)}
                   className="shrink-0 text-[10px] px-3 py-1 rounded-lg font-bold text-obsidian transition-all"
                   style={{ background: 'linear-gradient(135deg, #c9a84c, #e6c85a)' }}
                 >
-                  auto-fill
+                  auto build
                 </button>
               </div>
             </motion.div>
@@ -479,6 +531,28 @@ export function PitchBuilder({ allCards, initialState }: Props) {
           selectedSlotPos={selectedSlotDef?.position ?? null}
           dragOver={state.dragOver === 'pool'}
           onTapCard={handleTapCard}
+        />
+
+        {/* Player select modal (slot tap) */}
+        <PlayerSelectModal
+          open={playerModalSlotId !== null}
+          slotPosition={playerModalSlotDef?.position ?? null}
+          pool={pool}
+          onSelect={handlePlayerModalSelect}
+          onClose={() => {
+            setPlayerModalSlotId(null);
+            setSelectedSlotId(null);
+          }}
+        />
+
+        {/* Auto Build sheet */}
+        <AutoBuildSheet
+          open={autoBuildOpen}
+          hasFavorites={hasFavorites}
+          hasBrazilians={hasBrazilians}
+          hasGoats={hasGoats}
+          onBuild={handleAutoBuild}
+          onClose={() => setAutoBuildOpen(false)}
         />
       </div>
 

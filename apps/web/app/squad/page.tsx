@@ -1,4 +1,5 @@
 import { PitchBuilder } from '@/components/squad/premium/PitchBuilder';
+import { getFavoriteCardIds } from '@/lib/actions/favorites';
 import { getCollection } from '@/lib/collection-data';
 import {
   buildSBStateFromSaved,
@@ -10,7 +11,10 @@ import { getCurrentUser } from '@/lib/supabase/server';
 export default async function SquadPage() {
   const user = await getCurrentUser();
 
-  const allCards = user ? await getUserCollection(user.id) : getCollection();
+  const [allCards, favoriteIds] = await Promise.all([
+    user ? getUserCollection(user.id) : Promise.resolve(getCollection()),
+    user ? getFavoriteCardIds() : Promise.resolve([]),
+  ]);
 
   let initialState = undefined;
   if (user && allCards.length > 0) {
@@ -32,6 +36,7 @@ export default async function SquadPage() {
       <div className="flex-1 min-h-0">
         <PitchBuilder
           allCards={allCards}
+          favoriteIds={new Set(favoriteIds)}
           {...(initialState !== undefined ? { initialState } : {})}
         />
       </div>
