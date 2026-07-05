@@ -39,7 +39,17 @@ export default async function ProfilePage() {
   advStats.winRate = winRate;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8 pb-10 animate-[fadeIn_0.4s_ease-out]">
+    <div
+      className="min-h-full animate-[fadeIn_0.4s_ease-out]"
+      style={{
+        background: [
+          'radial-gradient(ellipse 80% 40% at 50% 0%, rgba(71,85,105,0.18) 0%, transparent 55%)',
+          'radial-gradient(ellipse 40% 25% at 100% 70%, rgba(51,65,85,0.10) 0%, transparent 50%)',
+          '#050508',
+        ].join(', '),
+      }}
+    >
+    <div className="max-w-2xl mx-auto space-y-8 pb-10 px-4">
       <div className="glass rounded-3xl overflow-hidden border border-white/5">
         <ProfileHero wins={wins} draws={draws} losses={losses} winRate={winRate} />
       </div>
@@ -79,6 +89,7 @@ export default async function ProfilePage() {
       <div className="px-5 py-5 glass rounded-3xl border border-white/5">
         <CountriesUnlocked countries={advStats.uniqueCountries} />
       </div>
+    </div>
     </div>
   );
 }

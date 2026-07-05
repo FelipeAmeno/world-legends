@@ -88,7 +88,16 @@ export function MatchExperience() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#060810] overflow-hidden relative">
+    <div
+      className="min-h-screen overflow-hidden relative"
+      style={{
+        background: [
+          'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(185,28,28,0.14) 0%, transparent 55%)',
+          'radial-gradient(ellipse 50% 35% at 0% 80%, rgba(220,38,38,0.07) 0%, transparent 50%)',
+          '#060810',
+        ].join(', '),
+      }}
+    >
       <AnimatePresence mode="wait">
         {/* SELECT */}
         {phase === 'SELECT' && (
@@ -100,7 +109,20 @@ export function MatchExperience() {
             className="px-4 py-6"
           >
             <div className="mb-6">
-              <h1 className="font-display text-3xl gold-text tracking-wider">PARTIDA</h1>
+              <div className="flex items-center justify-between mb-1">
+                <h1 className="font-display text-3xl tracking-wider" style={{ color: '#f87171' }}>PARTIDA</h1>
+                <a
+                  href="/"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-white/35 hover:text-white/65 transition-colors"
+                  style={{ border: '1px solid rgba(255,255,255,0.07)' }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                  </svg>
+                  <span>Home</span>
+                </a>
+              </div>
               <p className="text-muted text-xs mt-0.5">Escolha um adversário e viva cada lance</p>
             </div>
             {loadError && (

@@ -110,6 +110,89 @@ const PARTICLE_MAP: Record<RarityCode, string> = {
   world_cup_hero: '#e2e8f0',
 };
 
+// ─── Packs "Em Breve" (display only, sem engine) ─────────────────────────────
+
+export type ComingSoonPack = {
+  id: string;
+  name: string;
+  tagline: string;
+  priceLabel: string;
+  icon: string;
+  gradientFrom: string;
+  gradientTo: string;
+  borderColor: string;
+  glowColor: string;
+};
+
+export const COMING_SOON_DEFS: readonly ComingSoonPack[] = [
+  {
+    id: 'starter',
+    name: 'Starter Pack',
+    tagline: 'Perfeito para começar sua jornada',
+    priceLabel: '75c',
+    icon: '🌟',
+    gradientFrom: '#0c1a10',
+    gradientTo: '#152b1a',
+    borderColor: 'rgba(74,222,128,0.35)',
+    glowColor: 'rgba(74,222,128,0.28)',
+  },
+  {
+    id: 'national',
+    name: 'National Pack',
+    tagline: 'Lendas de uma única seleção',
+    priceLabel: '250c',
+    icon: '🌍',
+    gradientFrom: '#070f1c',
+    gradientTo: '#0e1e36',
+    borderColor: 'rgba(96,165,250,0.38)',
+    glowColor: 'rgba(96,165,250,0.28)',
+  },
+  {
+    id: 'hero',
+    name: 'Hero Pack',
+    tagline: 'Os heróis imortais da Copa',
+    priceLabel: '700c',
+    icon: '🦸',
+    gradientFrom: '#150020',
+    gradientTo: '#220032',
+    borderColor: 'rgba(192,38,211,0.38)',
+    glowColor: 'rgba(192,38,211,0.28)',
+  },
+  {
+    id: 'goat',
+    name: 'GOAT Pack',
+    tagline: 'Os maiores de todos os tempos',
+    priceLabel: '2.500c',
+    icon: '🐐',
+    gradientFrom: '#1a1200',
+    gradientTo: '#2c1e00',
+    borderColor: 'rgba(251,191,36,0.45)',
+    glowColor: 'rgba(251,191,36,0.35)',
+  },
+  {
+    id: 'event',
+    name: 'Event Pack',
+    tagline: 'Exclusivo da temporada atual',
+    priceLabel: 'Gems',
+    icon: '⚡',
+    gradientFrom: '#1a0808',
+    gradientTo: '#2c1010',
+    borderColor: 'rgba(239,68,68,0.38)',
+    glowColor: 'rgba(239,68,68,0.28)',
+  },
+  {
+    id: 'season',
+    name: 'Season Pass Pack',
+    tagline: 'Recompensa exclusiva de temporada',
+    priceLabel: 'Pass',
+    icon: '🏆',
+    gradientFrom: '#080f00',
+    gradientTo: '#101900',
+    borderColor: 'rgba(132,204,22,0.38)',
+    glowColor: 'rgba(132,204,22,0.28)',
+  },
+];
+
 // ─── Estado de pity vazio (sem histórico) ────────────────────────────────────
 
 function freshPityState(): UserPityState {

@@ -227,8 +227,16 @@ export function PackExperience({ initialBalance = 500, isWelcome = false }: Prop
   return (
     <div
       ref={shakeRef}
-      className="relative min-h-screen overflow-hidden hero-bg select-none"
-      style={{ willChange: 'transform' }}
+      className="relative min-h-screen overflow-hidden select-none"
+      style={{
+        willChange: 'transform',
+        background: [
+          'radial-gradient(ellipse 80% 45% at 50% 0%, rgba(201,168,76,0.14) 0%, transparent 55%)',
+          'radial-gradient(ellipse 45% 30% at 0% 60%, rgba(180,130,30,0.07) 0%, transparent 50%)',
+          'radial-gradient(ellipse 50% 35% at 100% 80%, rgba(201,168,76,0.06) 0%, transparent 55%)',
+          '#050508',
+        ].join(', '),
+      }}
     >
       <AnimatePresence>
         {phase === 'BURST' && pack && (
@@ -251,7 +259,20 @@ export function PackExperience({ initialBalance = 500, isWelcome = false }: Prop
             className="px-4 py-6"
           >
             <div className="mb-6">
-              <h1 className="font-display text-3xl gold-text tracking-wider">PACKS</h1>
+              <div className="flex items-center justify-between mb-2">
+                <h1 className="font-display text-3xl gold-text tracking-wider">PACKS</h1>
+                <a
+                  href="/"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-white/35 hover:text-white/65 transition-colors"
+                  style={{ border: '1px solid rgba(255,255,255,0.07)' }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                  </svg>
+                  <span>Home</span>
+                </a>
+              </div>
               <div className="flex items-center justify-between mt-1">
                 <p className="text-muted text-xs">Escolha seu pack e descubra as lendas</p>
                 <div className="glass rounded-lg px-3 py-1.5 text-xs">

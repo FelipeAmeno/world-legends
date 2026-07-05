@@ -1,6 +1,7 @@
 'use client';
 
-import type { PackDefinitionUI } from '@/lib/pack-logic';
+import { COMING_SOON_DEFS, type ComingSoonPack, type PackDefinitionUI } from '@/lib/pack-logic';
+import { motion } from 'framer-motion';
 
 type Props = {
   packs: readonly PackDefinitionUI[];
@@ -13,7 +14,7 @@ type Props = {
 export function PackSelector({ packs, selected, balance, onSelect, onOpen }: Props) {
   return (
     <div>
-      {/* Header */}
+      {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="font-display text-2xl text-parchment tracking-wider">LOJA DE PACKS</h2>
@@ -25,8 +26,9 @@ export function PackSelector({ packs, selected, balance, onSelect, onOpen }: Pro
         </div>
       </div>
 
-      {/* Grade de packs */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-6">
+      {/* ── Packs disponíveis ──────────────────────────────────────────── */}
+      <p className="text-[10px] uppercase tracking-[0.3em] text-white/30 mb-3">Disponíveis</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
         {packs.map((pack) => (
           <PackCard
             key={pack.id}
@@ -38,9 +40,9 @@ export function PackSelector({ packs, selected, balance, onSelect, onOpen }: Pro
         ))}
       </div>
 
-      {/* Botão de abrir */}
+      {/* ── Botão de abrir ─────────────────────────────────────────────── */}
       {selected && (
-        <div className="flex justify-center">
+        <div className="flex justify-center mb-8">
           <button
             onClick={onOpen}
             disabled={balance < selected.price}
@@ -57,11 +59,26 @@ export function PackSelector({ packs, selected, balance, onSelect, onOpen }: Pro
           </button>
         </div>
       )}
+
+      {/* ── Em breve ───────────────────────────────────────────────────── */}
+      <div className="mt-2">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex-1 h-px bg-white/6" />
+          <p className="text-[10px] uppercase tracking-[0.35em] text-white/25 shrink-0">Em Breve</p>
+          <div className="flex-1 h-px bg-white/6" />
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {COMING_SOON_DEFS.map((pack, i) => (
+            <ComingSoonCard key={pack.id} pack={pack} index={i} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
-// ─── PackCard ─────────────────────────────────────────────────────────────────
+// ─── PackCard (disponível) ────────────────────────────────────────────────────
 
 function PackCard({
   pack,
@@ -75,70 +92,49 @@ function PackCard({
   onClick: () => void;
 }) {
   return (
-    <button
+    <motion.button
       onClick={onClick}
       disabled={!canAfford}
+      {...(canAfford ? { whileHover: { scale: 1.03 }, whileTap: { scale: 0.97 } } : {})}
       className={[
-        'relative group rounded-2xl border overflow-hidden text-left transition-all duration-300',
-        'focus:outline-none hover:scale-[1.03]',
-        isSelected
-          ? 'scale-[1.03] ring-2 ring-offset-2 ring-offset-obsidian'
-          : 'hover:border-opacity-60',
+        'relative group rounded-2xl border overflow-hidden text-left focus:outline-none',
+        isSelected ? 'scale-[1.03]' : '',
         !canAfford ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
       ].join(' ')}
-      style={
-        {
-          borderColor: pack.borderColor,
-          boxShadow: isSelected
-            ? `0 0 32px ${pack.glowColor}, 0 0 8px ${pack.glowColor}`
-            : undefined,
-          '--ring-color': pack.borderColor,
-        } as React.CSSProperties
-      }
+      style={{
+        borderColor: pack.borderColor,
+        boxShadow: isSelected
+          ? `0 0 32px ${pack.glowColor}, 0 0 8px ${pack.glowColor}`
+          : undefined,
+      }}
     >
-      {/* Pack art area */}
+      {/* Art */}
       <div
         className="relative h-48 flex flex-col items-center justify-center overflow-hidden"
         style={{ background: `linear-gradient(135deg, ${pack.gradientFrom}, ${pack.gradientTo})` }}
       >
-        {/* Shimmer de fundo */}
         <div
           className="absolute inset-0 opacity-20"
-          style={{
-            background: `radial-gradient(ellipse at 50% 30%, ${pack.glowColor} 0%, transparent 70%)`,
-          }}
+          style={{ background: `radial-gradient(ellipse at 50% 30%, ${pack.glowColor} 0%, transparent 70%)` }}
         />
-
-        {/* Ícone do pack */}
         <div
           className="relative z-10 text-6xl mb-3 transition-transform duration-300 group-hover:scale-110"
           style={{ filter: `drop-shadow(0 0 16px ${pack.glowColor})` }}
         >
           {pack.icon}
         </div>
-
-        {/* Nome */}
-        <p
-          className="relative z-10 font-display text-2xl tracking-wider"
-          style={{
-            color: pack.borderColor.replace('0.', '').replace(')', ',1)').replace('rgba(', 'rgb('),
-          }}
-        >
+        <p className="relative z-10 font-display text-2xl tracking-wider text-parchment">
           {(pack.name.split(' ')[0] ?? pack.name).toUpperCase()}
         </p>
 
-        {/* Garantia badge */}
+        {/* Guarantee badge */}
         <div
           className="absolute top-3 right-3 text-[9px] font-bold px-2 py-1 rounded-full"
-          style={{
-            background: pack.glowColor,
-            color: '#fff',
-          }}
+          style={{ background: pack.glowColor, color: '#fff' }}
         >
           {pack.guarantee}
         </div>
 
-        {/* Selected indicator */}
         {isSelected && (
           <div
             className="absolute inset-0 border-2 rounded-2xl pointer-events-none"
@@ -147,7 +143,7 @@ function PackCard({
         )}
       </div>
 
-      {/* Info area */}
+      {/* Info */}
       <div className="p-4 bg-surface border-t" style={{ borderColor: `${pack.borderColor}40` }}>
         <div className="flex items-center justify-between mb-1">
           <p className="text-parchment font-bold text-sm">{pack.name}</p>
@@ -159,6 +155,62 @@ function PackCard({
           <span>✨ {pack.guarantee}</span>
         </div>
       </div>
-    </button>
+    </motion.button>
+  );
+}
+
+// ─── ComingSoonCard ───────────────────────────────────────────────────────────
+
+function ComingSoonCard({ pack, index }: { pack: ComingSoonPack; index: number }) {
+  return (
+    <motion.div
+      className="relative rounded-2xl border overflow-hidden cursor-not-allowed"
+      style={{ borderColor: pack.borderColor, opacity: 0.6 }}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 0.6, y: 0 }}
+      transition={{ delay: index * 0.06, duration: 0.4 }}
+    >
+      {/* Art area */}
+      <div
+        className="relative h-28 flex flex-col items-center justify-center overflow-hidden"
+        style={{ background: `linear-gradient(135deg, ${pack.gradientFrom}, ${pack.gradientTo})` }}
+      >
+        <div
+          className="absolute inset-0 opacity-15"
+          style={{ background: `radial-gradient(ellipse at 50% 30%, ${pack.glowColor} 0%, transparent 70%)` }}
+        />
+
+        {/* Lock overlay */}
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex flex-col items-center justify-center gap-1.5 z-20">
+          <span className="text-2xl">🔒</span>
+          <span
+            className="text-[9px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full"
+            style={{
+              background: `${pack.glowColor}30`,
+              border: `1px solid ${pack.borderColor}`,
+              color: pack.borderColor.replace('0.38)', '0.9)').replace('0.35)', '0.9)').replace('0.45)', '0.9)'),
+            }}
+          >
+            Em Breve
+          </span>
+        </div>
+
+        <div
+          className="relative z-10 text-4xl"
+          style={{ filter: `drop-shadow(0 0 12px ${pack.glowColor})` }}
+        >
+          {pack.icon}
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="px-3 py-2.5" style={{ background: `${pack.gradientFrom}cc` }}>
+        <p className="text-parchment/70 font-bold text-xs truncate">{pack.name}</p>
+        <p className="text-white/30 text-[9px] truncate mt-0.5">{pack.tagline}</p>
+        <p className="text-[10px] mt-1" style={{ color: pack.borderColor.replace('0.38)', '0.7)').replace('0.35)', '0.7)').replace('0.45)', '0.7)') }}>
+          {pack.priceLabel}
+        </p>
+      </div>
+    </motion.div>
   );
 }

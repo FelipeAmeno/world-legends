@@ -19,7 +19,16 @@ export default async function SquadPage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div
+      className="flex flex-col h-full"
+      style={{
+        background: [
+          'radial-gradient(ellipse 80% 40% at 50% 0%, rgba(22,101,52,0.16) 0%, transparent 55%)',
+          'radial-gradient(ellipse 60% 50% at 50% 100%, rgba(5,150,105,0.10) 0%, transparent 55%)',
+          '#050508',
+        ].join(', '),
+      }}
+    >
       <div className="flex-1 min-h-0">
         <PitchBuilder
           allCards={allCards}

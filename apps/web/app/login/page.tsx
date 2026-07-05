@@ -101,17 +101,58 @@ function LoginContent() {
       style={{
         background: [
           /* pitch glow from bottom */
-          'radial-gradient(ellipse 90% 55% at 50% 115%, rgba(22,101,52,0.50) 0%, transparent 60%)',
+          'radial-gradient(ellipse 90% 60% at 50% 120%, rgba(22,101,52,0.55) 0%, transparent 62%)',
           /* floodlight — left corner */
-          'radial-gradient(ellipse 38% 72% at -6% -6%, rgba(255,243,210,0.20) 0%, transparent 52%)',
+          'radial-gradient(ellipse 42% 76% at -8% -8%, rgba(255,243,210,0.22) 0%, transparent 55%)',
           /* floodlight — right corner */
-          'radial-gradient(ellipse 38% 72% at 106% -6%, rgba(255,243,210,0.20) 0%, transparent 52%)',
+          'radial-gradient(ellipse 42% 76% at 108% -8%, rgba(255,243,210,0.22) 0%, transparent 55%)',
           /* golden center haze */
-          'radial-gradient(ellipse 65% 42% at 50% 18%, rgba(201,168,76,0.10) 0%, transparent 62%)',
+          'radial-gradient(ellipse 70% 45% at 50% 18%, rgba(201,168,76,0.11) 0%, transparent 65%)',
           '#050508',
         ].join(', '),
       }}
     >
+      {/* ── Stadium silhouette ──────────────────────────────────────── */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <svg
+          viewBox="0 0 400 280"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="absolute bottom-0 left-0 w-full"
+          style={{ opacity: 0.055 }}
+          preserveAspectRatio="xMidYMax slice"
+        >
+          {/* Upper tier stands */}
+          <path d="M0 280 L0 120 Q80 30 200 60 Q320 30 400 120 L400 280 Z" fill="rgba(200,200,220,0.9)" />
+          {/* Inner bowl */}
+          <path d="M20 280 L20 140 Q90 65 200 90 Q310 65 380 140 L380 280 Z" fill="rgba(5,5,8,0.95)" />
+          {/* Pitch surface */}
+          <rect x="35" y="200" width="330" height="80" rx="4" fill="rgba(22,101,52,0.7)" />
+          {/* Pitch markings */}
+          <rect x="35" y="200" width="330" height="80" rx="4" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
+          <line x1="200" y1="200" x2="200" y2="280" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+          <circle cx="200" cy="240" r="22" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="1.5" />
+          {/* Floodlight towers */}
+          <rect x="8"  y="30" width="6" height="90" fill="rgba(220,220,240,0.8)" />
+          <rect x="386" y="30" width="6" height="90" fill="rgba(220,220,240,0.8)" />
+          {/* Floodlight heads */}
+          <rect x="0"  y="24" width="22" height="9" rx="2" fill="rgba(255,243,210,0.9)" />
+          <rect x="378" y="24" width="22" height="9" rx="2" fill="rgba(255,243,210,0.9)" />
+          {/* Light beams */}
+          <polygon points="0,33 22,33 80,200 0,200" fill="rgba(255,243,210,0.04)" />
+          <polygon points="378,33 400,33 400,200 320,200" fill="rgba(255,243,210,0.04)" />
+        </svg>
+      </div>
+
+      {/* ── Grass strip ─────────────────────────────────────────────── */}
+      <div
+        className="fixed bottom-0 left-0 right-0 pointer-events-none h-14"
+        style={{
+          background: 'linear-gradient(to top, rgba(22,101,52,0.55) 0%, rgba(22,101,52,0.25) 50%, transparent 100%)',
+          backdropFilter: 'none',
+        }}
+      />
+
       {/* ── Spark particles ─────────────────────────────────────────── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {SPARKS.map((s, i) => (

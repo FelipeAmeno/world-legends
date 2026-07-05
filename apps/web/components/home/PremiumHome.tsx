@@ -1,4 +1,7 @@
+'use client';
+
 import { DailyLoginTrigger } from '@/components/daily-login/DailyLoginTrigger';
+import { motion } from 'framer-motion';
 import { EventBanner } from './EventBanner';
 import { GameGrid } from './GameGrid';
 import { NewUserWelcome } from './NewUserWelcome';
@@ -44,6 +47,26 @@ export function PremiumHome({ serverBalance, isNewUser, collectionCount = 0, squ
           `,
           backgroundSize: '40px 40px',
         }}
+      />
+
+      {/* Breathing ambient lights */}
+      <motion.div
+        className="fixed pointer-events-none"
+        style={{ top: '-10%', left: '20%', width: '60%', height: '50%', borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(201,168,76,0.08) 0%, transparent 70%)' }}
+        animate={{ opacity: [0.6, 1, 0.6], scale: [0.95, 1.05, 0.95] }}
+        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <motion.div
+        className="fixed pointer-events-none"
+        style={{ bottom: '5%', left: '-10%', width: '45%', height: '45%', borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(16,185,129,0.06) 0%, transparent 70%)' }}
+        animate={{ opacity: [0.5, 0.9, 0.5], scale: [1, 1.08, 1] }}
+        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}
+      />
+      <motion.div
+        className="fixed pointer-events-none"
+        style={{ top: '30%', right: '-8%', width: '40%', height: '40%', borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(58,110,165,0.06) 0%, transparent 70%)' }}
+        animate={{ opacity: [0.4, 0.8, 0.4], scale: [1.02, 0.98, 1.02] }}
+        transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
       />
 
       {/* Scrollable content */}

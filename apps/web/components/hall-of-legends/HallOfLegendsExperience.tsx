@@ -217,7 +217,16 @@ export function HallOfLegendsExperience({ catalogCards, ownedCardIds, isAuthenti
   const missingCount = hallData.totalCards - hallData.ownedCards;
 
   return (
-    <div className="flex flex-col h-full" style={{ background: '#050508' }}>
+    <div
+      className="flex flex-col h-full"
+      style={{
+        background: [
+          'radial-gradient(ellipse 90% 45% at 50% 0%, rgba(37,99,235,0.14) 0%, transparent 55%)',
+          'radial-gradient(ellipse 50% 30% at 100% 30%, rgba(99,102,241,0.08) 0%, transparent 50%)',
+          '#050508',
+        ].join(', '),
+      }}
+    >
       {/* ── Header premium ── */}
       <PremiumHeader
         totalCards={hallData.totalCards}
