@@ -43,14 +43,10 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
 
   // ── Intro sequence (0–600ms) ──────────────────────────────────────────────
   useEffect(() => {
-    // Immediate bright flash → fades out by 300ms
     const t1 = setTimeout(() => setRevealFlash(false), 320);
-    // REVELANDO text 150ms in → disappears at 560ms
     const t2 = setTimeout(() => setShowRevealText(true), 150);
     const t3 = setTimeout(() => setShowRevealText(false), 560);
-    // Cards slide in at 600ms
     const tCards = setTimeout(() => setShowCards(true), 600);
-    // "Revelar Tudo" button at 2200ms
     const tRevAll = setTimeout(() => setShowRevAll(true), 2200);
 
     return () => [t1, t2, t3, tCards, tRevAll].forEach(clearTimeout);
@@ -113,6 +109,13 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
     setGoatIndex(null);
     setFlipped((prev) => new Set([...prev, goatIdx!]));
   }, [goatIdx]);
+
+  // ── Auto-reveal: flip all cards 1.2s after they appear ───────────────────
+  useEffect(() => {
+    if (!showCards) return;
+    const t = setTimeout(handleRevealAll, 1200);
+    return () => clearTimeout(t);
+  }, [showCards, handleRevealAll]);
 
   const remaining = cards.length - flipped.size;
 

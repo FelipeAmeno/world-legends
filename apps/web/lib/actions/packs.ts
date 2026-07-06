@@ -214,6 +214,9 @@ export async function openPackAction(packId: string): Promise<OpenPackResult> {
     if (createResult.ok) {
       createdUserCardIds.set(cardId, createResult.value.id);
       ownedCardIds.add(cardId); // previne duplicata dentro do mesmo pack
+    } else {
+      // Falha ao criar carta — aborta e devolve erro visível ao usuário
+      return { ok: false, error: `Erro ao salvar carta: ${createResult.error.message}` };
     }
   }
 

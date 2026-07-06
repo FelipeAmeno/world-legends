@@ -775,13 +775,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "pack_openings_pack_id_fkey"
-            columns: ["pack_id"]
-            isOneToOne: false
-            referencedRelation: "packs"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "pack_openings_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
@@ -1246,13 +1239,6 @@ export type Database = {
           yellow_cards_accum?: number
         }
         Relationships: [
-          {
-            foreignKeyName: "user_cards_card_id_fkey"
-            columns: ["card_id"]
-            isOneToOne: false
-            referencedRelation: "cards"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "user_cards_profile_id_fkey"
             columns: ["profile_id"]
