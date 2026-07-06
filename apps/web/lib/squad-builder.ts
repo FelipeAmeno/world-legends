@@ -393,6 +393,73 @@ function greedyFill(formation: FormationKey, ranked: CollectionCard[]): SquadSlo
   return slots;
 }
 
+// ─── Swap suggestions ────────────────────────────────────────────────────────
+
+export type SwapSuggestion = {
+  slotId: string;
+  slotPosition: string;
+  currentCard: CollectionCard;
+  suggestedCard: CollectionCard;
+  chemDelta: number;
+  ovrDelta: number;
+};
+
+export function getSwapSuggestions(
+  state: SBState,
+  pool: CollectionCard[],
+  maxSuggestions = 5,
+): SwapSuggestion[] {
+  const currentSnap = calcSnapshot(state);
+  if (currentSnap.starterCount === 0) return [];
+
+  const currentChem = currentSnap.chemistry.total;
+  const currentOvr = currentSnap.rating.overall;
+  const suggestions: SwapSuggestion[] = [];
+  const formation = FORMATIONS[state.formation];
+  const poolTop = pool.slice(0, 30);
+
+  for (const slotDef of formation) {
+    const currentCard = state.slots[slotDef.slotId];
+    if (!currentCard) continue;
+
+    let bestForSlot: SwapSuggestion | null = null;
+
+    for (const poolCard of poolTop) {
+      if (getPositionCompat(poolCard.position, slotDef.position) === 'awkward') continue;
+
+      const newSlots = { ...state.slots, [slotDef.slotId]: poolCard };
+      const newSnap = calcSnapshot({ ...state, slots: newSlots });
+
+      const chemDelta = newSnap.chemistry.total - currentChem;
+      const ovrDelta = newSnap.rating.overall - currentOvr;
+
+      if (chemDelta > 0 || ovrDelta >= 3) {
+        const candidate: SwapSuggestion = {
+          slotId: slotDef.slotId,
+          slotPosition: slotDef.position,
+          currentCard,
+          suggestedCard: poolCard,
+          chemDelta,
+          ovrDelta,
+        };
+        if (
+          !bestForSlot ||
+          chemDelta > bestForSlot.chemDelta ||
+          (chemDelta === bestForSlot.chemDelta && ovrDelta > bestForSlot.ovrDelta)
+        ) {
+          bestForSlot = candidate;
+        }
+      }
+    }
+
+    if (bestForSlot) suggestions.push(bestForSlot);
+  }
+
+  return suggestions
+    .sort((a, b) => b.chemDelta - a.chemDelta || b.ovrDelta - a.ovrDelta)
+    .slice(0, maxSuggestions);
+}
+
 export function autoBuildSlots(
   mode: AutoBuildMode,
   allCards: CollectionCard[],
