@@ -3,18 +3,80 @@
 import type { RevealEffect } from '@/lib/pack-logic';
 import type { DrawnCard, PackDefinitionUI } from '@/lib/pack-logic';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ConfettiCanvas } from './ConfettiCanvas';
 import { GoatReveal } from './GoatReveal';
 import { RevealedCard } from './RevealedCard';
 
-const HIGH_RARITY_CONFETTI = new Set<RevealEffect>(['legendary', 'ultra', 'world_cup_hero']);
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-// Color that floods the background after a high-rarity reveal
-const RARITY_FLOOD: Partial<Record<RevealEffect, string>> = {
-  legendary: 'rgba(201,168,76,0.18)',
-  ultra: 'rgba(236,72,153,0.22)',
+const RARITY_ORDER: Record<RevealEffect, number> = {
+  common: 0,
+  rare: 1,
+  elite: 2,
+  legendary: 3,
+  ultra: 4,
+  world_cup_hero: 5,
 };
+
+// Milliseconds of face-down suspense before auto-flip
+const FACEDOWN_DELAY: Record<RevealEffect, number> = {
+  common: 600,
+  rare: 950,
+  elite: 1400,
+  legendary: 2400,
+  ultra: 3200,
+  world_cup_hero: 400,
+};
+
+// Time after flip animation completes to admire the card before advancing
+const ADMIRE_DELAY: Record<RevealEffect, number> = {
+  common: 1600,
+  rare: 2000,
+  elite: 2300,
+  legendary: 3200,
+  ultra: 3800,
+  world_cup_hero: 0,
+};
+
+// Approximate total flip animation time (anticipation + flip)
+const FLIP_ANIM_MS: Record<RevealEffect, number> = {
+  common: 700,
+  rare: 800,
+  elite: 900,
+  legendary: 1700,
+  ultra: 2200,
+  world_cup_hero: 0,
+};
+
+const RARITY_FLOOD: Partial<Record<RevealEffect, string>> = {
+  legendary: 'rgba(201,168,76,0.22)',
+  ultra: 'rgba(236,72,153,0.26)',
+};
+
+// Back face glow / ring color per rarity (shown while face-down)
+const BACK_PULSE: Record<RevealEffect, { border: string; glow: string; bg: string }> = {
+  common: { border: 'rgba(107,114,128,0.5)', glow: 'rgba(107,114,128,0.2)', bg: '#0c0d0f' },
+  rare: { border: 'rgba(147,51,234,0.7)', glow: 'rgba(147,51,234,0.35)', bg: '#0a0018' },
+  elite: { border: 'rgba(59,130,246,0.8)', glow: 'rgba(59,130,246,0.4)', bg: '#000d20' },
+  legendary: { border: 'rgba(201,168,76,1)', glow: 'rgba(201,168,76,0.55)', bg: '#150b00' },
+  ultra: { border: 'rgba(236,72,153,1)', glow: 'rgba(236,72,153,0.6)', bg: '#1a0015' },
+  world_cup_hero: { border: 'rgba(240,244,255,1)', glow: 'rgba(240,244,255,0.6)', bg: '#04040a' },
+};
+
+// Label shown while face-down (higher rarities only)
+const MYSTERY_LABEL: Partial<Record<RevealEffect, string>> = {
+  elite: '⚡ ELITE',
+  legendary: '✦ LENDÁRIO ✦',
+  ultra: '✦✦ ULTRA RARO ✦✦',
+  world_cup_hero: '?!',
+};
+
+// ─── Phase type ───────────────────────────────────────────────────────────────
+
+type CardPhase = 'entering' | 'facedown' | 'revealed';
+
+// ─── Props ────────────────────────────────────────────────────────────────────
 
 type Props = {
   cards: DrawnCard[];
@@ -23,170 +85,143 @@ type Props = {
   onShake?: (intensity?: number, duration?: number) => void;
 };
 
+// ─── Component ───────────────────────────────────────────────────────────────
+
 export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
-  const [flipped, setFlipped] = useState<Set<number>>(new Set());
-  const [showRevAll, setShowRevAll] = useState(false);
-  const [showCards, setShowCards] = useState(false);
-  const [goatIndex, setGoatIndex] = useState<number | null>(null);
-  const [goatDone, setGoatDone] = useState(false);
+  // Sort ascending: common first → rarest last
+  const sortedCards = useMemo(
+    () => [...cards].sort((a, b) => RARITY_ORDER[a.effect] - RARITY_ORDER[b.effect]),
+    [cards],
+  );
+
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [phase, setPhase] = useState<CardPhase>('entering');
+  const [flipped, setFlipped] = useState(false);
   const [confettiRarity, setConfettiRarity] = useState<RevealEffect | null>(null);
-
-  // Intro sequence states
-  const [revealFlash, setRevealFlash] = useState(true);
-  const [showRevealText, setShowRevealText] = useState(false);
-
-  // Rarity flood — background color reacts when a big card flips
   const [rarityFlood, setRarityFlood] = useState<string | null>(null);
+  const [goatActive, setGoatActive] = useState(false);
 
-  const goatCard = cards.find((c) => c.effect === 'world_cup_hero');
-  const goatIdx = goatCard ? cards.indexOf(goatCard) : null;
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Intro sequence (0–600ms) ──────────────────────────────────────────────
-  useEffect(() => {
-    const t1 = setTimeout(() => setRevealFlash(false), 320);
-    const t2 = setTimeout(() => setShowRevealText(true), 150);
-    const t3 = setTimeout(() => setShowRevealText(false), 560);
-    const tCards = setTimeout(() => setShowCards(true), 600);
-    const tRevAll = setTimeout(() => setShowRevAll(true), 2200);
+  const card = sortedCards[currentIdx];
+  const totalCards = sortedCards.length;
 
-    return () => [t1, t2, t3, tCards, tRevAll].forEach(clearTimeout);
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
   }, []);
 
-  // ── Detect all cards flipped ───────────────────────────────────────────────
+  // ── Advance to next card ──────────────────────────────────────────────────
+  const goNext = useCallback(() => {
+    clearTimer();
+    if (currentIdx >= totalCards - 1) {
+      setTimeout(onAllFlipped, 500);
+      return;
+    }
+    setCurrentIdx((i) => i + 1);
+    setPhase('entering');
+    setFlipped(false);
+  }, [currentIdx, totalCards, onAllFlipped, clearTimer]);
+
+  // ── Trigger flip ─────────────────────────────────────────────────────────
+  const doFlip = useCallback(() => {
+    if (!card || flipped) return;
+    clearTimer();
+
+    if (card.effect === 'world_cup_hero') {
+      setGoatActive(true);
+      return;
+    }
+
+    setFlipped(true);
+    setPhase('revealed');
+
+    // Camera shake + rarity flood on high rarity
+    if (card.effect === 'legendary') {
+      onShake?.(10, 500);
+      setRarityFlood(RARITY_FLOOD.legendary!);
+      setTimeout(() => setRarityFlood(null), 1800);
+    }
+    if (card.effect === 'ultra') {
+      onShake?.(18, 650);
+      setRarityFlood(RARITY_FLOOD.ultra!);
+      setTimeout(() => setRarityFlood(null), 2000);
+    }
+    if (card.effect === 'legendary' || card.effect === 'ultra') {
+      setConfettiRarity(card.effect);
+      setTimeout(() => setConfettiRarity(null), 2800);
+    }
+
+    // Auto-advance after flip animation + admire time
+    const advanceAfter = FLIP_ANIM_MS[card.effect] + ADMIRE_DELAY[card.effect];
+    timerRef.current = setTimeout(goNext, advanceAfter);
+  }, [card, flipped, onShake, goNext, clearTimer]);
+
+  // ── GoatReveal complete ───────────────────────────────────────────────────
+  const handleGoatDone = useCallback(() => {
+    setGoatActive(false);
+    setFlipped(true);
+    setPhase('revealed');
+    setConfettiRarity('world_cup_hero');
+    setTimeout(() => setConfettiRarity(null), 3000);
+    timerRef.current = setTimeout(goNext, 2500);
+  }, [goNext]);
+
+  // ── entering → facedown (400ms enter animation) ──────────────────────────
   useEffect(() => {
-    const allFlipped = flipped.size === cards.length;
-    const goatPending = goatIdx !== null && !goatDone;
-    if (allFlipped && !goatPending) onAllFlipped();
-  }, [flipped, cards.length, goatIdx, goatDone, onAllFlipped]);
+    if (phase !== 'entering') return;
+    timerRef.current = setTimeout(() => {
+      setPhase('facedown');
+    }, 400);
+    return clearTimer;
+  }, [phase, currentIdx, clearTimer]);
 
-  // ── Confetti auto-clear ────────────────────────────────────────────────────
+  // ── facedown → auto-flip ─────────────────────────────────────────────────
   useEffect(() => {
-    if (!confettiRarity) return;
-    const t = setTimeout(() => setConfettiRarity(null), 2500);
-    return () => clearTimeout(t);
-  }, [confettiRarity]);
+    if (phase !== 'facedown' || !card) return;
+    timerRef.current = setTimeout(doFlip, FACEDOWN_DELAY[card.effect]);
+    return clearTimer;
+  }, [phase, card, doFlip, clearTimer]);
 
-  // ── Rarity flood auto-clear ────────────────────────────────────────────────
-  useEffect(() => {
-    if (!rarityFlood) return;
-    const t = setTimeout(() => setRarityFlood(null), 1600);
-    return () => clearTimeout(t);
-  }, [rarityFlood]);
+  // ── Cleanup on unmount ────────────────────────────────────────────────────
+  useEffect(() => () => { clearTimer(); }, [clearTimer]);
 
-  const handleFlip = useCallback(
-    (idx: number) => {
-      if (idx === goatIdx && !goatDone) {
-        setGoatIndex(idx);
-        return;
-      }
-      setFlipped((prev) => new Set([...prev, idx]));
-    },
-    [goatIdx, goatDone],
-  );
+  // ── Tap handler: skip to next phase ──────────────────────────────────────
+  const handleTap = useCallback(() => {
+    if (goatActive) return;
+    if (phase === 'facedown' && !flipped) {
+      doFlip();
+      return;
+    }
+    if (phase === 'revealed' && flipped) {
+      goNext();
+    }
+  }, [phase, flipped, goatActive, doFlip, goNext]);
 
-  const handleHighRarity = useCallback(
-    (effect: RevealEffect) => {
-      if (HIGH_RARITY_CONFETTI.has(effect)) setConfettiRarity(effect);
-      if (effect === 'legendary') {
-        onShake?.(10, 450);
-        setRarityFlood(RARITY_FLOOD.legendary!);
-      }
-      if (effect === 'ultra') {
-        onShake?.(16, 600);
-        setRarityFlood(RARITY_FLOOD.ultra!);
-      }
-    },
-    [onShake],
-  );
+  if (!card) return null;
 
-  const handleRevealAll = useCallback(() => {
-    setFlipped(new Set(cards.map((_, i) => i)));
-    if (goatIdx !== null && !goatDone) setGoatIndex(goatIdx);
-  }, [cards, goatIdx, goatDone]);
-
-  const handleGoatComplete = useCallback(() => {
-    setGoatDone(true);
-    setGoatIndex(null);
-    setFlipped((prev) => new Set([...prev, goatIdx!]));
-  }, [goatIdx]);
-
-  // ── Auto-reveal: flip all cards 1.2s after they appear ───────────────────
-  useEffect(() => {
-    if (!showCards) return;
-    const t = setTimeout(handleRevealAll, 1200);
-    return () => clearTimeout(t);
-  }, [showCards, handleRevealAll]);
-
-  const remaining = cards.length - flipped.size;
+  const back = BACK_PULSE[card.effect];
+  const label = MYSTERY_LABEL[card.effect];
+  const isHighRarity = card.effect === 'legendary' || card.effect === 'ultra';
 
   return (
-    <>
-      {/* Confetti para raridade alta */}
+    // biome-ignore lint/a11y/useKeyWithClickEvents: tap to advance
+    <div
+      className="min-h-screen flex flex-col items-center justify-between px-4 py-6 relative overflow-hidden select-none"
+      onClick={handleTap}
+      style={{ cursor: phase === 'entering' ? 'default' : 'pointer' }}
+    >
+      {/* ── Confetti ── */}
       <AnimatePresence>
         {confettiRarity && <ConfettiCanvas key={confettiRarity} rarity={confettiRarity} />}
       </AnimatePresence>
 
-      {/* Tela GOAT */}
+      {/* ── GoatReveal modal ── */}
       <AnimatePresence>
-        {goatIndex !== null && (
-          <GoatReveal card={cards[goatIndex]!} onComplete={handleGoatComplete} />
-        )}
-      </AnimatePresence>
-
-      {/* ── Intro: flash de abertura ── */}
-      <AnimatePresence>
-        {revealFlash && (
-          <motion.div
-            className="fixed inset-0 pointer-events-none z-50"
-            initial={{ opacity: 0.9 }}
-            animate={{ opacity: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.32, ease: 'easeOut' }}
-            style={{
-              background: `radial-gradient(ellipse 70% 50% at 50% 50%, ${pack.glowColor}, rgba(255,255,255,0.25), transparent)`,
-            }}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* ── Intro: REVELANDO... ── */}
-      <AnimatePresence>
-        {showRevealText && !showCards && (
-          <motion.div
-            className="fixed inset-0 z-40 flex flex-col items-center justify-center pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.15 }}
-            transition={{ duration: 0.2 }}
-          >
-            <motion.p
-              className="font-display tracking-[0.55em] uppercase"
-              style={{
-                fontSize: 28,
-                background: `linear-gradient(90deg, ${pack.glowColor.replace(/[\d.]+\)$/, '1)')}, #fff, ${pack.glowColor.replace(/[\d.]+\)$/, '1)')})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                filter: `drop-shadow(0 0 18px ${pack.glowColor})`,
-              }}
-              animate={{ opacity: [0.6, 1, 0.6] }}
-              transition={{ duration: 0.28, repeat: Number.POSITIVE_INFINITY }}
-            >
-              REVELANDO
-            </motion.p>
-
-            {/* Three pulsing dots */}
-            <div className="flex gap-2 mt-3">
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  className="w-1.5 h-1.5 rounded-full"
-                  style={{ background: pack.glowColor.replace(/[\d.]+\)$/, '1)') }}
-                  animate={{ opacity: [0.2, 1, 0.2], scale: [0.7, 1.2, 0.7] }}
-                  transition={{ duration: 0.5, delay: i * 0.15, repeat: Number.POSITIVE_INFINITY }}
-                />
-              ))}
-            </div>
-          </motion.div>
+        {goatActive && card.effect === 'world_cup_hero' && (
+          <GoatReveal card={card} onComplete={handleGoatDone} />
         )}
       </AnimatePresence>
 
@@ -195,125 +230,224 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
         {rarityFlood && (
           <motion.div
             className="fixed inset-0 pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25, exit: { duration: 1.2 } }}
             style={{
               background: `radial-gradient(ellipse 85% 65% at 50% 40%, ${rarityFlood}, transparent)`,
               zIndex: 5,
             }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, exit: { duration: 1.4 } }}
           />
         )}
       </AnimatePresence>
 
-      {/* ── Cena principal ── */}
-      <div className="min-h-screen flex flex-col items-center px-4 py-6 gap-6">
-        {/* Header */}
-        <motion.div
-          className="text-center"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <p className="font-display text-2xl text-parchment tracking-wider">
-            {pack.name.toUpperCase()}
-          </p>
-          <p className="text-muted text-xs mt-0.5">
-            {remaining > 0
-              ? `${remaining} carta${remaining > 1 ? 's' : ''} para revelar`
-              : '✨ Pack revelado!'}
-          </p>
-        </motion.div>
+      {/* ── Pack glow background ── */}
+      <motion.div
+        className="fixed inset-0 pointer-events-none -z-10"
+        animate={{ opacity: [0.3, 0.7, 0.3] }}
+        transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
+        style={{
+          background: `radial-gradient(ellipse 65% 45% at 50% 50%, ${pack.glowColor.replace(/[\d.]+\)$/, '0.14)')}, transparent)`,
+        }}
+      />
 
-        {/* Background glow */}
-        <motion.div
-          className="fixed inset-0 pointer-events-none -z-10"
-          animate={{ opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
-          style={{
-            background: `radial-gradient(ellipse 60% 40% at 50% 50%, ${pack.glowColor.replace(/[\d.]+\)$/, '0.12)')}, transparent)`,
-          }}
-        />
+      {/* ── Header: pack name + progress ── */}
+      <motion.div
+        className="text-center z-10 w-full"
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+      >
+        <p className="font-display text-xl text-parchment tracking-wider mb-1">
+          {pack.name.toUpperCase()}
+        </p>
 
-        {/* Grade de cartas */}
-        <div className="relative z-10 flex flex-wrap justify-center gap-4 max-w-sm">
-          {cards.map((drawn, i) => (
+        {/* Dot progress indicator */}
+        <div className="flex items-center justify-center gap-1.5 mt-2">
+          {sortedCards.map((c, i) => (
             <motion.div
-              key={drawn.card.cardId + i}
-              initial={{ opacity: 0, y: 90, scale: 0.55, rotateX: 25 }}
-              animate={
-                showCards
-                  ? { opacity: 1, y: 0, scale: 1, rotateX: 0 }
-                  : { opacity: 0, y: 90, scale: 0.55, rotateX: 25 }
-              }
-              transition={{
-                type: 'spring',
-                stiffness: 220,
-                damping: 18,
-                delay: showCards ? 0.05 + i * 0.1 : 0,
+              key={c.card.cardId + i}
+              className="rounded-full"
+              animate={{
+                width: i === currentIdx ? 20 : 6,
+                height: 6,
+                opacity: i < currentIdx ? 0.35 : i === currentIdx ? 1 : 0.2,
+                background:
+                  i < currentIdx
+                    ? '#6b7280'
+                    : i === currentIdx
+                      ? pack.borderColor.replace(/[\d.]+\)$/, '1)')
+                      : 'rgba(255,255,255,0.2)',
               }}
-            >
-              <RevealedCard
-                drawn={drawn}
-                flipped={flipped.has(i)}
-                onFlip={() => handleFlip(i)}
-                onHighRarity={handleHighRarity}
-              />
-            </motion.div>
+              transition={{ duration: 0.3 }}
+            />
           ))}
         </div>
 
-        {/* Barra de progresso */}
-        <motion.div
-          className="w-56 h-1.5 rounded-full overflow-hidden"
-          style={{ background: 'rgba(255,255,255,0.06)' }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-        >
-          <motion.div
-            className="h-full rounded-full"
-            style={{ background: `linear-gradient(90deg, ${pack.glowColor}, ${pack.borderColor})` }}
-            initial={{ width: '0%' }}
-            animate={{ width: `${(flipped.size / cards.length) * 100}%` }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-          />
-        </motion.div>
+        <p className="text-white/30 text-[10px] mt-1.5 tracking-widest uppercase">
+          {currentIdx + 1} / {totalCards}
+        </p>
+      </motion.div>
 
-        {/* Revelar Tudo / celebração final */}
-        <AnimatePresence mode="wait">
-          {remaining === 0 ? (
+      {/* ── Card area (single card, centered) ── */}
+      <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full">
+        {/* Rarity halo behind card */}
+        <AnimatePresence>
+          {(phase === 'facedown' || phase === 'revealed') && (
             <motion.div
-              key="done"
-              className="flex flex-col items-center gap-1"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-            >
-              <span style={{ fontSize: 22 }}>✨</span>
-              <p className="font-display text-sm tracking-widest text-gold">PACK REVELADO</p>
-            </motion.div>
-          ) : showRevAll && remaining > 1 ? (
-            <motion.button
-              key="revall"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              onClick={handleRevealAll}
-              className="px-6 py-2.5 rounded-xl text-xs font-bold transition-all"
+              className="absolute rounded-full pointer-events-none"
               style={{
-                background: `linear-gradient(135deg,${pack.glowColor.replace(/[\d.]+\)$/, '0.15)')},${pack.glowColor.replace(/[\d.]+\)$/, '0.08)')})`,
-                border: `1px solid ${pack.borderColor.replace(/[\d.]+\)$/, '0.5)')}`,
-                color: pack.borderColor.replace(/[\d.]+\)$/, '1)'),
-                boxShadow: `0 0 12px ${pack.glowColor.replace(/[\d.]+\)$/, '0.2)')}`,
+                width: 240,
+                height: 320,
+                background: `radial-gradient(ellipse at center, ${back.glow}, transparent 70%)`,
               }}
-            >
-              Revelar todas ({remaining}) →
-            </motion.button>
-          ) : null}
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: isHighRarity ? [0.6, 1, 0.6] : 0.7, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={
+                isHighRarity
+                  ? { duration: 1.6, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }
+                  : { duration: 0.4 }
+              }
+            />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentIdx}
+            className="relative flex flex-col items-center"
+            initial={{ y: 80, opacity: 0, scale: 0.75 }}
+            animate={{ y: 0, opacity: 1, scale: 1.35 }}
+            exit={{ y: -60, opacity: 0, scale: 0.8 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+          >
+            {/* Mystery label (shown face-down for higher rarities) */}
+            <AnimatePresence>
+              {phase === 'facedown' && label && (
+                <motion.div
+                  className="absolute -top-10 left-0 right-0 flex justify-center pointer-events-none"
+                  initial={{ opacity: 0, y: 6, scale: 0.8 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                >
+                  <span
+                    className="text-[10px] font-black uppercase tracking-[0.25em] px-3 py-1 rounded-full"
+                    style={{
+                      color: back.border,
+                      background: `${back.glow}`,
+                      border: `1px solid ${back.border}`,
+                      boxShadow: `0 0 14px ${back.glow}`,
+                    }}
+                  >
+                    {label}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* The actual card (RevealedCard handles its own flip animation) */}
+            <RevealedCard
+              drawn={card}
+              flipped={flipped}
+              onFlip={doFlip}
+              onHighRarity={() => {}}
+            />
+
+            {/* Tap hint */}
+            <AnimatePresence>
+              {phase === 'facedown' && !flipped && (
+                <motion.p
+                  className="absolute -bottom-9 text-[9px] tracking-[0.25em] uppercase pointer-events-none"
+                  style={{ color: 'rgba(255,255,255,0.25)' }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0, 0.6, 0] }}
+                  transition={{ duration: 1.6, repeat: Number.POSITIVE_INFINITY, delay: 0.8 }}
+                >
+                  toque para revelar
+                </motion.p>
+              )}
+              {phase === 'revealed' && flipped && (
+                <motion.p
+                  className="absolute -bottom-9 text-[9px] tracking-[0.25em] uppercase pointer-events-none"
+                  style={{ color: 'rgba(255,255,255,0.20)' }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0, 0.5, 0] }}
+                  transition={{
+                    duration: 1.4,
+                    repeat: Number.POSITIVE_INFINITY,
+                    delay: FLIP_ANIM_MS[card.effect] / 1000 + 0.4,
+                  }}
+                >
+                  {currentIdx < totalCards - 1 ? 'próxima →' : '✨ pack revelado'}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Suspense charging rings for legendary/ultra (face-down) */}
+        <AnimatePresence>
+          {phase === 'facedown' && (card.effect === 'legendary' || card.effect === 'ultra') && (
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  className="absolute rounded-full border"
+                  style={{
+                    width: 180 + i * 40,
+                    height: 240 + i * 55,
+                    borderColor: back.border,
+                  }}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: [0, 0.6, 0], scale: [0.9, 1.05, 0.9] }}
+                  transition={{
+                    duration: card.effect === 'ultra' ? 1.0 : 1.4,
+                    delay: i * 0.25,
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: 'easeInOut',
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </AnimatePresence>
       </div>
-    </>
+
+      {/* ── Card name revealed strip (after flip) ── */}
+      <AnimatePresence>
+        {phase === 'revealed' && flipped && (
+          <motion.div
+            className="text-center z-10 pb-2"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ delay: FLIP_ANIM_MS[card.effect] / 1000 + 0.15, duration: 0.4 }}
+          >
+            <p
+              className="font-display text-2xl tracking-wider"
+              style={{
+                background: `linear-gradient(180deg, #fff, ${back.border})`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                filter: `drop-shadow(0 0 16px ${back.glow})`,
+              }}
+            >
+              {card.card.displayName}
+            </p>
+            {card.isDuplicate && (
+              <p className="text-[10px] text-purple-400 mt-0.5">
+                duplicata · +{card.fragmentsGained} fragmentos
+              </p>
+            )}
+            <p className="text-[9px] text-white/30 mt-0.5 uppercase tracking-widest">
+              {card.card.position} · {card.card.rarityLabel}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
