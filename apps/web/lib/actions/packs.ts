@@ -108,6 +108,15 @@ async function savePityState(
 // ─── Server Action ────────────────────────────────────────────────────────────
 
 export async function openPackAction(packId: string): Promise<OpenPackResult> {
+  try {
+    return await _openPackAction(packId);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'Erro inesperado ao abrir pack.';
+    return { ok: false, error: msg };
+  }
+}
+
+async function _openPackAction(packId: string): Promise<OpenPackResult> {
   const userId = await getAuthenticatedUserId();
   if (!userId) return { ok: false, error: 'Não autenticado.' };
 
