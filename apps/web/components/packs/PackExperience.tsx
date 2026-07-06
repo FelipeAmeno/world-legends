@@ -12,6 +12,7 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { DrawnCardInfo } from '@/lib/actions';
@@ -106,6 +107,7 @@ export function PackExperience({
   initialFragments = 0,
   isWelcome = false,
 }: Props) {
+  const router = useRouter();
   const [phase, setPhase] = useState<Phase>('SELECT');
   const [pack, setPack] = useState<PackDefinitionUI | null>(null);
   const [cards, setCards] = useState<DrawnCard[]>([]);
@@ -217,7 +219,9 @@ export function PackExperience({
     setCards([]);
     setPack(null);
     setPhase('SELECT');
-  }, []);
+    // Refresh server data (balance, missions) sem bloquear o fluxo
+    router.refresh();
+  }, [router]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
 

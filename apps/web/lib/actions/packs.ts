@@ -27,7 +27,7 @@ import {
 } from '@world-legends/packs';
 import type { Pack, UserPityState } from '@world-legends/packs';
 import type { RarityCode } from '@world-legends/types';
-import { revalidatePath } from 'next/cache';
+
 
 type PackDef = { pack: Pack; price: number; nationalityFilter?: string };
 
@@ -319,8 +319,6 @@ async function _openPackAction(packId: string): Promise<OpenPackResult> {
       });
     }
   })();
-
-  revalidatePath('/', 'layout');
 
   return { ok: true, drawn, newBalance, totalFragments: pendingFragments };
 }
