@@ -109,17 +109,21 @@ async function savePityState(
 
 export async function openPackAction(packId: string): Promise<OpenPackResult> {
   try {
-    return await _openPackAction(packId);
+    const userId = await getAuthenticatedUserId();
+    if (!userId) return { ok: false, error: 'Não autenticado.' };
+    return await openPackForUser(userId, packId);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Erro inesperado ao abrir pack.';
     return { ok: false, error: msg };
   }
 }
 
-async function _openPackAction(packId: string): Promise<OpenPackResult> {
-  const userId = await getAuthenticatedUserId();
-  if (!userId) return { ok: false, error: 'Não autenticado.' };
-
+/**
+ * Núcleo de negócio de abertura de pack, parametrizado por userId — permite
+ * testes de integração reais (mesmo código, mesmos repositórios) sem depender
+ * de cookies/sessão HTTP. `openPackAction` é só o wrapper de auth + try/catch.
+ */
+export async function openPackForUser(userId: string, packId: string): Promise<OpenPackResult> {
   const packDef = PACK_DEFS[packId];
   if (!packDef) return { ok: false, error: 'Pack inválido.' };
 
@@ -146,13 +150,16 @@ async function _openPackAction(packId: string): Promise<OpenPackResult> {
 
   const catalogMap = getCollectionMap();
   const byRarity = new Map<RarityCode, string[]>();
+  const nationalityFilteredIds: string[] = [];
   for (const [cardId, card] of catalogMap) {
     // Filtro de nacionalidade para National Pack e similares
     if (packDef.nationalityFilter && card.nationality !== packDef.nationalityFilter) continue;
     const pool = byRarity.get(card.rarityCode) ?? [];
     pool.push(cardId);
     byRarity.set(card.rarityCode, pool);
+    nationalityFilteredIds.push(cardId);
   }
+  let brokeNationalityGuarantee = false;
 
   // Carregar coleção existente para detecção de duplicatas
   const existingCards = await cardRepo.findByProfile(userId);
@@ -180,13 +187,21 @@ async function _openPackAction(packId: string): Promise<OpenPackResult> {
       const notOwned = (id: string) => !ownedCardIds.has(id) && notUsedThisPack(id);
 
       const rarityPool = byRarity.get(rarityCode as RarityCode) ?? [];
-      // Primeiro tenta não-duplicatas; se não houver, aceita qualquer carta
+      // Primeiro tenta não-duplicatas; se não houver, aceita qualquer carta —
+      // sempre respeitando o filtro de nacionalidade do pack (ex: Brazil Pack)
+      // antes de considerar cartas de qualquer país como último recurso.
       const preferred = rarityPool.filter(notOwned);
       const fallback = rarityPool.filter(notUsedThisPack);
+      const nationalityFallback = nationalityFilteredIds.filter(notUsedThisPack);
       const globalFallback = [...catalogMap.keys()].filter(notUsedThisPack);
 
-      const source =
-        preferred.length > 0 ? preferred : fallback.length > 0 ? fallback : globalFallback;
+      let source = preferred.length > 0 ? preferred : fallback.length > 0 ? fallback : nationalityFallback;
+      if (source.length === 0 && packDef.nationalityFilter) {
+        // Pool da nacionalidade genuinamente esgotado para esta raridade — só
+        // então quebra a garantia de nacionalidade, e reporta (nunca em silêncio).
+        source = globalFallback;
+        if (source.length > 0) brokeNationalityGuarantee = true;
+      }
       if (source.length === 0) return null;
       const picked = source[Math.floor(Math.random() * source.length)] ?? null;
       if (picked) {
@@ -197,6 +212,15 @@ async function _openPackAction(packId: string): Promise<OpenPackResult> {
       return picked;
     },
   });
+
+  if (brokeNationalityGuarantee) {
+    crash.captureError(new Error('Pool de nacionalidade esgotado — carta de outro país sorteada'), {
+      context: 'pack_nationality_guarantee_broken',
+      userId,
+      extras: { packId, nationalityFilter: packDef.nationalityFilter },
+      level: 'warning',
+    });
+  }
 
   // ── Processar slots: classificar novo vs. duplicata ──────────────────────
 
@@ -279,12 +303,20 @@ async function _openPackAction(packId: string): Promise<OpenPackResult> {
 
   // ── Registrar abertura no banco ───────────────────────────────────────────
 
-  await packRepo.recordOpening({
+  const recordResult = await packRepo.recordOpening({
     profileId: userId,
     packId,
     rngSeed: Number.parseInt(seed, 10) || 0,
     cardIds: drawn.map((d) => d.cardId),
   });
+  if (!recordResult.ok) {
+    crash.captureError(new Error(recordResult.error.message), {
+      context: 'pack_record_opening',
+      userId,
+      extras: { packId },
+      level: 'warning',
+    });
+  }
 
   // ── Atualizar progresso de missões (background, não bloqueia) ────────────
 

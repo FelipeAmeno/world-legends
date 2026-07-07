@@ -165,7 +165,7 @@ type CardSeed = {
   traits: { trait: TraitName; tier: 1 | 2 | 3 }[];
 };
 
-const PLAYER_SEEDS: PlayerSeed[] = [
+export const PLAYER_SEEDS: PlayerSeed[] = [
   {
     id: 'pelé',
     fullName: 'Edson Arantes do Nascimento',
@@ -210,20 +210,20 @@ const PLAYER_SEEDS: PlayerSeed[] = [
     height: 183,
     bio: 'Il Fenomeno. Velocidade, técnica e frieza ímpares.',
     baseAttrs: {
-      pace: 97,
-      stamina: 82,
-      physical: 85,
-      heading: 75,
-      finishing: 97,
-      shot_power: 90,
-      passing: 78,
-      vision: 84,
-      dribbling: 94,
-      penalty_kicks: 88,
-      defending: 30,
-      composure: 93,
-      aggression: 72,
-      leadership: 80,
+      pace: 86,
+      stamina: 73,
+      physical: 76,
+      heading: 67,
+      finishing: 86,
+      shot_power: 80,
+      passing: 69,
+      vision: 75,
+      dribbling: 84,
+      penalty_kicks: 78,
+      defending: 27,
+      composure: 83,
+      aggression: 64,
+      leadership: 71,
     },
   },
   {
@@ -240,20 +240,20 @@ const PLAYER_SEEDS: PlayerSeed[] = [
     height: 181,
     bio: 'O mais habilidoso. Magia pura no Camp Nou.',
     baseAttrs: {
-      pace: 82,
-      stamina: 80,
-      physical: 75,
-      heading: 70,
-      finishing: 88,
-      shot_power: 83,
-      passing: 92,
-      vision: 95,
-      dribbling: 99,
-      penalty_kicks: 82,
-      defending: 35,
-      composure: 90,
-      aggression: 55,
-      leadership: 78,
+      pace: 69,
+      stamina: 67,
+      physical: 63,
+      heading: 59,
+      finishing: 74,
+      shot_power: 70,
+      passing: 77,
+      vision: 80,
+      dribbling: 83,
+      penalty_kicks: 69,
+      defending: 29,
+      composure: 76,
+      aggression: 46,
+      leadership: 66,
     },
   },
   {
@@ -300,20 +300,20 @@ const PLAYER_SEEDS: PlayerSeed[] = [
     height: 176,
     bio: 'O Galinho de Quintino. Maestro das cobranças de falta.',
     baseAttrs: {
-      pace: 78,
-      stamina: 80,
-      physical: 72,
-      heading: 75,
-      finishing: 90,
-      shot_power: 95,
-      passing: 92,
-      vision: 93,
-      dribbling: 90,
-      penalty_kicks: 97,
-      defending: 40,
-      composure: 91,
-      aggression: 58,
-      leadership: 88,
+      pace: 67,
+      stamina: 69,
+      physical: 62,
+      heading: 65,
+      finishing: 77,
+      shot_power: 82,
+      passing: 79,
+      vision: 80,
+      dribbling: 77,
+      penalty_kicks: 83,
+      defending: 34,
+      composure: 78,
+      aggression: 50,
+      leadership: 76,
     },
   },
   {
@@ -330,20 +330,20 @@ const PLAYER_SEEDS: PlayerSeed[] = [
     height: 169,
     bio: 'O Baixinho. 1000 gols de habilidade e instinto.',
     baseAttrs: {
-      pace: 88,
-      stamina: 74,
-      physical: 70,
-      heading: 71,
-      finishing: 97,
-      shot_power: 86,
-      passing: 76,
-      vision: 85,
-      dribbling: 92,
-      penalty_kicks: 85,
-      defending: 25,
-      composure: 95,
-      aggression: 65,
-      leadership: 80,
+      pace: 82,
+      stamina: 69,
+      physical: 65,
+      heading: 66,
+      finishing: 90,
+      shot_power: 80,
+      passing: 71,
+      vision: 79,
+      dribbling: 86,
+      penalty_kicks: 79,
+      defending: 23,
+      composure: 88,
+      aggression: 60,
+      leadership: 74,
     },
   },
   {
@@ -360,20 +360,20 @@ const PLAYER_SEEDS: PlayerSeed[] = [
     height: 168,
     bio: 'O lateral com o chute mais temido do planeta.',
     baseAttrs: {
-      pace: 93,
-      stamina: 94,
-      physical: 83,
-      heading: 68,
-      finishing: 70,
-      shot_power: 97,
-      passing: 83,
-      vision: 78,
-      dribbling: 80,
-      penalty_kicks: 72,
-      defending: 84,
-      composure: 82,
-      aggression: 78,
-      leadership: 80,
+      pace: 87,
+      stamina: 88,
+      physical: 78,
+      heading: 64,
+      finishing: 66,
+      shot_power: 91,
+      passing: 78,
+      vision: 73,
+      dribbling: 75,
+      penalty_kicks: 68,
+      defending: 79,
+      composure: 77,
+      aggression: 73,
+      leadership: 75,
     },
   },
   {
@@ -390,20 +390,20 @@ const PLAYER_SEEDS: PlayerSeed[] = [
     height: 186,
     bio: "Ballon d'Or 2007. Elegância e velocidade rara para um meia.",
     baseAttrs: {
-      pace: 86,
-      stamina: 85,
-      physical: 78,
-      heading: 72,
-      finishing: 86,
-      shot_power: 84,
-      passing: 91,
-      vision: 90,
-      dribbling: 86,
-      penalty_kicks: 80,
-      defending: 42,
-      composure: 88,
-      aggression: 55,
-      leadership: 80,
+      pace: 76,
+      stamina: 75,
+      physical: 69,
+      heading: 63,
+      finishing: 76,
+      shot_power: 74,
+      passing: 80,
+      vision: 79,
+      dribbling: 76,
+      penalty_kicks: 70,
+      defending: 37,
+      composure: 77,
+      aggression: 48,
+      leadership: 70,
     },
   },
   {
@@ -420,20 +420,20 @@ const PLAYER_SEEDS: PlayerSeed[] = [
     height: 176,
     bio: 'O Biricel. Lateral direito mais titulado da história.',
     baseAttrs: {
-      pace: 90,
-      stamina: 96,
-      physical: 82,
-      heading: 72,
-      finishing: 65,
-      shot_power: 72,
-      passing: 80,
-      vision: 75,
-      dribbling: 77,
-      penalty_kicks: 60,
-      defending: 85,
-      composure: 80,
-      aggression: 80,
-      leadership: 85,
+      pace: 86,
+      stamina: 91,
+      physical: 78,
+      heading: 68,
+      finishing: 62,
+      shot_power: 68,
+      passing: 76,
+      vision: 71,
+      dribbling: 73,
+      penalty_kicks: 57,
+      defending: 81,
+      composure: 76,
+      aggression: 76,
+      leadership: 81,
     },
   },
   {
@@ -450,20 +450,20 @@ const PLAYER_SEEDS: PlayerSeed[] = [
     height: 186,
     bio: "Ballon d'Or 1999. Campeão mundial com uma bicicleta inesquecível.",
     baseAttrs: {
-      pace: 82,
-      stamina: 80,
-      physical: 76,
-      heading: 82,
-      finishing: 90,
-      shot_power: 91,
-      passing: 85,
-      vision: 88,
-      dribbling: 88,
-      penalty_kicks: 83,
-      defending: 35,
-      composure: 88,
-      aggression: 62,
-      leadership: 76,
+      pace: 74,
+      stamina: 72,
+      physical: 68,
+      heading: 74,
+      finishing: 81,
+      shot_power: 82,
+      passing: 77,
+      vision: 79,
+      dribbling: 79,
+      penalty_kicks: 75,
+      defending: 32,
+      composure: 79,
+      aggression: 56,
+      leadership: 68,
     },
   },
   {
@@ -480,25 +480,25 @@ const PLAYER_SEEDS: PlayerSeed[] = [
     height: 186,
     bio: 'Herói do pênalti em 1994. Um dos maiores GKs da história.',
     baseAttrs: {
-      pace: 55,
-      stamina: 78,
-      physical: 80,
-      heading: 60,
-      finishing: 20,
-      shot_power: 30,
-      passing: 55,
-      vision: 60,
-      dribbling: 20,
-      penalty_kicks: 40,
-      defending: 70,
-      composure: 85,
-      aggression: 55,
-      leadership: 82,
-      gk_reflexes: 91,
-      gk_positioning: 88,
-      gk_handling: 87,
-      gk_kicking: 75,
-      gk_penalty_save: 90,
+      pace: 49,
+      stamina: 69,
+      physical: 71,
+      heading: 53,
+      finishing: 18,
+      shot_power: 27,
+      passing: 49,
+      vision: 53,
+      dribbling: 18,
+      penalty_kicks: 36,
+      defending: 62,
+      composure: 76,
+      aggression: 49,
+      leadership: 73,
+      gk_reflexes: 81,
+      gk_positioning: 78,
+      gk_handling: 77,
+      gk_kicking: 67,
+      gk_penalty_save: 80,
     },
   },
   {
@@ -515,20 +515,20 @@ const PLAYER_SEEDS: PlayerSeed[] = [
     height: 188,
     bio: 'Defensor implacável, campeão com Bayern e Internazionale.',
     baseAttrs: {
-      pace: 80,
-      stamina: 82,
-      physical: 88,
-      heading: 87,
-      finishing: 40,
-      shot_power: 55,
-      passing: 70,
-      vision: 68,
-      dribbling: 60,
-      penalty_kicks: 45,
-      defending: 88,
-      composure: 82,
-      aggression: 82,
-      leadership: 80,
+      pace: 73,
+      stamina: 75,
+      physical: 80,
+      heading: 79,
+      finishing: 36,
+      shot_power: 50,
+      passing: 64,
+      vision: 62,
+      dribbling: 55,
+      penalty_kicks: 41,
+      defending: 80,
+      composure: 75,
+      aggression: 75,
+      leadership: 73,
     },
   },
   {
@@ -545,20 +545,20 @@ const PLAYER_SEEDS: PlayerSeed[] = [
     height: 177,
     bio: 'O Rei de Roma. O melhor meia do mundo nos anos 80.',
     baseAttrs: {
-      pace: 78,
-      stamina: 85,
-      physical: 76,
-      heading: 74,
-      finishing: 82,
-      shot_power: 88,
-      passing: 91,
-      vision: 92,
-      dribbling: 86,
-      penalty_kicks: 80,
-      defending: 76,
-      composure: 88,
-      aggression: 74,
-      leadership: 86,
+      pace: 69,
+      stamina: 76,
+      physical: 68,
+      heading: 66,
+      finishing: 73,
+      shot_power: 78,
+      passing: 81,
+      vision: 82,
+      dribbling: 77,
+      penalty_kicks: 71,
+      defending: 68,
+      composure: 78,
+      aggression: 66,
+      leadership: 77,
     },
   },
   {
@@ -575,20 +575,20 @@ const PLAYER_SEEDS: PlayerSeed[] = [
     height: 192,
     bio: 'O Doutor. Médico, filósofo e artilheiro do Corinthians.',
     baseAttrs: {
-      pace: 74,
-      stamina: 80,
-      physical: 78,
-      heading: 82,
-      finishing: 82,
-      shot_power: 85,
-      passing: 90,
-      vision: 93,
-      dribbling: 83,
-      penalty_kicks: 88,
-      defending: 42,
-      composure: 90,
-      aggression: 60,
-      leadership: 92,
+      pace: 64,
+      stamina: 70,
+      physical: 68,
+      heading: 71,
+      finishing: 71,
+      shot_power: 74,
+      passing: 78,
+      vision: 81,
+      dribbling: 72,
+      penalty_kicks: 77,
+      defending: 37,
+      composure: 78,
+      aggression: 52,
+      leadership: 80,
     },
   },
   {
@@ -605,20 +605,20 @@ const PLAYER_SEEDS: PlayerSeed[] = [
     height: 176,
     bio: 'Parceiro eterno de Romário. Gol da Caxangá na Copa de 94.',
     baseAttrs: {
-      pace: 86,
-      stamina: 78,
-      physical: 72,
-      heading: 74,
-      finishing: 88,
-      shot_power: 82,
-      passing: 78,
-      vision: 80,
-      dribbling: 84,
-      penalty_kicks: 82,
-      defending: 28,
-      composure: 88,
-      aggression: 60,
-      leadership: 76,
+      pace: 79,
+      stamina: 72,
+      physical: 66,
+      heading: 68,
+      finishing: 81,
+      shot_power: 75,
+      passing: 72,
+      vision: 74,
+      dribbling: 77,
+      penalty_kicks: 75,
+      defending: 26,
+      composure: 81,
+      aggression: 55,
+      leadership: 70,
     },
   },
   {
@@ -635,25 +635,25 @@ const PLAYER_SEEDS: PlayerSeed[] = [
     height: 188,
     bio: 'O Imperador. Chute mais potente de sua geração.',
     baseAttrs: {
-      pace: 82,
-      stamina: 74,
-      physical: 92,
-      heading: 84,
-      finishing: 88,
-      shot_power: 97,
-      passing: 70,
-      vision: 74,
-      dribbling: 78,
-      penalty_kicks: 80,
-      defending: 30,
-      composure: 76,
-      aggression: 80,
-      leadership: 72,
+      pace: 73,
+      stamina: 66,
+      physical: 82,
+      heading: 75,
+      finishing: 78,
+      shot_power: 86,
+      passing: 62,
+      vision: 66,
+      dribbling: 69,
+      penalty_kicks: 71,
+      defending: 27,
+      composure: 68,
+      aggression: 71,
+      leadership: 64,
     },
   },
 ];
 
-const CARD_SEEDS: CardSeed[] = [
+export const CARD_SEEDS: CardSeed[] = [
   {
     playerId: 'pelé',
     rarity: 'world_cup_hero',
@@ -788,6 +788,27 @@ const CARD_SEEDS: CardSeed[] = [
 
 let _initialized = false;
 
+/**
+ * Qualquer falha de registro (jogador ou carta) é acumulada aqui — nunca
+ * descartada em silêncio (Sprint 16.1, Problema 2). Consumido por
+ * getCatalogRegistrationErrors() para relatórios/auditoria e reportado ao
+ * Sentry uma única vez ao final de ensureInitialized().
+ */
+export type CatalogRegistrationError = Readonly<{
+  kind: 'player' | 'card';
+  id: string;
+  rarity?: RarityCode;
+  reason: string;
+}>;
+
+const registrationErrors: CatalogRegistrationError[] = [];
+
+/** Cartas/jogadores que falharam validação ao inicializar o catálogo. Vazio = tudo ok. */
+export function getCatalogRegistrationErrors(): readonly CatalogRegistrationError[] {
+  ensureInitialized();
+  return registrationErrors;
+}
+
 function ensureInitialized() {
   if (_initialized) return;
   _initialized = true;
@@ -810,7 +831,13 @@ function ensureInitialized() {
       bioShort: seed.bio,
       sourceNotes: 'Dados históricos curados — fontes: Wikipedia, FIFA, RSSSF.',
     });
-    if (result.ok) playerCatalog.register(result.value);
+    if (result.ok) {
+      playerCatalog.register(result.value);
+    } else {
+      const reason = result.error.message;
+      console.error(`[catalog] Falha ao registrar jogador '${seed.id}': ${reason}`);
+      registrationErrors.push({ kind: 'player', id: seed.id, reason });
+    }
   }
 
   const WCH_CONTEXT: Record<string, import('@world-legends/cards').TournamentContext> = {
@@ -833,7 +860,12 @@ function ensureInitialized() {
   // Registrar cartas (seeds manuais + catálogo completo)
   for (const seed of [...CARD_SEEDS, ...ALL_CARD_SEEDS]) {
     const player = playerCatalog.findById(playerId(seed.playerId));
-    if (!player) continue;
+    if (!player) {
+      const reason = 'jogador não encontrado no catálogo (falhou registro de Player)';
+      console.error(`[catalog] Falha ao registrar carta '${seed.playerId}-${seed.rarity}': ${reason}`);
+      registrationErrors.push({ kind: 'card', id: seed.playerId, rarity: seed.rarity, reason });
+      continue;
+    }
 
     const result = createCard({
       id: cardId(`${seed.playerId}-${seed.rarity}`),
@@ -857,7 +889,26 @@ function ensureInitialized() {
         : {}),
     });
 
-    if (result.ok) cardCatalog.register(result.value);
+    if (result.ok) {
+      cardCatalog.register(result.value);
+    } else {
+      const reason = result.error.message;
+      console.error(`[catalog] Falha ao registrar carta '${seed.playerId}-${seed.rarity}': ${reason}`);
+      registrationErrors.push({ kind: 'card', id: seed.playerId, rarity: seed.rarity, reason });
+    }
+  }
+
+  if (registrationErrors.length > 0 && typeof window === 'undefined') {
+    const count = registrationErrors.length;
+    import('./crash/sentry')
+      .then(({ crash }) => {
+        crash.captureError(new Error(`Catálogo: ${count} falha(s) de registro`), {
+          context: 'catalog_registration',
+          extras: { errors: registrationErrors.slice(0, 50) },
+          level: 'error',
+        });
+      })
+      .catch(() => {});
   }
 }
 

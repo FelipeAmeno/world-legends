@@ -148,6 +148,7 @@ export type Database = {
         Row: {
           artwork_url: string | null
           attributes: Json
+          code_id: string | null
           created_at: string
           edition_code: string
           id: string
@@ -159,6 +160,7 @@ export type Database = {
         Insert: {
           artwork_url?: string | null
           attributes: Json
+          code_id?: string | null
           created_at?: string
           edition_code?: string
           id?: string
@@ -170,6 +172,7 @@ export type Database = {
         Update: {
           artwork_url?: string | null
           attributes?: Json
+          code_id?: string | null
           created_at?: string
           edition_code?: string
           id?: string
@@ -920,6 +923,7 @@ export type Database = {
           preferred_foot: string | null
           primary_position: string
           secondary_positions: string[]
+          slug: string | null
           source_notes: string | null
         }
         Insert: {
@@ -937,6 +941,7 @@ export type Database = {
           preferred_foot?: string | null
           primary_position: string
           secondary_positions?: string[]
+          slug?: string | null
           source_notes?: string | null
         }
         Update: {
@@ -954,6 +959,7 @@ export type Database = {
           preferred_foot?: string | null
           primary_position?: string
           secondary_positions?: string[]
+          slug?: string | null
           source_notes?: string | null
         }
         Relationships: []

@@ -733,18 +733,25 @@ Rare tier     → edition: 'base'         + rarity: 'rare'
 Common tier   → edition: 'base'         + rarity: 'common'
 ```
 
-### Faixas de OVR por Rarity (referência do sistema)
+### Faixas de OVR por Rarity — fonte única de verdade: `packages/cards/src/rarity/rarity.ts`
 
-Extraído de `packages/cards/fixtures/historical-cards.ts`:
+**Sprint 16.1 (Foundation Recovery, 2026-07-07):** esta tabela documentava faixas
+diferentes das realmente validadas em `createCard()` (`isOverallInRange`,
+`packages/cards/src/card/card.ts`), o que fez 243 de 574 cartas geradas serem
+rejeitadas em silêncio na inicialização do catálogo. Decisão: `rarity.ts` é a
+**única** fonte de verdade daqui em diante — é código executável, testado, e
+usado por todo o domínio (drop tables, pity). Esta tabela foi corrigida para
+espelhá-lo; qualquer geração futura de seeds deve validar contra o código, não
+contra este documento.
 
-| Rarity | OVR Mín | OVR Máx | Exemplo |
-|--------|---------|---------|---------|
-| common | 55 | 72 | Carlos Alberto common → 67 |
-| rare | 68 | 78 | — |
-| elite | 79 | 83 | Ronaldo R9 elite → 83 |
-| legendary | 83 | 90 | Pelé legendary → 89, Maradona → 90 |
-| ultra | 88 | 95 | Pelé ultra → 95, Zidane → 93 |
-| world_cup_hero | 93 | 99 | Pelé WCH → 97, Maradona WCH → 98 |
+| Rarity | OVR Mín | OVR Máx | Attr. Mult. |
+|--------|---------|---------|-------------|
+| common | 55 | 72 | 1.00x |
+| rare | 73 | 81 | 1.06x |
+| elite | 82 | 87 | 1.12x |
+| legendary | 88 | 92 | 1.18x |
+| ultra | 93 | 96 | 1.25x |
+| world_cup_hero | 95 | 99 | 1.30x |
 
 ### Players já implementados em código
 
