@@ -1546,7 +1546,7 @@ export const ALL_PLAYER_SEEDS: PlayerSeed[] = [
   {
     id: 'andrea-pirlo',
     fullName: 'Andrea Pirlo',
-    knownAs: 'L\'Architetto',
+    knownAs: "L'Architetto",
     birthYear: 1982,
     nationality: 'IT' as NationalityCode,
     primary: 'CDM' as Position,
@@ -1555,7 +1555,7 @@ export const ALL_PLAYER_SEEDS: PlayerSeed[] = [
     eraEnd: 2020,
     foot: 'right',
     height: 181,
-    bio: 'L\'Architetto.',
+    bio: "L'Architetto.",
     baseAttrs: {
       pace: 71,
       stamina: 88,
@@ -2185,7 +2185,7 @@ export const ALL_PLAYER_SEEDS: PlayerSeed[] = [
   },
   {
     id: 'samuel-etoo',
-    fullName: 'Samuel Eto\'o',
+    fullName: "Samuel Eto'o",
     knownAs: 'Le Lion',
     birthYear: 1986,
     nationality: 'CM' as NationalityCode,
@@ -3746,7 +3746,7 @@ export const ALL_PLAYER_SEEDS: PlayerSeed[] = [
   {
     id: 'antonio-cabrini',
     fullName: 'Antonio Cabrini',
-    knownAs: 'Il Bell\'Antonio',
+    knownAs: "Il Bell'Antonio",
     birthYear: 1958,
     nationality: 'IT' as NationalityCode,
     primary: 'LB' as Position,
@@ -3755,7 +3755,7 @@ export const ALL_PLAYER_SEEDS: PlayerSeed[] = [
     eraEnd: 1996,
     foot: 'left',
     height: 177,
-    bio: 'Il Bell\'Antonio.',
+    bio: "Il Bell'Antonio.",
     baseAttrs: {
       pace: 85,
       stamina: 85,
@@ -6701,7 +6701,7 @@ export const ALL_PLAYER_SEEDS: PlayerSeed[] = [
   {
     id: 'jean-tigana',
     fullName: 'Jean Tigana',
-    knownAs: 'L\'Ogre',
+    knownAs: "L'Ogre",
     birthYear: 1958,
     nationality: 'FR' as NationalityCode,
     primary: 'CM' as Position,
@@ -6710,7 +6710,7 @@ export const ALL_PLAYER_SEEDS: PlayerSeed[] = [
     eraEnd: 1996,
     foot: 'right',
     height: 179,
-    bio: 'L\'Ogre.',
+    bio: "L'Ogre.",
     baseAttrs: {
       pace: 68,
       stamina: 78,
@@ -7031,7 +7031,7 @@ export const ALL_PLAYER_SEEDS: PlayerSeed[] = [
   {
     id: 'walter-zenga',
     fullName: 'Walter Zenga',
-    knownAs: 'L\'Uomo Ragno',
+    knownAs: "L'Uomo Ragno",
     birthYear: 1966,
     nationality: 'IT' as NationalityCode,
     primary: 'GK' as Position,
@@ -7040,7 +7040,7 @@ export const ALL_PLAYER_SEEDS: PlayerSeed[] = [
     eraEnd: 2004,
     foot: 'right',
     height: 190,
-    bio: 'L\'Uomo Ragno.',
+    bio: "L'Uomo Ragno.",
     baseAttrs: {
       pace: 49,
       stamina: 66,
@@ -12565,8 +12565,8 @@ export const ALL_PLAYER_SEEDS: PlayerSeed[] = [
   },
   {
     id: 'stephane-guivarch',
-    fullName: 'Stéphane Guivarc\'h',
-    knownAs: 'Guivarc\'h',
+    fullName: "Stéphane Guivarc'h",
+    knownAs: "Guivarc'h",
     birthYear: 1974,
     nationality: 'FR' as NationalityCode,
     primary: 'ST' as Position,
@@ -12575,7 +12575,7 @@ export const ALL_PLAYER_SEEDS: PlayerSeed[] = [
     eraEnd: 2012,
     foot: 'right',
     height: 181,
-    bio: 'Guivarc\'h.',
+    bio: "Guivarc'h.",
     baseAttrs: {
       pace: 75,
       stamina: 67,
@@ -12995,7 +12995,7 @@ export const ALL_PLAYER_SEEDS: PlayerSeed[] = [
   },
   {
     id: 'ngolo-kante',
-    fullName: 'N\'Golo Kanté',
+    fullName: "N'Golo Kanté",
     knownAs: 'Kanté',
     birthYear: 1994,
     nationality: 'FR' as NationalityCode,

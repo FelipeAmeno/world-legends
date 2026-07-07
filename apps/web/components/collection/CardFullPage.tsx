@@ -1,7 +1,7 @@
 'use client';
 
-import type { CollectionCard } from '@/lib/collection-data';
 import { toggleFavoriteCardAction } from '@/lib/actions';
+import type { CollectionCard } from '@/lib/collection-data';
 import { RARITY_META } from '@/lib/hall-of-legends-data';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -42,7 +42,7 @@ const RARITY_BG: Record<string, [string, string]> = {
 
 const ATTR_LABELS: Array<{ key: string; label: string; icon: string; color: string }> = [
   { key: 'pace', label: 'Ritmo', icon: '⚡', color: '#f59e0b' },
-  { key: 'shooting', label: 'Finalização', icon: '🎯', color: '#ef4444' },
+  { key: 'finishing', label: 'Finalização', icon: '🎯', color: '#ef4444' },
   { key: 'passing', label: 'Passe', icon: '🔄', color: '#10b981' },
   { key: 'dribbling', label: 'Drible', icon: '🌀', color: '#3b82f6' },
   { key: 'defending', label: 'Defesa', icon: '🛡', color: '#6366f1' },

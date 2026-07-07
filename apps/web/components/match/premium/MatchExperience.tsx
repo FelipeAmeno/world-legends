@@ -16,6 +16,7 @@ import { playMatchAction } from '@/lib/actions';
 import { MATCH_OPPONENTS } from '@/lib/match-data';
 import { type MatchExperienceData, buildMatchExperienceData } from '@/lib/match-experience';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { LiveMatchView } from './LiveMatchView';
@@ -27,6 +28,7 @@ import { StadiumIntro } from './StadiumIntro';
 type Phase = 'SELECT' | 'LOADING' | 'INTRO' | 'PRE' | 'LIVE' | 'HT' | 'RESULT';
 
 export function MatchExperience() {
+  const router = useRouter();
   const [phase, setPhase] = useState<Phase>('SELECT');
   const [data, setData] = useState<MatchExperienceData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -86,7 +88,9 @@ export function MatchExperience() {
   const handleBack = useCallback(() => {
     setData(null);
     setPhase('SELECT');
-  }, []);
+    // Saldo/missões/XP mudaram no servidor — atualiza dados da Home sem bloquear o fluxo.
+    router.refresh();
+  }, [router]);
 
   return (
     <div

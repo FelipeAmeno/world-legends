@@ -30,7 +30,6 @@ function makePlayer(
   return {
     userCardId: 'uc-x',
     userId: 'user-001',
-    naturalPosition: overrides.naturalPosition,
     nationality: overrides.nationality ?? 'BR',
     overall: overrides.overall ?? 80,
     isInjured: overrides.isInjured ?? false,
@@ -220,7 +219,7 @@ describe('simulateSquadMatch', () => {
           mvpUserCardId: null,
           weather: 'ensolarado',
           refereeProfile: 'normal',
-          seed: new Uint32Array([0]),
+          seed: { value: '0' },
           engineVersion: '1',
         }),
       ).toBe('home');
@@ -235,7 +234,7 @@ describe('simulateSquadMatch', () => {
           mvpUserCardId: null,
           weather: 'ensolarado',
           refereeProfile: 'normal',
-          seed: new Uint32Array([0]),
+          seed: { value: '0' },
           engineVersion: '1',
         }),
       ).toBe('draw');

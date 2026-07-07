@@ -22,7 +22,7 @@ const ATTR_LABELS: Array<{
   sector: 'atk' | 'mid' | 'def' | 'gk';
 }> = [
   { key: 'pace', label: 'Ritmo', sector: 'atk' },
-  { key: 'shooting', label: 'Finalização', sector: 'atk' },
+  { key: 'finishing', label: 'Finalização', sector: 'atk' },
   { key: 'passing', label: 'Passe', sector: 'mid' },
   { key: 'dribbling', label: 'Drible', sector: 'mid' },
   { key: 'defending', label: 'Defesa', sector: 'def' },

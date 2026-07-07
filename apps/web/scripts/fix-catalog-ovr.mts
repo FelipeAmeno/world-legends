@@ -12,20 +12,40 @@
  * unresolved: [...] } — nenhuma falha é descartada silenciosamente.
  */
 import {
+  type BaseAttributeSet,
+  cardId,
   createCard,
   createPlayer,
-  cardId,
   playerId,
-  type BaseAttributeSet,
 } from '@world-legends/cards';
 import type { RarityCode } from '@world-legends/types';
-import { ALL_PLAYER_SEEDS, ALL_CARD_SEEDS, type PlayerSeed, type CardSeed } from '../lib/catalog-seeds.ts';
+import {
+  ALL_CARD_SEEDS,
+  ALL_PLAYER_SEEDS,
+  type CardSeed,
+  type PlayerSeed,
+} from '../lib/catalog-seeds.ts';
 
 const DEFAULT_ATTRS: BaseAttributeSet = {
-  pace: 70, stamina: 70, physical: 70, heading: 60, finishing: 60, shot_power: 60,
-  passing: 65, vision: 65, dribbling: 65, penalty_kicks: 60, defending: 40,
-  composure: 70, aggression: 60, leadership: 60,
-  gk_reflexes: 20, gk_positioning: 20, gk_handling: 20, gk_kicking: 20, gk_penalty_save: 20,
+  pace: 70,
+  stamina: 70,
+  physical: 70,
+  heading: 60,
+  finishing: 60,
+  shot_power: 60,
+  passing: 65,
+  vision: 65,
+  dribbling: 65,
+  penalty_kicks: 60,
+  defending: 40,
+  composure: 70,
+  aggression: 60,
+  leadership: 60,
+  gk_reflexes: 20,
+  gk_positioning: 20,
+  gk_handling: 20,
+  gk_kicking: 20,
+  gk_penalty_save: 20,
 };
 
 function fullAttrs(partial: Partial<BaseAttributeSet>): BaseAttributeSet {
@@ -36,7 +56,11 @@ function clamp(v: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, v));
 }
 
-function tryCard(player: ReturnType<typeof createPlayer>, seed: CardSeed, fullBaseAttrs: BaseAttributeSet) {
+function tryCard(
+  player: ReturnType<typeof createPlayer>,
+  seed: CardSeed,
+  fullBaseAttrs: BaseAttributeSet,
+) {
   if (!player.ok) return { ok: false as const, error: 'player-invalid' };
   return createCard({
     id: cardId(`${seed.playerId}-${seed.rarity}`),
@@ -90,7 +114,11 @@ for (const cardSeed of ALL_CARD_SEEDS) {
 
   const pseed = playerById.get(cardSeed.playerId);
   if (!pseed) {
-    unresolved.push({ id: cardSeed.playerId, rarity: cardSeed.rarity, reason: 'player-seed-not-found' });
+    unresolved.push({
+      id: cardSeed.playerId,
+      rarity: cardSeed.rarity,
+      reason: 'player-seed-not-found',
+    });
     continue;
   }
 
@@ -110,7 +138,11 @@ for (const cardSeed of ALL_CARD_SEEDS) {
       if (k <= 0.2 || k >= 3) continue;
       const scaledPartial: Partial<BaseAttributeSet> = {};
       for (const [key, val] of Object.entries(pseed.baseAttrs)) {
-        scaledPartial[key as keyof BaseAttributeSet] = clamp(Math.round((val as number) * k), 1, 99);
+        scaledPartial[key as keyof BaseAttributeSet] = clamp(
+          Math.round((val as number) * k),
+          1,
+          99,
+        );
       }
       const candidateFull = fullAttrs(scaledPartial);
       const result = tryCard(player, cardSeed, candidateFull);

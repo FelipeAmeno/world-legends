@@ -245,7 +245,14 @@ export const STARTER_PACK: Pack = Object.freeze({
   cardsPerPack: 5,
   dropTable: Object.freeze({
     slots: [
-      guaranteedSlot('rare', { common: 30, rare: 45, elite: 20, legendary: 4, ultra: 1, world_cup_hero: 0 }),
+      guaranteedSlot('rare', {
+        common: 30,
+        rare: 45,
+        elite: 20,
+        legendary: 4,
+        ultra: 1,
+        world_cup_hero: 0,
+      }),
       freeSlot({ common: 65, rare: 28, elite: 6, legendary: 1, ultra: 0, world_cup_hero: 0 }),
       freeSlot({ common: 65, rare: 28, elite: 6, legendary: 1, ultra: 0, world_cup_hero: 0 }),
       freeSlot({ common: 65, rare: 28, elite: 6, legendary: 1, ultra: 0, world_cup_hero: 0 }),
@@ -267,7 +274,14 @@ export const NATIONAL_PACK: Pack = Object.freeze({
   cardsPerPack: 5,
   dropTable: Object.freeze({
     slots: [
-      guaranteedSlot('elite', { common: 0, rare: 0, elite: 70, legendary: 25, ultra: 5, world_cup_hero: 0 }),
+      guaranteedSlot('elite', {
+        common: 0,
+        rare: 0,
+        elite: 70,
+        legendary: 25,
+        ultra: 5,
+        world_cup_hero: 0,
+      }),
       freeSlot({ common: 40, rare: 35, elite: 18, legendary: 6, ultra: 1, world_cup_hero: 0 }),
       freeSlot({ common: 40, rare: 35, elite: 18, legendary: 6, ultra: 1, world_cup_hero: 0 }),
       freeSlot({ common: 40, rare: 35, elite: 18, legendary: 6, ultra: 1, world_cup_hero: 0 }),

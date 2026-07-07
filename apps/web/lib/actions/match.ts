@@ -7,22 +7,11 @@ import {
   setAchievementValueInternal,
 } from '@/lib/actions/missions';
 import { crash } from '@/lib/crash/sentry';
-import type { MatchDisplay, MatchOpponent } from '@/lib/match-data';
 import { MATCH_OPPONENTS, runMatch } from '@/lib/match-data';
 import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
 import { getUserActiveSquad, getUserCollection } from '@/lib/server/game-data';
 import { SupabaseMatchRepository, SupabaseProfileRepository } from '@world-legends/db';
-import { revalidatePath } from 'next/cache';
-
-export type PlayMatchResult =
-  | {
-      ok: true;
-      display: MatchDisplay;
-      opponent: MatchOpponent;
-      matchId: string;
-      newBalance: number;
-    }
-  | { ok: false; error: string };
+import type { PlayMatchResult } from './match.types';
 
 /**
  * Simula uma partida com o squad ativo do usuário, persiste e credita recompensas.
@@ -126,6 +115,7 @@ export async function playMatchAction(opponentId: string): Promise<PlayMatchResu
 
       if (outcome === 'home') {
         await incrementMissionProgressInternal(userId, 'wins', 1);
+        await incrementMissionProgressInternal(userId, 'winStreak', 1);
       } else if (outcome === 'away') {
         await incrementMissionProgressInternal(userId, 'losses', 1);
         await setAchievementValueInternal(userId, 'achiev_30_unbeaten', 0);
@@ -150,8 +140,6 @@ export async function playMatchAction(opponentId: string): Promise<PlayMatchResu
       });
     }
   })();
-
-  revalidatePath('/', 'layout');
 
   return { ok: true, display, opponent, matchId, newBalance };
 }

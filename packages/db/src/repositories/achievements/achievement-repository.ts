@@ -62,9 +62,7 @@ export class SupabaseAchievementRepository implements IAchievementRepository {
     return Ok((data ?? []).map(toRow));
   }
 
-  async insertTrophy(
-    input: InsertPlayerTrophyInput,
-  ): Promise<Result<PlayerTrophyRow, DbError>> {
+  async insertTrophy(input: InsertPlayerTrophyInput): Promise<Result<PlayerTrophyRow, DbError>> {
     const { data, error } = await this.db
       .from('player_trophies')
       .insert({ profile_id: input.profileId, achievement_id: input.achievementId })
@@ -84,7 +82,7 @@ export class SupabaseAchievementRepository implements IAchievementRepository {
     }));
     const { data, error } = await this.db
       .from('player_trophies')
-      .insert(rows as typeof rows[number][])
+      .insert(rows as (typeof rows)[number][])
       .select('*');
     if (error) return Err(dbErr(error));
     return Ok((data ?? []).map(toRow));

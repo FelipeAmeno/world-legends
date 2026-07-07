@@ -15,8 +15,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { DrawnCardInfo } from '@/lib/actions';
-import { openPackAction } from '@/lib/actions';
+import { openPackAction } from '@/lib/actions/packs';
+import type { DrawnCardInfo } from '@/lib/actions/packs.types';
 import type { CollectionCard } from '@/lib/collection-data';
 import { getCollection } from '@/lib/collection-data';
 import { vibrate } from '@/lib/haptics';

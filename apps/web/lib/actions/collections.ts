@@ -2,7 +2,6 @@
 
 import {
   COLLECTION_SETS,
-  type CollectionSetDef,
   detectNewlyCompletedSets,
   getSetByCode,
   setCompletionPct,
@@ -10,29 +9,12 @@ import {
 import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
 import type { CollectionSetRow } from '@world-legends/db';
 import { SupabaseCollectionRepository, SupabaseProfileRepository } from '@world-legends/db';
-
-// ─── Tipos públicos ───────────────────────────────────────────────────────────
-
-export type CollectionSetView = Readonly<{
-  def: CollectionSetDef;
-  ownedCardIds: readonly string[];
-  completionPct: number;
-  isCompleted: boolean;
-  isClaimed: boolean;
-}>;
-
-export type CollectionsData = Readonly<{
-  views: readonly CollectionSetView[];
-  totalCompleted: number;
-}>;
-
-export type ClaimCollectionResult =
-  | { ok: true; creditsEarned: number; newBalance: number }
-  | { ok: false; error: string };
-
-export type CheckCollectionResult = Readonly<{
-  newlyCompleted: readonly CollectionSetDef[];
-}>;
+import type {
+  CheckCollectionResult,
+  ClaimCollectionResult,
+  CollectionSetView,
+  CollectionsData,
+} from './collections.types';
 
 // ─── Actions ─────────────────────────────────────────────────────────────────
 

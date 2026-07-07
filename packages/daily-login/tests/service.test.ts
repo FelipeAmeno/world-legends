@@ -84,10 +84,12 @@ describe('DailyLoginService.computeState', () => {
 // ── processClaim ───────────────────────────────────────────────────────────────
 
 describe('DailyLoginService.processClaim', () => {
-  function makeState(overrides: Partial<{
-    canClaimToday: boolean;
-    streakBroken: boolean;
-  }> = {}): ReturnType<DailyLoginService['computeState']> {
+  function makeState(
+    overrides: Partial<{
+      canClaimToday: boolean;
+      streakBroken: boolean;
+    }> = {},
+  ): ReturnType<DailyLoginService['computeState']> {
     return {
       currentDay: 1,
       streakDays: 0,

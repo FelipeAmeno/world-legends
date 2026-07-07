@@ -38,7 +38,7 @@ describe('CardMasteryService.computeXpGain', () => {
   it('match_played gives 10 XP', () => {
     const result = svc.computeXpGain(['match_played']);
     expect(result.totalXp).toBe(10);
-    expect(result.entries[0]!.amount).toBe(10);
+    expect(result.entries[0]?.amount).toBe(10);
   });
 
   it('match_win gives 15 XP', () => {

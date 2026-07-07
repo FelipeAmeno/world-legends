@@ -9,28 +9,49 @@
 // ─── Posições (doc 09 §1, doc 02 DDL players) ────────────────────────────────
 export type Position =
   | 'GK'
-  | 'CB' | 'LB' | 'RB' | 'LWB' | 'RWB'
-  | 'CDM' | 'CM' | 'CAM' | 'LM' | 'RM'
-  | 'LW' | 'RW' | 'CF' | 'ST';
+  | 'CB'
+  | 'LB'
+  | 'RB'
+  | 'LWB'
+  | 'RWB'
+  | 'CDM'
+  | 'CM'
+  | 'CAM'
+  | 'LM'
+  | 'RM'
+  | 'LW'
+  | 'RW'
+  | 'CF'
+  | 'ST';
 
 export const ALL_POSITIONS: readonly Position[] = [
   'GK',
-  'CB', 'LB', 'RB', 'LWB', 'RWB',
-  'CDM', 'CM', 'CAM', 'LM', 'RM',
-  'LW', 'RW', 'CF', 'ST',
+  'CB',
+  'LB',
+  'RB',
+  'LWB',
+  'RWB',
+  'CDM',
+  'CM',
+  'CAM',
+  'LM',
+  'RM',
+  'LW',
+  'RW',
+  'CF',
+  'ST',
 ];
 
 // ─── Raridades (doc 10 §4) ────────────────────────────────────────────────────
-export type RarityCode =
-  | 'common'
-  | 'rare'
-  | 'elite'
-  | 'legendary'
-  | 'ultra'
-  | 'world_cup_hero';
+export type RarityCode = 'common' | 'rare' | 'elite' | 'legendary' | 'ultra' | 'world_cup_hero';
 
 export const ALL_RARITY_CODES: readonly RarityCode[] = [
-  'common', 'rare', 'elite', 'legendary', 'ultra', 'world_cup_hero',
+  'common',
+  'rare',
+  'elite',
+  'legendary',
+  'ultra',
+  'world_cup_hero',
 ];
 
 // ─── Edições (doc 10 §2, §9, §10; doc 17 §5) ─────────────────────────────────

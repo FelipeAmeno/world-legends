@@ -133,28 +133,26 @@ describe('checkCondition — sets_completed', () => {
 describe('checkCondition — gameplay conditions', () => {
   it('matches_played: returns true when count meets min', () => {
     expect(
-      service.checkCondition({ type: 'matches_played', min: 10 }, emptyInput({ matchesPlayed: 10 })),
+      service.checkCondition(
+        { type: 'matches_played', min: 10 },
+        emptyInput({ matchesPlayed: 10 }),
+      ),
     ).toBe(true);
   });
 
   it('wins: returns true when wins meets min', () => {
-    expect(
-      service.checkCondition({ type: 'wins', min: 50 }, emptyInput({ wins: 51 })),
-    ).toBe(true);
+    expect(service.checkCondition({ type: 'wins', min: 50 }, emptyInput({ wins: 51 }))).toBe(true);
   });
 
   it('goals: returns true when goals meets min', () => {
-    expect(
-      service.checkCondition({ type: 'goals', min: 500 }, emptyInput({ goals: 500 })),
-    ).toBe(true);
+    expect(service.checkCondition({ type: 'goals', min: 500 }, emptyInput({ goals: 500 }))).toBe(
+      true,
+    );
   });
 
   it('win_streak: returns true when currentWinStreak meets min', () => {
     expect(
-      service.checkCondition(
-        { type: 'win_streak', min: 10 },
-        emptyInput({ currentWinStreak: 10 }),
-      ),
+      service.checkCondition({ type: 'win_streak', min: 10 }, emptyInput({ currentWinStreak: 10 })),
     ).toBe(true);
   });
 });
@@ -221,18 +219,18 @@ describe('buildViews', () => {
   it('returns correct locked/unlocked state for each def', () => {
     const defs = ACHIEVEMENT_CATALOG.slice(0, 3);
     const now = new Date();
-    const unlockedMap = new Map([
-      [defs[0]!.id, { unlockedAt: now, rewardClaimed: true }],
-    ]);
+    const first = defs[0];
+    if (!first) throw new Error('expected at least one achievement def');
+    const unlockedMap = new Map([[first.id, { unlockedAt: now, rewardClaimed: true }]]);
     const views = service.buildViews(defs, unlockedMap);
 
     expect(views.length).toBe(3);
-    expect(views[0]!.unlocked).toBe(true);
-    expect(views[0]!.unlockedAt).toBe(now);
-    expect(views[0]!.rewardClaimed).toBe(true);
-    expect(views[1]!.unlocked).toBe(false);
-    expect(views[1]!.unlockedAt).toBeNull();
-    expect(views[1]!.rewardClaimed).toBe(false);
+    expect(views[0]?.unlocked).toBe(true);
+    expect(views[0]?.unlockedAt).toBe(now);
+    expect(views[0]?.rewardClaimed).toBe(true);
+    expect(views[1]?.unlocked).toBe(false);
+    expect(views[1]?.unlockedAt).toBeNull();
+    expect(views[1]?.rewardClaimed).toBe(false);
   });
 });
 

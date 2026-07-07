@@ -27,7 +27,7 @@ import {
 } from '@world-legends/packs';
 import type { Pack, UserPityState } from '@world-legends/packs';
 import type { RarityCode } from '@world-legends/types';
-
+import type { DrawnCardInfo, OpenPackResult } from './packs.types';
 
 type PackDef = { pack: Pack; price: number; nationalityFilter?: string };
 
@@ -49,18 +49,6 @@ const RARITY_ORDER: Record<RarityCode, number> = {
   ultra: 4,
   world_cup_hero: 5,
 };
-
-export type DrawnCardInfo = {
-  cardId: string;
-  userCardId: string;
-  rarityCode: RarityCode;
-  isDuplicate: boolean;
-  fragmentsGained: number;
-};
-
-export type OpenPackResult =
-  | { ok: true; drawn: DrawnCardInfo[]; newBalance: number; totalFragments: number }
-  | { ok: false; error: string };
 
 // ─── Pity state helpers ───────────────────────────────────────────────────────
 
@@ -195,7 +183,8 @@ export async function openPackForUser(userId: string, packId: string): Promise<O
       const nationalityFallback = nationalityFilteredIds.filter(notUsedThisPack);
       const globalFallback = [...catalogMap.keys()].filter(notUsedThisPack);
 
-      let source = preferred.length > 0 ? preferred : fallback.length > 0 ? fallback : nationalityFallback;
+      let source =
+        preferred.length > 0 ? preferred : fallback.length > 0 ? fallback : nationalityFallback;
       if (source.length === 0 && packDef.nationalityFilter) {
         // Pool da nacionalidade genuinamente esgotado para esta raridade — só
         // então quebra a garantia de nacionalidade, e reporta (nunca em silêncio).

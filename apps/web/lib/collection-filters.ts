@@ -253,8 +253,8 @@ export function compareCards(cards: CollectionCard[]): CardDiff[] {
 
   return [
     numField('OVR Geral', (c) => c.overall),
-    numField('Físico', (c) => c.attributes.pace),
-    numField('Finalização', (c) => c.attributes.shooting),
+    numField('Ritmo', (c) => c.attributes.pace),
+    numField('Finalização', (c) => c.attributes.finishing),
     numField('Passe', (c) => c.attributes.passing),
     numField('Drible', (c) => c.attributes.dribbling),
     numField('Defesa', (c) => c.attributes.defending),

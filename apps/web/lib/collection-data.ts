@@ -76,20 +76,72 @@ export type CollectionCard = Readonly<{
 // ─── Mapa de bandeiras ────────────────────────────────────────────────────────
 
 const FLAG_MAP: Record<string, string> = {
-  BR:'🇧🇷', AR:'🇦🇷', DE:'🇩🇪', FR:'🇫🇷', IT:'🇮🇹',
-  ES:'🇪🇸', NL:'🇳🇱', PT:'🇵🇹', UY:'🇺🇾', CR:'🇨🇷',
-  EN:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', GB:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', HR:'🇭🇷', DK:'🇩🇰',
-  HU:'🇭🇺', PL:'🇵🇱', BG:'🇧🇬', CM:'🇨🇲', SU:'🪆',
-  RU:'🇷🇺', YU:'🏳', SE:'🇸🇪', RO:'🇷🇴', CO:'🇨🇴',
-  CZ:'🇨🇿', CS:'🏳', NG:'🇳🇬', GH:'🇬🇭', MX:'🇲🇽',
-  CL:'🇨🇱', AT:'🇦🇹', CI:'🇨🇮', SN:'🇸🇳', KR:'🇰🇷',
-  JP:'🇯🇵', BE:'🇧🇪', SC:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', IE:'🇮🇪', WA:'🏴󠁧󠁢󠁷󠁬󠁳󠁿',
-  NI:'🇬🇧', TR:'🇹🇷', GR:'🇬🇷', CH:'🇨🇭', RS:'🇷🇸',
-  DZ:'🇩🇿', MA:'🇲🇦', US:'🇺🇸', PE:'🇵🇪', PY:'🇵🇾',
-  EC:'🇪🇨', AU:'🇦🇺', IS:'🇮🇸', EG:'🇪🇬', IL:'🇮🇱',
-  UA:'🇺🇦', ML:'🇲🇱', AL:'🇦🇱', BA:'🇧🇦', SK:'🇸🇰',
-  CA:'🇨🇦', SA:'🇸🇦', QA:'🇶🇦', CD:'🇨🇩', PF:'🇵🇫',
-  JM:'🇯🇲', CU:'🇨🇺',
+  BR: '🇧🇷',
+  AR: '🇦🇷',
+  DE: '🇩🇪',
+  FR: '🇫🇷',
+  IT: '🇮🇹',
+  ES: '🇪🇸',
+  NL: '🇳🇱',
+  PT: '🇵🇹',
+  UY: '🇺🇾',
+  CR: '🇨🇷',
+  EN: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+  GB: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+  HR: '🇭🇷',
+  DK: '🇩🇰',
+  HU: '🇭🇺',
+  PL: '🇵🇱',
+  BG: '🇧🇬',
+  CM: '🇨🇲',
+  SU: '🪆',
+  RU: '🇷🇺',
+  YU: '🏳',
+  SE: '🇸🇪',
+  RO: '🇷🇴',
+  CO: '🇨🇴',
+  CZ: '🇨🇿',
+  CS: '🏳',
+  NG: '🇳🇬',
+  GH: '🇬🇭',
+  MX: '🇲🇽',
+  CL: '🇨🇱',
+  AT: '🇦🇹',
+  CI: '🇨🇮',
+  SN: '🇸🇳',
+  KR: '🇰🇷',
+  JP: '🇯🇵',
+  BE: '🇧🇪',
+  SC: '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+  IE: '🇮🇪',
+  WA: '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+  NI: '🇬🇧',
+  TR: '🇹🇷',
+  GR: '🇬🇷',
+  CH: '🇨🇭',
+  RS: '🇷🇸',
+  DZ: '🇩🇿',
+  MA: '🇲🇦',
+  US: '🇺🇸',
+  PE: '🇵🇪',
+  PY: '🇵🇾',
+  EC: '🇪🇨',
+  AU: '🇦🇺',
+  IS: '🇮🇸',
+  EG: '🇪🇬',
+  IL: '🇮🇱',
+  UA: '🇺🇦',
+  ML: '🇲🇱',
+  AL: '🇦🇱',
+  BA: '🇧🇦',
+  SK: '🇸🇰',
+  CA: '🇨🇦',
+  SA: '🇸🇦',
+  QA: '🇶🇦',
+  CD: '🇨🇩',
+  PF: '🇵🇫',
+  JM: '🇯🇲',
+  CU: '🇨🇺',
 };
 
 function flag(code: string): string {
@@ -862,7 +914,9 @@ function ensureInitialized() {
     const player = playerCatalog.findById(playerId(seed.playerId));
     if (!player) {
       const reason = 'jogador não encontrado no catálogo (falhou registro de Player)';
-      console.error(`[catalog] Falha ao registrar carta '${seed.playerId}-${seed.rarity}': ${reason}`);
+      console.error(
+        `[catalog] Falha ao registrar carta '${seed.playerId}-${seed.rarity}': ${reason}`,
+      );
       registrationErrors.push({ kind: 'card', id: seed.playerId, rarity: seed.rarity, reason });
       continue;
     }
@@ -893,7 +947,9 @@ function ensureInitialized() {
       cardCatalog.register(result.value);
     } else {
       const reason = result.error.message;
-      console.error(`[catalog] Falha ao registrar carta '${seed.playerId}-${seed.rarity}': ${reason}`);
+      console.error(
+        `[catalog] Falha ao registrar carta '${seed.playerId}-${seed.rarity}': ${reason}`,
+      );
       registrationErrors.push({ kind: 'card', id: seed.playerId, rarity: seed.rarity, reason });
     }
   }

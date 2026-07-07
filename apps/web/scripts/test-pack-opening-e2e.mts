@@ -33,9 +33,19 @@ async function main() {
   const createdUserCardIds: string[] = [];
 
   for (const packId of PACKS) {
-    const { count: openingsBefore } = await db.from('pack_openings').select('*', { count: 'exact', head: true }).eq('profile_id', userId);
-    const { count: cardsBefore } = await db.from('user_cards').select('*', { count: 'exact', head: true }).eq('profile_id', userId);
-    const { data: profBefore } = await db.from('profiles').select('soft_currency, fragment_balance').eq('id', userId).single();
+    const { count: openingsBefore } = await db
+      .from('pack_openings')
+      .select('*', { count: 'exact', head: true })
+      .eq('profile_id', userId);
+    const { count: cardsBefore } = await db
+      .from('user_cards')
+      .select('*', { count: 'exact', head: true })
+      .eq('profile_id', userId);
+    const { data: profBefore } = await db
+      .from('profiles')
+      .select('soft_currency, fragment_balance')
+      .eq('id', userId)
+      .single();
 
     const result = await openPackForUser(userId, packId);
     if (result.ok) {
@@ -44,9 +54,19 @@ async function main() {
       }
     }
 
-    const { count: openingsAfter } = await db.from('pack_openings').select('*', { count: 'exact', head: true }).eq('profile_id', userId);
-    const { count: cardsAfter } = await db.from('user_cards').select('*', { count: 'exact', head: true }).eq('profile_id', userId);
-    const { data: profAfter } = await db.from('profiles').select('soft_currency, fragment_balance').eq('id', userId).single();
+    const { count: openingsAfter } = await db
+      .from('pack_openings')
+      .select('*', { count: 'exact', head: true })
+      .eq('profile_id', userId);
+    const { count: cardsAfter } = await db
+      .from('user_cards')
+      .select('*', { count: 'exact', head: true })
+      .eq('profile_id', userId);
+    const { data: profAfter } = await db
+      .from('profiles')
+      .select('soft_currency, fragment_balance')
+      .eq('id', userId)
+      .single();
 
     results.push({
       packId,
@@ -65,7 +85,10 @@ async function main() {
   }
 
   // Restaura saldo original do perfil de teste
-  await db.from('profiles').update({ soft_currency: originalBalance, fragment_balance: originalFragments }).eq('id', userId);
+  await db
+    .from('profiles')
+    .update({ soft_currency: originalBalance, fragment_balance: originalFragments })
+    .eq('id', userId);
   // Remove SOMENTE as cartas criadas por este teste (IDs exatos retornados pela
   // própria action) para não poluir a coleção do perfil de teste. pack_openings
   // fica como registro de auditoria — é exatamente o que estamos provando existir.
@@ -73,7 +96,13 @@ async function main() {
     await db.from('user_cards').delete().in('id', createdUserCardIds);
   }
 
-  console.log(JSON.stringify({ testProfile: TEST_USERNAME, createdUserCardIdsRemoved: createdUserCardIds.length, results }, null, 2));
+  console.log(
+    JSON.stringify(
+      { testProfile: TEST_USERNAME, createdUserCardIdsRemoved: createdUserCardIds.length, results },
+      null,
+      2,
+    ),
+  );
 }
 
 main();

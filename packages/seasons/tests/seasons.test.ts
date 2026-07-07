@@ -163,7 +163,7 @@ describe('TC-SEA-16..20: advanceRound', () => {
     const r2 = okv(advanceRound(okv(recordRoundResult(s, 2, 1)), 42));
     expect(r2.currentRound).toBe(2);
     expect(r2.rounds[0]?.completed).toBe(true);
-    const aiM = r2.rounds[0]?.matches.filter(
+    const aiM = (r2.rounds[0]?.matches ?? []).filter(
       (m) => m.homeTeamId !== r2.userTeamId && m.awayTeamId !== r2.userTeamId,
     );
     expect(aiM.every((m) => m.status === 'played')).toBe(true);
@@ -217,7 +217,7 @@ describe('TC-SEA-21..27: calculateStandings', () => {
     const s = simulateFullSeason(mkSeason(), 42);
     const st = calculateStandings(s);
     for (let i = 1; i < st.length; i++) {
-      expect(st[i - 1]?.points).toBeGreaterThanOrEqual(st[i]?.points);
+      expect(st[i - 1]?.points ?? 0).toBeGreaterThanOrEqual(st[i]?.points ?? 0);
     }
   });
   it('TC-SEA-26: positions corretas 1..8', () => {
@@ -392,6 +392,6 @@ describe('TC-SEA-46..50: Integracao', () => {
       s = okv(advanceRound(okv(recordRoundResult(s, 1, 1)), i * 77 + 99));
     expect(isSeasonComplete(s)).toBe(true);
     expect(getChampion(s)).not.toBeNull();
-    expect(getRewardsForPosition(getUserStanding(s)?.position).credits).toBeGreaterThan(0);
+    expect(getRewardsForPosition(getUserStanding(s)?.position ?? 0).credits).toBeGreaterThan(0);
   });
 });

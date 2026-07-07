@@ -75,9 +75,7 @@ function computeLevel(xp: number): number {
 export class SupabaseCardMasteryRepository implements ICardMasteryRepository {
   constructor(private readonly db: DbClient) {}
 
-  async findAllByProfile(
-    profileId: string,
-  ): Promise<Result<readonly CardMasteryRow[], DbError>> {
+  async findAllByProfile(profileId: string): Promise<Result<readonly CardMasteryRow[], DbError>> {
     const { data, error } = await this.db
       .from('card_mastery')
       .select('*')

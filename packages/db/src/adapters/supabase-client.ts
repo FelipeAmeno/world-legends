@@ -10,15 +10,12 @@
  * O cliente é passado aos repositórios via injeção — nunca um singleton
  * global importado por domínio.
  */
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { type SupabaseClient, createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 
 export type DbClient = SupabaseClient<Database>;
 
-export function createDbClient(
-  supabaseUrl: string,
-  supabaseKey: string,
-): DbClient {
+export function createDbClient(supabaseUrl: string, supabaseKey: string): DbClient {
   return createClient<Database>(supabaseUrl, supabaseKey, {
     auth: {
       autoRefreshToken: true,
@@ -32,10 +29,7 @@ export function createDbClient(
  * contornar RLS (simulação de partida, entrega de recompensas, etc.).
  * NUNCA exposto ao client-side ou a packages de domínio.
  */
-export function createServiceClient(
-  supabaseUrl: string,
-  serviceRoleKey: string,
-): DbClient {
+export function createServiceClient(supabaseUrl: string, serviceRoleKey: string): DbClient {
   return createClient<Database>(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,

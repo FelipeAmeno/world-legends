@@ -163,7 +163,12 @@ export class SupabaseMissionRepository implements IMissionRepository {
 
     const { data, error } = await this.db
       .from('mission_progress')
-      .insert({ profile_id: profileId, mission_id: missionId, period_key: periodKey, current_value: delta })
+      .insert({
+        profile_id: profileId,
+        mission_id: missionId,
+        period_key: periodKey,
+        current_value: delta,
+      })
       .select('*')
       .single();
     if (error || !data) return Err(dbErr(error));
@@ -184,7 +189,8 @@ export class SupabaseMissionRepository implements IMissionRepository {
       .is('claimed_at', null)
       .select('*')
       .single();
-    if (error || !data) return Err(dbErr(error ?? { message: 'Missão já coletada ou não encontrada.' }));
+    if (error || !data)
+      return Err(dbErr(error ?? { message: 'Missão já coletada ou não encontrada.' }));
     return Ok(toMissionProgress(data));
   }
 

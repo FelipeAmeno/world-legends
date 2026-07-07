@@ -5,24 +5,9 @@ import {
   type ClaimDayPayload,
   DAILY_SCHEDULE,
   DailyLoginService,
-  type DailyLoginState,
-  type DayConfig,
 } from '@world-legends/daily-login';
 import { SupabaseDailyLoginRepository, SupabaseProfileRepository } from '@world-legends/db';
-
-// ─── Tipos públicos ───────────────────────────────────────────────────────────
-
-export type { DailyLoginState, DayConfig, ClaimDayPayload };
-export type { DailyReward, DailyRewardKind } from '@world-legends/daily-login';
-
-export type DailyLoginView = Readonly<{
-  state: DailyLoginState;
-  schedule: readonly DayConfig[];
-}>;
-
-export type ClaimDailyLoginResult =
-  | { ok: true; payload: ClaimDayPayload; newBalance: number }
-  | { ok: false; error: string };
+import type { ClaimDailyLoginResult, DailyLoginView } from './daily-login.types';
 
 // ─── Service singleton ────────────────────────────────────────────────────────
 

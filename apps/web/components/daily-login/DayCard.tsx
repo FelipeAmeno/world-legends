@@ -1,6 +1,6 @@
 'use client';
 
-import type { DayConfig } from '@/lib/actions/daily-login';
+import type { DayConfig } from '@/lib/actions/daily-login.types';
 import { motion } from 'framer-motion';
 
 type Props = {

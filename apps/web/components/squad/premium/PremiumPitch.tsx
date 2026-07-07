@@ -7,9 +7,9 @@ import type { ChemLine, SBSnapshot, SlotDef, SquadSlots } from '@/lib/squad-buil
 import { getPositionCompat } from '@/lib/squad-builder';
 import type { FormationKey } from '@/lib/squad-builder';
 import type { DragSource } from '@/lib/squad-builder';
-import type { RarityCode } from '@world-legends/types';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import type { RarityCode } from '@world-legends/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback } from 'react';
 
@@ -83,10 +83,15 @@ function PitchCard({
   const isUltra = card.rarityCode === 'ultra';
   const isWCH = card.rarityCode === 'world_cup_hero';
 
-  const compatDot =
-    compat === 'natural' ? '#22c55e' : compat === 'ok' ? '#eab308' : '#ef4444';
+  const compatDot = compat === 'natural' ? '#22c55e' : compat === 'ok' ? '#eab308' : '#ef4444';
   const chemDot =
-    chemScore >= 7 ? '#22c55e' : chemScore >= 5 ? '#60a5fa' : chemScore >= 3 ? '#eab308' : '#ef4444';
+    chemScore >= 7
+      ? '#22c55e'
+      : chemScore >= 5
+        ? '#60a5fa'
+        : chemScore >= 3
+          ? '#eab308'
+          : '#ef4444';
 
   return (
     <div
@@ -96,9 +101,7 @@ function PitchCard({
         borderRadius: 9,
         overflow: 'hidden',
         border: `1.5px solid ${chrome.border}`,
-        boxShadow: isDragging
-          ? 'none'
-          : `0 0 18px ${glow}, 0 6px 16px rgba(0,0,0,0.8)`,
+        boxShadow: isDragging ? 'none' : `0 0 18px ${glow}, 0 6px 16px rgba(0,0,0,0.8)`,
         position: 'relative',
         background: 'rgba(4,8,16,0.7)',
         opacity: isDragging ? 0.2 : 1,
@@ -299,14 +302,7 @@ function PitchMarkings() {
       />
 
       {/* Center line */}
-      <line
-        x1="2.5"
-        y1="65"
-        x2="97.5"
-        y2="65"
-        stroke="rgba(255,255,255,0.22)"
-        strokeWidth="0.55"
-      />
+      <line x1="2.5" y1="65" x2="97.5" y2="65" stroke="rgba(255,255,255,0.22)" strokeWidth="0.55" />
 
       {/* Center circle */}
       <circle
@@ -654,11 +650,7 @@ function PitchSlot({
         <span
           className="text-[10px] font-black uppercase tracking-wide"
           style={{
-            color: isSelected
-              ? '#c9a84c'
-              : isActualOver
-                ? posColor
-                : 'rgba(255,255,255,0.28)',
+            color: isSelected ? '#c9a84c' : isActualOver ? posColor : 'rgba(255,255,255,0.28)',
           }}
         >
           {slot.position}
@@ -705,7 +697,11 @@ function SuggestionPanel({
     >
       <div className="flex items-center justify-between px-2 mb-0.5">
         <span className="text-[8px] text-gold uppercase tracking-widest font-bold">Sugestões</span>
-        <button type="button" onClick={onClose} className="text-[8px] text-white/30 hover:text-white/60 ml-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-[8px] text-white/30 hover:text-white/60 ml-3"
+        >
           ✕
         </button>
       </div>
@@ -793,7 +789,7 @@ export function PremiumPitch({
   const selectedSlotDef = slots.find((s) => s.slotId === selectedSlotId) ?? null;
 
   return (
-    <div className="relative flex-1 overflow-hidden" style={{ minHeight: 0 }}>
+    <div className="absolute inset-0 overflow-hidden">
       <div className="absolute inset-0">
         <PitchMarkings />
         <ChemistryLinesLayer lines={chemLines} />

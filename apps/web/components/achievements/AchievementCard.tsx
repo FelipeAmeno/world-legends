@@ -1,6 +1,6 @@
 'use client';
 
-import type { AchievementView } from '@/lib/actions/achievements';
+import type { AchievementView } from '@/lib/actions/achievements.types';
 import type { AchievementDef } from '@world-legends/achievements';
 import { motion } from 'framer-motion';
 

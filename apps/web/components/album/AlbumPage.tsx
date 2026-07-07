@@ -9,7 +9,7 @@
  */
 
 import { claimCollectionRewardAction, getCollectionsAction } from '@/lib/actions/collections';
-import type { CollectionSetView } from '@/lib/actions/collections';
+import type { CollectionSetView } from '@/lib/actions/collections.types';
 import { getCollection } from '@/lib/collection-data';
 import { COLLECTION_SETS } from '@/lib/collection-sets';
 import { AnimatePresence, motion } from 'framer-motion';

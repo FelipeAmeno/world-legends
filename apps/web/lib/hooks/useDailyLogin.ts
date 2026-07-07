@@ -1,12 +1,11 @@
 'use client';
 
-import {
-  type ClaimDailyLoginResult,
-  type ClaimDayPayload,
-  type DailyLoginView,
-  claimDailyLoginAction,
-  getDailyLoginAction,
-} from '@/lib/actions/daily-login';
+import { claimDailyLoginAction, getDailyLoginAction } from '@/lib/actions/daily-login';
+import type {
+  ClaimDailyLoginResult,
+  ClaimDayPayload,
+  DailyLoginView,
+} from '@/lib/actions/daily-login.types';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 
 export type UseDailyLoginReturn = {

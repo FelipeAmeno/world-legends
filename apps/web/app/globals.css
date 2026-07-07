@@ -42,6 +42,10 @@
 /* ── Base ──────────────────────────────────────────────────────────────────── */
 html,
 body {
+  /* Ancora a cadeia de h-full/h-screen usada por telas como Squad — sem isso,
+     qualquer flex-1/h-full descendente colapsa para altura zero (bug real:
+     pitch do Squad Builder renderizava vazio). */
+  height: 100%;
   background-color: var(--obsidian);
   color: var(--parchment);
   font-family: "Inter", system-ui, sans-serif;

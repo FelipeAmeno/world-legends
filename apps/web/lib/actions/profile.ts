@@ -2,7 +2,7 @@
 
 import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
 import { SupabaseProfileRepository, SupabaseUserCardRepository } from '@world-legends/db';
-import { revalidatePath } from 'next/cache';
+import type { ClaimStarterResult, UpdateProfileResult } from './profile.types';
 
 // ─── claimStarterPack ─────────────────────────────────────────────────────────
 
@@ -19,8 +19,6 @@ const STARTER_CARD_IDS = [
   'zico-legendary',
   'romario-legendary',
 ] as const;
-
-export type ClaimStarterResult = { ok: true; cardIds: string[] } | { ok: false; error: string };
 
 /**
  * Concede cartas iniciais ao usuário se ainda não tem nenhuma.
@@ -44,14 +42,10 @@ export async function claimStarterPack(): Promise<ClaimStarterResult> {
     if (result.ok) inserted.push(cardId);
   }
 
-  revalidatePath('/', 'layout');
-
   return { ok: true, cardIds: inserted };
 }
 
 // ─── updateProfile ────────────────────────────────────────────────────────────
-
-export type UpdateProfileResult = { ok: true } | { ok: false; error: string };
 
 export async function updateProfile(input: {
   displayName?: string;

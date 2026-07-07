@@ -32,7 +32,7 @@ describe('TIERS — tabela de divisões', () => {
 
   it('minRating cresce monotonicamente de tier em tier', () => {
     for (let i = 1; i < TIERS.length; i++) {
-      expect(TIERS[i]?.minRating).toBeGreaterThan(TIERS[i - 1]?.minRating);
+      expect(TIERS[i]?.minRating).toBeGreaterThan(TIERS[i - 1]?.minRating ?? 0);
     }
   });
 

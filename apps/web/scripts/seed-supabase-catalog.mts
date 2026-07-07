@@ -1,3 +1,10 @@
+import {
+  type BaseAttributeSet,
+  cardId,
+  createCard,
+  createPlayer,
+  playerId,
+} from '@world-legends/cards';
 /**
  * Foundation Recovery — Sprint 16.1, Problema 1.
  *
@@ -13,16 +20,9 @@
  * relatório final, nunca só ignorada.
  */
 import { createServiceClient } from '@world-legends/db';
-import {
-  createCard,
-  createPlayer,
-  cardId,
-  playerId,
-  type BaseAttributeSet,
-} from '@world-legends/cards';
 import type { NationalityCode, RarityCode } from '@world-legends/types';
-import { ALL_PLAYER_SEEDS, ALL_CARD_SEEDS } from '../lib/catalog-seeds.ts';
-import { PLAYER_SEEDS, CARD_SEEDS } from '../lib/collection-data.ts';
+import { ALL_CARD_SEEDS, ALL_PLAYER_SEEDS } from '../lib/catalog-seeds.ts';
+import { CARD_SEEDS, PLAYER_SEEDS } from '../lib/collection-data.ts';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -40,18 +40,54 @@ const RARITY_ID: Record<RarityCode, number> = {
 };
 
 const DEFAULT_ATTRS: BaseAttributeSet = {
-  pace: 70, stamina: 70, physical: 70, heading: 60, finishing: 60, shot_power: 60,
-  passing: 65, vision: 65, dribbling: 65, penalty_kicks: 60, defending: 40,
-  composure: 70, aggression: 60, leadership: 60,
-  gk_reflexes: 20, gk_positioning: 20, gk_handling: 20, gk_kicking: 20, gk_penalty_save: 20,
+  pace: 70,
+  stamina: 70,
+  physical: 70,
+  heading: 60,
+  finishing: 60,
+  shot_power: 60,
+  passing: 65,
+  vision: 65,
+  dribbling: 65,
+  penalty_kicks: 60,
+  defending: 40,
+  composure: 70,
+  aggression: 60,
+  leadership: 60,
+  gk_reflexes: 20,
+  gk_positioning: 20,
+  gk_handling: 20,
+  gk_kicking: 20,
+  gk_penalty_save: 20,
 };
 function fullAttrs(partial: Partial<BaseAttributeSet>): BaseAttributeSet {
   return { ...DEFAULT_ATTRS, ...partial };
 }
 
-const WCH_CONTEXT: Record<string, { tournament: string; year: number; hostCountry: string; narrativeDescription: string; performanceIndicator: number }> = {
-  pelé: { tournament: 'FIFA World Cup', year: 1970, hostCountry: 'Mexico', narrativeDescription: 'O Rei na Copa de 1970', performanceIndicator: 99 },
-  maradona: { tournament: 'FIFA World Cup', year: 1986, hostCountry: 'Mexico', narrativeDescription: 'La Mano de Dios na Copa de 1986', performanceIndicator: 99 },
+const WCH_CONTEXT: Record<
+  string,
+  {
+    tournament: string;
+    year: number;
+    hostCountry: string;
+    narrativeDescription: string;
+    performanceIndicator: number;
+  }
+> = {
+  pelé: {
+    tournament: 'FIFA World Cup',
+    year: 1970,
+    hostCountry: 'Mexico',
+    narrativeDescription: 'O Rei na Copa de 1970',
+    performanceIndicator: 99,
+  },
+  maradona: {
+    tournament: 'FIFA World Cup',
+    year: 1986,
+    hostCountry: 'Mexico',
+    narrativeDescription: 'La Mano de Dios na Copa de 1986',
+    performanceIndicator: 99,
+  },
 };
 
 type PlayerRow = {
@@ -87,7 +123,10 @@ const skipped: { id: string; rarity?: RarityCode; reason: string }[] = [];
 
 const allPlayerSeeds = [...PLAYER_SEEDS, ...ALL_PLAYER_SEEDS];
 const allCardSeeds = [...CARD_SEEDS, ...ALL_CARD_SEEDS];
-const playerObjById = new Map<string, ReturnType<typeof createPlayer> extends { value: infer V } ? V : never>();
+const playerObjById = new Map<
+  string,
+  ReturnType<typeof createPlayer> extends { value: infer V } ? V : never
+>();
 
 for (const seed of allPlayerSeeds) {
   const result = createPlayer({
@@ -133,7 +172,11 @@ for (const seed of allPlayerSeeds) {
 for (const seed of allCardSeeds) {
   const player = playerObjById.get(seed.playerId);
   if (!player) {
-    skipped.push({ id: seed.playerId, rarity: seed.rarity, reason: 'player não registrado (ver errors)' });
+    skipped.push({
+      id: seed.playerId,
+      rarity: seed.rarity,
+      reason: 'player não registrado (ver errors)',
+    });
     continue;
   }
   const result = createCard({
@@ -146,11 +189,24 @@ for (const seed of allCardSeeds) {
     editionMetadata: { kind: 'base' },
     traits: seed.traits,
     ...(seed.rarity === 'world_cup_hero'
-      ? { tournamentContext: WCH_CONTEXT[seed.playerId] ?? { tournament: 'FIFA World Cup', year: 2002, hostCountry: 'Japan/Korea', narrativeDescription: 'Ícone da Copa do Mundo', performanceIndicator: 90 } }
+      ? {
+          tournamentContext: WCH_CONTEXT[seed.playerId] ?? {
+            tournament: 'FIFA World Cup',
+            year: 2002,
+            hostCountry: 'Japan/Korea',
+            narrativeDescription: 'Ícone da Copa do Mundo',
+            performanceIndicator: 90,
+          },
+        }
       : {}),
   });
   if (!result.ok) {
-    errors.push({ kind: 'card', id: seed.playerId, rarity: seed.rarity, reason: result.error.message });
+    errors.push({
+      kind: 'card',
+      id: seed.playerId,
+      rarity: seed.rarity,
+      reason: result.error.message,
+    });
     continue;
   }
   const c = result.value;
@@ -166,7 +222,12 @@ for (const seed of allCardSeeds) {
 }
 
 // ── Upsert players ──────────────────────────────────────────────────────────
-async function upsertBatched<T extends Record<string, unknown>>(table: string, rows: T[], onConflict: string, batchSize = 200) {
+async function upsertBatched<T extends Record<string, unknown>>(
+  table: string,
+  rows: T[],
+  onConflict: string,
+  batchSize = 200,
+) {
   const failures: { batch: number; error: string }[] = [];
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows.slice(i, i + batchSize);
@@ -180,14 +241,18 @@ const playerFailures = await upsertBatched('players', playerRows, 'slug');
 
 // Buscar ids reais gerados para linkar cards.player_id
 const { data: playerIdRows, error: playerFetchErr } = await db.from('players').select('id, slug');
-if (playerFetchErr) throw new Error(`Falha ao buscar players após upsert: ${playerFetchErr.message}`);
+if (playerFetchErr)
+  throw new Error(`Falha ao buscar players após upsert: ${playerFetchErr.message}`);
 const idBySlug = new Map((playerIdRows ?? []).map((r) => [r.slug as string, r.id as string]));
 
 const cardRowsWithFk = cardRows
   .map((c) => {
     const player_id = idBySlug.get(c.player_slug);
     if (!player_id) {
-      skipped.push({ id: c.player_slug, reason: 'player_id não encontrado após upsert (slug ausente no banco)' });
+      skipped.push({
+        id: c.player_slug,
+        reason: 'player_id não encontrado após upsert (slug ausente no banco)',
+      });
       return null;
     }
     const { player_slug, ...rest } = c;
@@ -198,7 +263,9 @@ const cardRowsWithFk = cardRows
 const cardFailures = await upsertBatched('cards', cardRowsWithFk, 'code_id');
 
 // ── Relatório final ──────────────────────────────────────────────────────────
-const { count: dbPlayerCount } = await db.from('players').select('*', { count: 'exact', head: true });
+const { count: dbPlayerCount } = await db
+  .from('players')
+  .select('*', { count: 'exact', head: true });
 const { count: dbCardCount } = await db.from('cards').select('*', { count: 'exact', head: true });
 
 const countries = new Set(playerRows.map((p) => p.nationality_code));
@@ -208,17 +275,23 @@ for (const c of cardRows) {
   byRarity[code] = (byRarity[code] ?? 0) + 1;
 }
 
-console.log(JSON.stringify({
-  totalPlayersAttempted: allPlayerSeeds.length,
-  totalCardsAttempted: allCardSeeds.length,
-  totalPlayersUpserted: playerRows.length,
-  totalCardsUpserted: cardRowsWithFk.length,
-  dbPlayerCount,
-  dbCardCount,
-  totalCountries: countries.size,
-  byRarity,
-  errors,
-  skipped,
-  playerFailures,
-  cardFailures,
-}, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      totalPlayersAttempted: allPlayerSeeds.length,
+      totalCardsAttempted: allCardSeeds.length,
+      totalPlayersUpserted: playerRows.length,
+      totalCardsUpserted: cardRowsWithFk.length,
+      dbPlayerCount,
+      dbCardCount,
+      totalCountries: countries.size,
+      byRarity,
+      errors,
+      skipped,
+      playerFailures,
+      cardFailures,
+    },
+    null,
+    2,
+  ),
+);

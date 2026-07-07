@@ -1,5 +1,11 @@
-import { getLevelConfig, getLevelForXp, MASTERY_LEVELS } from './levels.js';
-import type { CardMasteryState, MasteryLevel, XpGainEntry, XpGainResult, XpGainSource } from './types.js';
+import { MASTERY_LEVELS, getLevelConfig, getLevelForXp } from './levels.js';
+import type {
+  CardMasteryState,
+  MasteryLevel,
+  XpGainEntry,
+  XpGainResult,
+  XpGainSource,
+} from './types.js';
 
 // XP awarded per event source — tuned for 30-40 matches per level transition
 const XP_TABLE: Record<XpGainSource, number> = {
@@ -35,9 +41,7 @@ export class CardMasteryService {
     });
   }
 
-  computeXpGain(
-    sources: readonly XpGainSource[],
-  ): XpGainResult {
+  computeXpGain(sources: readonly XpGainSource[]): XpGainResult {
     const entries: XpGainEntry[] = sources.map((source) => ({
       source,
       amount: XP_TABLE[source],
@@ -46,7 +50,10 @@ export class CardMasteryService {
     return Object.freeze({ totalXp, entries });
   }
 
-  applyXpGain(currentXp: number, gain: XpGainResult): Readonly<{
+  applyXpGain(
+    currentXp: number,
+    gain: XpGainResult,
+  ): Readonly<{
     newXp: number;
     oldLevel: MasteryLevel;
     newLevel: MasteryLevel;

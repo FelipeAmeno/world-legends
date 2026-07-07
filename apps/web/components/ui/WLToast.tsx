@@ -43,12 +43,13 @@ const STYLE: Record<ToastType, { bg: string; border: string; color: string; icon
 
 // ─── WLToast (root) ───────────────────────────────────────────────────────────
 
+const EMPTY_TOASTS: ToastItem[] = [];
+const subscribeToasts = toastStore.subscribe.bind(toastStore);
+const getToastsSnapshot = toastStore.getSnapshot.bind(toastStore);
+const getToastsServerSnapshot = () => EMPTY_TOASTS;
+
 export function WLToast() {
-  const items = useSyncExternalStore(
-    toastStore.subscribe.bind(toastStore),
-    toastStore.getSnapshot.bind(toastStore),
-    () => [] as ToastItem[],
-  );
+  const items = useSyncExternalStore(subscribeToasts, getToastsSnapshot, getToastsServerSnapshot);
 
   const dismiss = useCallback((id: string) => toastStore.remove(id), []);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import type { ClaimDayPayload, DailyReward } from '@/lib/actions/daily-login';
+import type { ClaimDayPayload, DailyReward } from '@/lib/actions/daily-login.types';
 import { UI_HAPTIC } from '@/lib/haptics';
 import { markTodayAction } from '@/lib/retention-store';
 import { REWARD_SFX } from '@/lib/sound-manager';

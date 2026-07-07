@@ -25,7 +25,7 @@ import {
   rollForInjury,
   staminaModifier,
 } from '../src/index';
-import type { InjuryProfile } from '../src/index';
+import type { Injury, InjuryProfile } from '../src/index';
 
 // ─── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -324,9 +324,9 @@ describe('TC-INJ-22..27: progressRecovery e isFullyRecovered', () => {
 
   it('TC-INJ-27: leve recupera antes que moderada, moderada antes que grave', () => {
     // Com mesmos matchesOut iniciais, a leve chega a 0 antes
-    let light = makeInjury('light', 2);
-    let moderate = makeInjury('moderate', 4);
-    let severe = makeInjury('severe', 8);
+    let light: Injury = makeInjury('light', 2);
+    let moderate: Injury = makeInjury('moderate', 4);
+    let severe: Injury = makeInjury('severe', 8);
 
     // Avançar 2 partidas
     light = progressRecoveryN(light, 2);

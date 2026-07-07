@@ -1,9 +1,5 @@
 import { DAILY_SCHEDULE, STREAK_MILESTONES } from './rewards.js';
-import type {
-  ClaimDayPayload,
-  DailyLoginState,
-  DailyReward,
-} from './types.js';
+import type { ClaimDayPayload, DailyLoginState, DailyReward } from './types.js';
 
 // ── UTC calendar-day utilities ─────────────────────────────────────────────────
 
@@ -27,8 +23,7 @@ export class DailyLoginService {
   ): DailyLoginState {
     const nowDay = utcDayIndex(now);
 
-    const alreadyClaimedToday =
-      lastClaimAt !== null && utcDayIndex(lastClaimAt) === nowDay;
+    const alreadyClaimedToday = lastClaimAt !== null && utcDayIndex(lastClaimAt) === nowDay;
 
     const canClaimToday = !alreadyClaimedToday;
 

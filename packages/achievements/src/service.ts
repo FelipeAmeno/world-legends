@@ -1,4 +1,4 @@
-import { ALL_SET_CODES, ACHIEVEMENT_CATALOG } from './definitions.js';
+import { ACHIEVEMENT_CATALOG, ALL_SET_CODES } from './definitions.js';
 import type {
   AchievementCategory,
   AchievementCheckInput,
@@ -28,11 +28,7 @@ const CARD_RARITIES: Readonly<Record<string, string>> = {
 };
 
 // Rarity values that count as "high_rarity" (legendary-tier and above)
-const HIGH_RARITY_VALUES: ReadonlySet<string> = new Set([
-  'legendary',
-  'ultra',
-  'world_cup_hero',
-]);
+const HIGH_RARITY_VALUES: ReadonlySet<string> = new Set(['legendary', 'ultra', 'world_cup_hero']);
 
 function countByRarity(cardsOwnedIds: readonly string[], rarity: string): number {
   return cardsOwnedIds.filter((id) => {

@@ -415,7 +415,7 @@ function StatRow({
   decimal?: boolean;
   reverse?: boolean;
 }) {
-  const fmt = (v: number) => (decimal ? v.toFixed(1) : String(v));
+  const fmt = (v: number) => (decimal ? v.toFixed(1) : String(Math.round(v)));
   const total = Math.max(1, home + away);
   const hPct = Math.round((home / total) * 100);
   const aPct = 100 - hPct;

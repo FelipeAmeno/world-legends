@@ -1,6 +1,6 @@
 'use client';
 
-import type { ClaimDayPayload, DailyLoginView } from '@/lib/actions/daily-login';
+import type { ClaimDayPayload, DailyLoginView } from '@/lib/actions/daily-login.types';
 import { SPRING } from '@/lib/motion-tokens';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useRef } from 'react';

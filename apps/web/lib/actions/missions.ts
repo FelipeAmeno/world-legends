@@ -1,12 +1,9 @@
 'use server';
 
 import {
-  ACHIEVEMENT_IDS,
   ALL_MISSION_DEFS,
   type MissionDef,
   type MissionProgress,
-  type MissionReward,
-  type MissionStage,
   type MissionView,
   type TrackKey,
   dailyPeriodKey,
@@ -15,19 +12,7 @@ import {
 import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
 import type { AchievementProgressRow, MissionProgressRow } from '@world-legends/db';
 import { SupabaseMissionRepository, SupabaseProfileRepository } from '@world-legends/db';
-
-// ─── Tipos públicos ───────────────────────────────────────────────────────────
-
-export type { MissionView, MissionDef, MissionStage, MissionReward };
-
-export type MissionsData = {
-  views: MissionView[];
-  periodKeys: { daily: string; weekly: string };
-};
-
-export type ClaimMissionResult =
-  | { ok: true; rewards: MissionReward[]; newBalance: number }
-  | { ok: false; error: string };
+import type { ClaimMissionResult, MissionsData } from './missions.types';
 
 // ─── getMissionsAction ────────────────────────────────────────────────────────
 
@@ -287,5 +272,3 @@ function buildView(
     allDone,
   };
 }
-
-export { ACHIEVEMENT_IDS };

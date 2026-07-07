@@ -1,12 +1,11 @@
 'use client';
 
-import {
-  type AchievementView,
-  type AchievementsData,
-  type NewTrophyNotice,
-  claimAchievementRewardAction,
-  getAchievementsAction,
-} from '@/lib/actions/achievements';
+import { claimAchievementRewardAction, getAchievementsAction } from '@/lib/actions/achievements';
+import type {
+  AchievementView,
+  AchievementsData,
+  NewTrophyNotice,
+} from '@/lib/actions/achievements.types';
 import type { AchievementCategory } from '@world-legends/achievements';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';

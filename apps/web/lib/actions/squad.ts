@@ -1,22 +1,7 @@
 'use server';
 
 import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
-import type { FormationKey } from '@/lib/squad-data';
-import { revalidatePath } from 'next/cache';
-
-export type SquadSlotInput = {
-  slotId: string;
-  userCardId: string;
-  isStarter: boolean;
-  benchOrder?: number;
-};
-
-export type SaveSquadInput = {
-  formation: FormationKey;
-  slots: SquadSlotInput[];
-};
-
-export type SaveSquadResult = { ok: true; squadId: string } | { ok: false; error: string };
+import type { SaveSquadInput, SaveSquadResult } from './squad.types';
 
 /**
  * Cria ou atualiza o squad ativo do usuário.
@@ -77,8 +62,6 @@ export async function saveSquad(input: SaveSquadInput): Promise<SaveSquadResult>
     )) as { error: { message: string } | null };
     if (insertErr) return { ok: false, error: insertErr.message };
   }
-
-  revalidatePath('/', 'layout');
 
   return { ok: true, squadId };
 }

@@ -1,7 +1,7 @@
 'use client';
 
-import type { SaveSquadInput } from '@/lib/actions';
-import { saveSquad } from '@/lib/actions';
+import { saveSquad } from '@/lib/actions/squad';
+import type { SaveSquadInput } from '@/lib/actions/squad.types';
 import type { CollectionCard } from '@/lib/collection-data';
 import { RARITY_VISUAL } from '@/lib/collection-data';
 import {
@@ -93,7 +93,7 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
         ...(favoriteIds !== undefined ? { favoriteIds } : {}),
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Save state ────────────────────────────────────────────────────────────
@@ -285,8 +285,12 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
   );
 
   const handleAutoFill = useCallback(() => {
-    dispatch({ type: 'AUTO_BUILD', mode: 'best', allCards,
-      ...(favoriteIds !== undefined ? { favoriteIds } : {}) });
+    dispatch({
+      type: 'AUTO_BUILD',
+      mode: 'best',
+      allCards,
+      ...(favoriteIds !== undefined ? { favoriteIds } : {}),
+    });
     setSelectedSlotId(null);
     toast.success('Melhor time montado!', '⚡');
   }, [allCards, favoriteIds]);
@@ -362,7 +366,14 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
             href="/"
             className="flex items-center gap-1 text-muted hover:text-white/70 transition-colors shrink-0"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </Link>
@@ -399,7 +410,10 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
                       : 'bg-red-400'
                 }`}
                 animate={saveStatus === 'saving' ? { opacity: [1, 0.3, 1] } : { opacity: 1 }}
-                transition={{ duration: 0.8, repeat: saveStatus === 'saving' ? Number.POSITIVE_INFINITY : 0 }}
+                transition={{
+                  duration: 0.8,
+                  repeat: saveStatus === 'saving' ? Number.POSITIVE_INFINITY : 0,
+                }}
               />
               <span className="text-[9px] text-white/35">
                 {saveStatus === 'saving' ? 'salvando' : saveStatus === 'saved' ? 'salvo' : 'erro'}
@@ -435,9 +449,7 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
                     : 'rgba(255,255,255,0.12)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  textShadow: snapshot.rating.overall
-                    ? '0 0 24px rgba(201,168,76,0.55)'
-                    : 'none',
+                  textShadow: snapshot.rating.overall ? '0 0 24px rgba(201,168,76,0.55)' : 'none',
                 }}
                 initial={{ scale: 1.3, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -447,7 +459,9 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
               </motion.span>
             </AnimatePresence>
             <div className="flex flex-col pb-1">
-              <span className="text-[8px] text-gold/55 uppercase tracking-widest font-bold">OVR</span>
+              <span className="text-[8px] text-gold/55 uppercase tracking-widest font-bold">
+                OVR
+              </span>
               <span className="text-[8px] text-muted">{snapshot.starterCount}/11</span>
             </div>
           </div>
@@ -518,11 +532,7 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
         </div>
 
         {/* ── BENCH ──────────────────────────────────────────────────────── */}
-        <BenchStrip
-          bench={state.bench}
-          dragOver={state.dragOver}
-          onRemove={handleRemoveBench}
-        />
+        <BenchStrip bench={state.bench} dragOver={state.dragOver} onRemove={handleRemoveBench} />
 
         {/* ── ACTION BAR ─────────────────────────────────────────────────── */}
         <div

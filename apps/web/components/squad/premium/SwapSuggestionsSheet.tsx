@@ -77,7 +77,12 @@ export function SwapSuggestionsSheet({ open, suggestions, onApply, onClose }: Pr
                 </div>
               ) : (
                 suggestions.map((s, i) => (
-                  <SwapCard key={`${s.slotId}-${s.suggestedCard.cardId}`} suggestion={s} index={i} onApply={onApply} />
+                  <SwapCard
+                    key={`${s.slotId}-${s.suggestedCard.cardId}`}
+                    suggestion={s}
+                    index={i}
+                    onApply={onApply}
+                  />
                 ))
               )}
             </div>
@@ -97,12 +102,7 @@ function SwapCard({
   index: number;
   onApply: (slotId: string, cardId: string) => void;
 }) {
-  const chemColor =
-    s.chemDelta > 0
-      ? '#22c55e'
-      : s.chemDelta === 0
-        ? '#60a5fa'
-        : '#ef4444';
+  const chemColor = s.chemDelta > 0 ? '#22c55e' : s.chemDelta === 0 ? '#60a5fa' : '#ef4444';
 
   const ovrColor = s.ovrDelta > 0 ? '#22c55e' : s.ovrDelta === 0 ? '#9ca3af' : '#ef4444';
 
@@ -125,11 +125,15 @@ function SwapCard({
               border: '1px solid rgba(239,68,68,0.2)',
             }}
           >
-            <p className="font-bold text-[11px] text-parchment truncate">{s.currentCard.displayName}</p>
+            <p className="font-bold text-[11px] text-parchment truncate">
+              {s.currentCard.displayName}
+            </p>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="text-[9px] text-muted">{s.slotPosition}</span>
               <span className="text-[9px] text-white/50">·</span>
-              <span className="font-display text-[11px] text-white/70">{s.currentCard.overall}</span>
+              <span className="font-display text-[11px] text-white/70">
+                {s.currentCard.overall}
+              </span>
               <span className="text-[8px]">{s.currentCard.flagEmoji}</span>
             </div>
           </div>
@@ -147,7 +151,8 @@ function SwapCard({
                 color: chemColor,
               }}
             >
-              ⚗ {s.chemDelta > 0 ? '+' : ''}{s.chemDelta}
+              ⚗ {s.chemDelta > 0 ? '+' : ''}
+              {s.chemDelta}
             </div>
           )}
           {s.ovrDelta !== 0 && (
@@ -159,7 +164,8 @@ function SwapCard({
                 color: ovrColor,
               }}
             >
-              ↑ {s.ovrDelta > 0 ? '+' : ''}{s.ovrDelta}
+              ↑ {s.ovrDelta > 0 ? '+' : ''}
+              {s.ovrDelta}
             </div>
           )}
         </div>
@@ -181,7 +187,9 @@ function SwapCard({
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="text-[9px] text-muted">{s.suggestedCard.position}</span>
               <span className="text-[9px] text-white/50">·</span>
-              <span className="font-display text-[11px] text-white/70">{s.suggestedCard.overall}</span>
+              <span className="font-display text-[11px] text-white/70">
+                {s.suggestedCard.overall}
+              </span>
               <span className="text-[8px]">{s.suggestedCard.flagEmoji}</span>
             </div>
           </div>

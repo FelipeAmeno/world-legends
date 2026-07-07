@@ -1,6 +1,6 @@
 'use client';
 
-import type { CardMasteryView } from '@/lib/actions/card-mastery';
+import type { CardMasteryView } from '@/lib/actions/card-mastery.types';
 import { MASTERY_LEVELS } from '@world-legends/card-mastery';
 import { motion } from 'framer-motion';
 

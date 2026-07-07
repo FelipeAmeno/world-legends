@@ -186,7 +186,12 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
   }, [phase, card, doFlip, clearTimer]);
 
   // ── Cleanup on unmount ────────────────────────────────────────────────────
-  useEffect(() => () => { clearTimer(); }, [clearTimer]);
+  useEffect(
+    () => () => {
+      clearTimer();
+    },
+    [clearTimer],
+  );
 
   // ── Tap handler: skip to next phase ──────────────────────────────────────
   const handleTap = useCallback(() => {
@@ -349,12 +354,7 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
             </AnimatePresence>
 
             {/* The actual card (RevealedCard handles its own flip animation) */}
-            <RevealedCard
-              drawn={card}
-              flipped={flipped}
-              onFlip={doFlip}
-              onHighRarity={() => {}}
-            />
+            <RevealedCard drawn={card} flipped={flipped} onFlip={doFlip} onHighRarity={() => {}} />
 
             {/* Tap hint */}
             <AnimatePresence>

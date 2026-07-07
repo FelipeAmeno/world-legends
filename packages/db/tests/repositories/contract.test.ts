@@ -1,3 +1,4 @@
+import { Err, Ok } from '@world-legends/shared';
 /**
  * Testes de contrato de packages/db (doc 18 §3.2/§17).
  *
@@ -16,15 +17,19 @@
  * em Fase 6 (doc 18 §17) com infraestrutura real, nunca aqui.
  */
 import { describe, expect, it } from 'vitest';
-import { Ok, Err } from '@world-legends/shared';
 import type {
-  IProfileRepository, ProfileRow, CreateProfileInput, DbError,
-  IUserCardRepository, UserCardRow,
-  IRankingRepository, RankingRow,
-  IPackRepository,
+  CreateProfileInput,
+  DbError,
   ICraftRepository,
   IMatchRepository,
+  IPackRepository,
+  IProfileRepository,
+  IRankingRepository,
   ISeasonRepository,
+  IUserCardRepository,
+  ProfileRow,
+  RankingRow,
+  UserCardRow,
 } from '../../src/index';
 
 // ─── In-Memory adapters para testes de contrato ───────────────────────────────
@@ -41,18 +46,27 @@ class InMemoryProfileRepository implements IProfileRepository {
   }
   async create(input: CreateProfileInput) {
     const row: ProfileRow = Object.freeze({
-      id: input.id, username: input.username,
-      displayName: input.displayName ?? null, avatarUrl: null,
+      id: input.id,
+      username: input.username,
+      displayName: input.displayName ?? null,
+      avatarUrl: null,
       countryCode: input.countryCode ?? 'BR',
-      softCurrency: 500, hardCurrency: 0, fragmentBalance: 0,
-      eloRating: 1000, createdAt: new Date(), updatedAt: new Date(),
+      softCurrency: 500,
+      hardCurrency: 0,
+      fragmentBalance: 0,
+      eloRating: 1000,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     this.store.set(input.id, row);
     return Ok(row);
   }
   async update(id: string, input: Partial<ProfileRow>) {
     const existing = this.store.get(id);
-    if (!existing) return Err(Object.freeze({ code: 'NOT_FOUND', message: 'Profile não encontrado' }) as DbError);
+    if (!existing)
+      return Err(
+        Object.freeze({ code: 'NOT_FOUND', message: 'Profile não encontrado' }) as DbError,
+      );
     const updated = Object.freeze({ ...existing, ...input, updatedAt: new Date() });
     this.store.set(id, updated);
     return Ok(updated);
@@ -67,7 +81,10 @@ class InMemoryProfileRepository implements IProfileRepository {
   async debitSoftCurrency(id: string, amount: number) {
     const p = this.store.get(id);
     if (!p) return Err(Object.freeze({ code: 'NOT_FOUND', message: 'x' }) as DbError);
-    if (p.softCurrency < amount) return Err(Object.freeze({ code: 'INSUFFICIENT_FUNDS', message: 'Saldo insuficiente' }) as DbError);
+    if (p.softCurrency < amount)
+      return Err(
+        Object.freeze({ code: 'INSUFFICIENT_FUNDS', message: 'Saldo insuficiente' }) as DbError,
+      );
     const updated = Object.freeze({ ...p, softCurrency: p.softCurrency - amount });
     this.store.set(id, updated);
     return Ok(updated.softCurrency);
@@ -82,7 +99,13 @@ class InMemoryProfileRepository implements IProfileRepository {
   async debitFragments(id: string, amount: number) {
     const p = this.store.get(id);
     if (!p) return Err(Object.freeze({ code: 'NOT_FOUND', message: 'x' }) as DbError);
-    if (p.fragmentBalance < amount) return Err(Object.freeze({ code: 'INSUFFICIENT_FUNDS', message: 'Fragmentos insuficientes' }) as DbError);
+    if (p.fragmentBalance < amount)
+      return Err(
+        Object.freeze({
+          code: 'INSUFFICIENT_FUNDS',
+          message: 'Fragmentos insuficientes',
+        }) as DbError,
+      );
     const updated = Object.freeze({ ...p, fragmentBalance: p.fragmentBalance - amount });
     this.store.set(id, updated);
     return Ok(updated.fragmentBalance);
@@ -109,17 +132,31 @@ class InMemoryRankingRepository implements IRankingRepository {
     this.store.set(this.key(input.seasonId, input.profileId), row);
     return Ok(row);
   }
-  async updateElo(seasonId: string, profileId: string, newElo: number, result: 'win'|'draw'|'loss') {
+  async updateElo(
+    seasonId: string,
+    profileId: string,
+    newElo: number,
+    result: 'win' | 'draw' | 'loss',
+  ) {
     const existing = this.store.get(this.key(seasonId, profileId));
     const base = existing ?? {
-      seasonId, profileId, division: 5, eloRating: 1000,
-      matchesPlayed: 0, wins: 0, draws: 0, losses: 0, finalPosition: null, rewardClaimed: false,
+      seasonId,
+      profileId,
+      division: 5,
+      eloRating: 1000,
+      matchesPlayed: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      finalPosition: null,
+      rewardClaimed: false,
     };
     return this.upsert({
-      ...base, eloRating: newElo,
+      ...base,
+      eloRating: newElo,
       matchesPlayed: base.matchesPlayed + 1,
-      wins:   base.wins   + (result === 'win'  ? 1 : 0),
-      draws:  base.draws  + (result === 'draw' ? 1 : 0),
+      wins: base.wins + (result === 'win' ? 1 : 0),
+      draws: base.draws + (result === 'draw' ? 1 : 0),
       losses: base.losses + (result === 'loss' ? 1 : 0),
     });
   }
@@ -205,9 +242,16 @@ describe('Porta IRankingRepository — contrato de interface', () => {
   it('upsert → findBySeasonAndProfile recupera o ranking', async () => {
     const repo = new InMemoryRankingRepository();
     await repo.upsert({
-      seasonId: 's1', profileId: 'p1', division: 2,
-      eloRating: 1500, matchesPlayed: 10, wins: 7, draws: 2, losses: 1,
-      finalPosition: null, rewardClaimed: false,
+      seasonId: 's1',
+      profileId: 'p1',
+      division: 2,
+      eloRating: 1500,
+      matchesPlayed: 10,
+      wins: 7,
+      draws: 2,
+      losses: 1,
+      finalPosition: null,
+      rewardClaimed: false,
     });
     const r = await repo.findBySeasonAndProfile('s1', 'p1');
     if (r.ok && r.value) {
@@ -218,10 +262,22 @@ describe('Porta IRankingRepository — contrato de interface', () => {
 
   it('findLeaderboard ordena por eloRating DESC', async () => {
     const repo = new InMemoryRankingRepository();
-    for (const [pid, elo] of [['p1', 1200], ['p2', 1800], ['p3', 1500]] as const) {
+    for (const [pid, elo] of [
+      ['p1', 1200],
+      ['p2', 1800],
+      ['p3', 1500],
+    ] as const) {
       await repo.upsert({
-        seasonId: 's1', profileId: pid, division: 3, eloRating: elo,
-        matchesPlayed: 5, wins: 3, draws: 1, losses: 1, finalPosition: null, rewardClaimed: false,
+        seasonId: 's1',
+        profileId: pid,
+        division: 3,
+        eloRating: elo,
+        matchesPlayed: 5,
+        wins: 3,
+        draws: 1,
+        losses: 1,
+        finalPosition: null,
+        rewardClaimed: false,
       });
     }
     const r = await repo.findLeaderboard('s1');
@@ -299,8 +355,16 @@ describe('Schema — invariantes documentadas (doc 02)', () => {
     const repo = new InMemoryRankingRepository();
     for (let i = 0; i < 10; i++) {
       await repo.upsert({
-        seasonId: 's1', profileId: `p${i}`, division: 3, eloRating: 1000 + i,
-        matchesPlayed: 1, wins: 1, draws: 0, losses: 0, finalPosition: null, rewardClaimed: false,
+        seasonId: 's1',
+        profileId: `p${i}`,
+        division: 3,
+        eloRating: 1000 + i,
+        matchesPlayed: 1,
+        wins: 1,
+        draws: 0,
+        losses: 0,
+        finalPosition: null,
+        rewardClaimed: false,
       });
     }
     const r = await repo.findLeaderboard('s1', 3);
@@ -341,9 +405,21 @@ describe('Tipos de database.types.ts — cobertura de tabelas', () => {
     // Verificação via import: se faltar alguma tabela no Database type,
     // o typecheck acima já falharia. Este teste documenta a intenção.
     const tables = [
-      'profiles', 'players', 'cards', 'user_cards', 'squads',
-      'seasons', 'leagues', 'league_members', 'matches', 'match_events',
-      'rankings', 'packs', 'pack_openings', 'craft_requests', 'pity_counters',
+      'profiles',
+      'players',
+      'cards',
+      'user_cards',
+      'squads',
+      'seasons',
+      'leagues',
+      'league_members',
+      'matches',
+      'match_events',
+      'rankings',
+      'packs',
+      'pack_openings',
+      'craft_requests',
+      'pity_counters',
     ];
     expect(tables.length).toBe(15);
   });
@@ -351,11 +427,26 @@ describe('Tipos de database.types.ts — cobertura de tabelas', () => {
   it('RLS está habilitado para 14 tabelas (doc 02 §8)', () => {
     // Contar as tabelas com RLS na policies.sql
     const rlsTables = [
-      'profiles', 'friendships', 'user_cards', 'squads', 'squad_slots',
-      'pack_openings', 'pack_opening_cards', 'league_members', 'rankings',
-      'collection_progress', 'craft_requests', 'pity_counters',
-      'players', 'cards', 'rarities', 'packs', 'collection_sets',
-      'seasons', 'leagues', 'league_rounds',
+      'profiles',
+      'friendships',
+      'user_cards',
+      'squads',
+      'squad_slots',
+      'pack_openings',
+      'pack_opening_cards',
+      'league_members',
+      'rankings',
+      'collection_progress',
+      'craft_requests',
+      'pity_counters',
+      'players',
+      'cards',
+      'rarities',
+      'packs',
+      'collection_sets',
+      'seasons',
+      'leagues',
+      'league_rounds',
     ];
     expect(rlsTables.length).toBe(20);
   });

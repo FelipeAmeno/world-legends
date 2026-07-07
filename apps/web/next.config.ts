@@ -39,7 +39,6 @@ const nextConfig: NextConfig = {
 
   // ── Experimental ────────────────────────────────────────────────────────────
   experimental: {
-    esmExternals: 'loose',
     // optimizeCss:     true,   // habilitar quando critters estiver disponível
     optimizePackageImports: [
       'framer-motion', // tree-shake Framer Motion

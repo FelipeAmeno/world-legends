@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  ACHIEVEMENT_CATALOG,
-  ALL_SET_CODES,
-  VALID_CARD_IDS,
-} from '../src/definitions.js';
+import { ACHIEVEMENT_CATALOG, ALL_SET_CODES, VALID_CARD_IDS } from '../src/definitions.js';
 import type { AchievementCategory } from '../src/types.js';
 
 describe('ACHIEVEMENT_CATALOG — definitions', () => {
@@ -87,10 +83,9 @@ describe('ACHIEVEMENT_CATALOG — definitions', () => {
     for (const def of specificCardAchievements) {
       if (def.condition.type === 'specific_cards_owned') {
         for (const cardId of def.condition.cardIds) {
-          expect(
-            validIds.has(cardId),
-            `"${def.id}" references unknown cardId "${cardId}"`,
-          ).toBe(true);
+          expect(validIds.has(cardId), `"${def.id}" references unknown cardId "${cardId}"`).toBe(
+            true,
+          );
         }
       }
     }

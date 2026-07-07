@@ -6,7 +6,6 @@ import {
   type AchievementCheckInput,
   type AchievementDef,
   AchievementService,
-  type AchievementView,
 } from '@world-legends/achievements';
 import {
   SupabaseAchievementRepository,
@@ -16,30 +15,13 @@ import {
   SupabaseProfileRepository,
   SupabaseUserCardRepository,
 } from '@world-legends/db';
+import type {
+  AchievementsData,
+  ClaimAchievementResult,
+  NewTrophyNotice,
+} from './achievements.types';
 
 const svc = new AchievementService();
-
-// ─── Public types ─────────────────────────────────────────────────────────────
-
-export type { AchievementView, AchievementDef };
-
-export type AchievementsData = Readonly<{
-  views: readonly AchievementView[];
-  totalUnlocked: number;
-  totalXpEarned: number;
-}>;
-
-export type ClaimAchievementResult =
-  | { ok: true; newBalance: number }
-  | { ok: false; error: string };
-
-export type NewTrophyNotice = Readonly<{
-  achievementId: string;
-  name: string;
-  icon: string;
-  rarity: AchievementDef['rarity'];
-  xp: number;
-}>;
 
 // ─── getAchievementsAction ────────────────────────────────────────────────────
 

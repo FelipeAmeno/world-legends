@@ -1,6 +1,6 @@
 'use client';
 
-import type { NewTrophyNotice } from '@/lib/actions/achievements';
+import type { NewTrophyNotice } from '@/lib/actions/achievements.types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect } from 'react';
 

@@ -45,18 +45,14 @@ describe('DAILY_SCHEDULE', () => {
   it('day 6 contains an elite pack', () => {
     const day6 = DAILY_SCHEDULE.find((d) => d.day === 6);
     expect(day6).toBeDefined();
-    const hasElite = day6?.rewards.some(
-      (r) => r.kind === 'pack' && r.packId === 'elite',
-    );
+    const hasElite = day6?.rewards.some((r) => r.kind === 'pack' && r.packId === 'elite');
     expect(hasElite).toBe(true);
   });
 
   it('day 7 contains a legend pack AND credits >= 2000', () => {
     const day7 = DAILY_SCHEDULE.find((d) => d.day === 7);
     expect(day7).toBeDefined();
-    const hasLegend = day7?.rewards.some(
-      (r) => r.kind === 'pack' && r.packId === 'legend',
-    );
+    const hasLegend = day7?.rewards.some((r) => r.kind === 'pack' && r.packId === 'legend');
     expect(hasLegend).toBe(true);
     const creditsReward = day7?.rewards.find((r) => r.kind === 'credits');
     expect(creditsReward).toBeDefined();

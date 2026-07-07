@@ -107,7 +107,7 @@ function makeResult(
     mvpUserCardId: overrides.mvpUserCardId ?? null,
     weather: 'ensolarado',
     refereeProfile: 'normal',
-    seed: new Uint32Array([42]),
+    seed: { value: '42' },
     engineVersion: '1.0.0-test',
     ...(overrides.walkover ? { walkover: overrides.walkover } : {}),
     ...(overrides.penaltyShootout ? { penaltyShootout: overrides.penaltyShootout } : {}),

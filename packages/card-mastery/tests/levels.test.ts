@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getLevelForXp, MASTERY_LEVELS, getLevelConfig } from '../src/levels.js';
+import { MASTERY_LEVELS, getLevelConfig, getLevelForXp } from '../src/levels.js';
 
 describe('MASTERY_LEVELS', () => {
   it('has exactly 6 levels (0–5)', () => {
@@ -10,17 +10,17 @@ describe('MASTERY_LEVELS', () => {
   it('thresholds are strictly increasing', () => {
     const xps = MASTERY_LEVELS.map((l) => l.xpRequired);
     for (let i = 1; i < xps.length; i++) {
-      expect(xps[i]).toBeGreaterThan(xps[i - 1]!);
+      expect(xps[i]).toBeGreaterThan(xps[i - 1] ?? 0);
     }
   });
 
   it('level 0 requires 0 XP', () => {
-    expect(MASTERY_LEVELS[0]!.xpRequired).toBe(0);
+    expect(MASTERY_LEVELS[0]?.xpRequired).toBe(0);
   });
 
   it('level 5 is World Class', () => {
-    expect(MASTERY_LEVELS[5]!.name).toBe('World Class');
-    expect(MASTERY_LEVELS[5]!.xpRequired).toBe(1500);
+    expect(MASTERY_LEVELS[5]?.name).toBe('World Class');
+    expect(MASTERY_LEVELS[5]?.xpRequired).toBe(1500);
   });
 });
 

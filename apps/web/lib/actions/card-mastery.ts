@@ -3,29 +3,14 @@
 import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
 import {
   CardMasteryService,
-  type CardMasteryState,
   MASTERY_LEVELS,
   type MasteryLevelConfig,
   type XpGainSource,
 } from '@world-legends/card-mastery';
 import { SupabaseCardMasteryRepository } from '@world-legends/db';
+import type { AllMasteryData, CardMasteryView } from './card-mastery.types';
 
 const svc = new CardMasteryService();
-
-// ─── Public types ─────────────────────────────────────────────────────────────
-
-export type { CardMasteryState, MasteryLevelConfig, XpGainSource };
-
-export type CardMasteryView = Readonly<{
-  cardId: string;
-  state: CardMasteryState;
-  levelConfig: MasteryLevelConfig;
-  nextLevelConfig: MasteryLevelConfig | null;
-}>;
-
-export type AllMasteryData = Readonly<{
-  masteries: readonly CardMasteryView[];
-}>;
 
 // ─── getAllCardMasteryAction ───────────────────────────────────────────────────
 
