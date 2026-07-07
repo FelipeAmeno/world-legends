@@ -39,31 +39,66 @@ export type Database = {
   }
   public: {
     Tables: {
-      player_trophies: {
+      achievement_progress: {
         Row: {
+          created_at: string
+          current_value: number
+          first_unlocked_at: string | null
           id: string
+          mission_id: string
           profile_id: string
-          achievement_id: string
-          unlocked_at: string
-          reward_claimed: boolean
+          stage_claimed: number
+          updated_at: string
         }
         Insert: {
+          created_at?: string
+          current_value?: number
+          first_unlocked_at?: string | null
           id?: string
+          mission_id: string
           profile_id: string
-          achievement_id: string
-          unlocked_at?: string
-          reward_claimed?: boolean
+          stage_claimed?: number
+          updated_at?: string
         }
         Update: {
+          created_at?: string
+          current_value?: number
+          first_unlocked_at?: string | null
           id?: string
+          mission_id?: string
           profile_id?: string
-          achievement_id?: string
-          unlocked_at?: string
-          reward_claimed?: boolean
+          stage_claimed?: number
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "player_trophies_profile_id_fkey"
+            foreignKeyName: "achievement_progress_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      card_favorites: {
+        Row: {
+          card_id: string
+          created_at: string
+          profile_id: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          profile_id: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_favorites_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -73,72 +108,37 @@ export type Database = {
       }
       card_mastery: {
         Row: {
-          id: string
-          profile_id: string
           card_id: string
-          xp: number
-          mastery_level: number
           created_at: string
+          id: string
+          mastery_level: number
+          profile_id: string
           updated_at: string
+          xp: number
         }
         Insert: {
-          id?: string
-          profile_id: string
           card_id: string
-          xp?: number
-          mastery_level?: number
           created_at?: string
+          id?: string
+          mastery_level?: number
+          profile_id: string
           updated_at?: string
+          xp?: number
         }
         Update: {
-          id?: string
-          profile_id?: string
           card_id?: string
-          xp?: number
-          mastery_level?: number
           created_at?: string
+          id?: string
+          mastery_level?: number
+          profile_id?: string
           updated_at?: string
+          xp?: number
         }
         Relationships: [
           {
             foreignKeyName: "card_mastery_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      daily_login: {
-        Row: {
-          created_at: string
-          current_day: number
-          last_claim_at: string | null
-          profile_id: string
-          streak_days: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          current_day?: number
-          last_claim_at?: string | null
-          profile_id: string
-          streak_days?: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          current_day?: number
-          last_claim_at?: string | null
-          profile_id?: string
-          streak_days?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "daily_login_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -275,47 +275,6 @@ export type Database = {
           },
         ]
       }
-      achievement_progress: {
-        Row: {
-          id: string
-          profile_id: string
-          mission_id: string
-          current_value: number
-          stage_claimed: number
-          first_unlocked_at: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          profile_id: string
-          mission_id: string
-          current_value?: number
-          stage_claimed?: number
-          first_unlocked_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          profile_id?: string
-          mission_id?: string
-          current_value?: number
-          stage_claimed?: number
-          first_unlocked_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "achievement_progress_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       craft_requests: {
         Row: {
           created_at: string
@@ -362,11 +321,39 @@ export type Database = {
             referencedRelation: "user_cards"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      daily_login: {
+        Row: {
+          created_at: string
+          current_day: number
+          last_claim_at: string | null
+          profile_id: string
+          streak_days: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_day?: number
+          last_claim_at?: string | null
+          profile_id: string
+          streak_days?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_day?: number
+          last_claim_at?: string | null
+          profile_id?: string
+          streak_days?: number
+          updated_at?: string
+        }
+        Relationships: [
           {
-            foreignKeyName: "craft_requests_target_card_id_fkey"
-            columns: ["target_card_id"]
-            isOneToOne: false
-            referencedRelation: "cards"
+            foreignKeyName: "daily_login_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -708,6 +695,47 @@ export type Database = {
           },
         ]
       }
+      mission_progress: {
+        Row: {
+          claimed_at: string | null
+          created_at: string
+          current_value: number
+          id: string
+          mission_id: string
+          period_key: string
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          created_at?: string
+          current_value?: number
+          id?: string
+          mission_id: string
+          period_key: string
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          claimed_at?: string | null
+          created_at?: string
+          current_value?: number
+          id?: string
+          mission_id?: string
+          period_key?: string
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mission_progress_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pack_opening_cards: {
         Row: {
           card_id: string
@@ -728,13 +756,6 @@ export type Database = {
           user_card_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "pack_opening_cards_card_id_fkey"
-            columns: ["card_id"]
-            isOneToOne: false
-            referencedRelation: "cards"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "pack_opening_cards_pack_opening_id_fkey"
             columns: ["pack_opening_id"]
@@ -844,6 +865,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "pity_counters_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_trophies: {
+        Row: {
+          achievement_id: string
+          id: string
+          profile_id: string
+          reward_claimed: boolean
+          unlocked_at: string
+        }
+        Insert: {
+          achievement_id: string
+          id?: string
+          profile_id: string
+          reward_claimed?: boolean
+          unlocked_at?: string
+        }
+        Update: {
+          achievement_id?: string
+          id?: string
+          profile_id?: string
+          reward_claimed?: boolean
+          unlocked_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_trophies_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -1157,47 +1210,6 @@ export type Database = {
           },
         ]
       }
-      mission_progress: {
-        Row: {
-          id: string
-          profile_id: string
-          mission_id: string
-          period_key: string
-          current_value: number
-          claimed_at: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          profile_id: string
-          mission_id: string
-          period_key: string
-          current_value?: number
-          claimed_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          profile_id?: string
-          mission_id?: string
-          period_key?: string
-          current_value?: number
-          claimed_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "mission_progress_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_cards: {
         Row: {
           acquired_at: string
@@ -1253,7 +1265,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      credit_soft_currency: {
+        Args: { p_amount: number; p_profile_id: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
