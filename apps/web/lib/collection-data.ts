@@ -30,6 +30,8 @@ import {
 import type { NationalityCode, Position, RarityCode, TraitName } from '@world-legends/types';
 import { ALL_POSITIONS, ALL_RARITY_CODES } from '@world-legends/types';
 
+import { ALL_CARD_SEEDS, ALL_PLAYER_SEEDS } from './catalog-seeds';
+
 // ─── DTO para a UI ────────────────────────────────────────────────────────────
 
 /**
@@ -74,20 +76,20 @@ export type CollectionCard = Readonly<{
 // ─── Mapa de bandeiras ────────────────────────────────────────────────────────
 
 const FLAG_MAP: Record<string, string> = {
-  BR: '🇧🇷',
-  AR: '🇦🇷',
-  DE: '🇩🇪',
-  FR: '🇫🇷',
-  IT: '🇮🇹',
-  ES: '🇪🇸',
-  NL: '🇳🇱',
-  PT: '🇵🇹',
-  UY: '🇺🇾',
-  CR: '🇭🇷',
-  EN: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-  GB: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-  HR: '🇭🇷',
-  DK: '🇩🇰',
+  BR:'🇧🇷', AR:'🇦🇷', DE:'🇩🇪', FR:'🇫🇷', IT:'🇮🇹',
+  ES:'🇪🇸', NL:'🇳🇱', PT:'🇵🇹', UY:'🇺🇾', CR:'🇨🇷',
+  EN:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', GB:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', HR:'🇭🇷', DK:'🇩🇰',
+  HU:'🇭🇺', PL:'🇵🇱', BG:'🇧🇬', CM:'🇨🇲', SU:'🪆',
+  RU:'🇷🇺', YU:'🏳', SE:'🇸🇪', RO:'🇷🇴', CO:'🇨🇴',
+  CZ:'🇨🇿', CS:'🏳', NG:'🇳🇬', GH:'🇬🇭', MX:'🇲🇽',
+  CL:'🇨🇱', AT:'🇦🇹', CI:'🇨🇮', SN:'🇸🇳', KR:'🇰🇷',
+  JP:'🇯🇵', BE:'🇧🇪', SC:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', IE:'🇮🇪', WA:'🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+  NI:'🇬🇧', TR:'🇹🇷', GR:'🇬🇷', CH:'🇨🇭', RS:'🇷🇸',
+  DZ:'🇩🇿', MA:'🇲🇦', US:'🇺🇸', PE:'🇵🇪', PY:'🇵🇾',
+  EC:'🇪🇨', AU:'🇦🇺', IS:'🇮🇸', EG:'🇪🇬', IL:'🇮🇱',
+  UA:'🇺🇦', ML:'🇲🇱', AL:'🇦🇱', BA:'🇧🇦', SK:'🇸🇰',
+  CA:'🇨🇦', SA:'🇸🇦', QA:'🇶🇦', CD:'🇨🇩', PF:'🇵🇫',
+  JM:'🇯🇲', CU:'🇨🇺',
 };
 
 function flag(code: string): string {
@@ -790,8 +792,8 @@ function ensureInitialized() {
   if (_initialized) return;
   _initialized = true;
 
-  // Registrar jogadores
-  for (const seed of PLAYER_SEEDS) {
+  // Registrar jogadores (seeds manuais + catálogo completo)
+  for (const seed of [...PLAYER_SEEDS, ...ALL_PLAYER_SEEDS]) {
     const result = createPlayer({
       id: playerId(seed.id),
       fullName: seed.fullName,
@@ -828,8 +830,8 @@ function ensureInitialized() {
     },
   };
 
-  // Registrar cartas
-  for (const seed of CARD_SEEDS) {
+  // Registrar cartas (seeds manuais + catálogo completo)
+  for (const seed of [...CARD_SEEDS, ...ALL_CARD_SEEDS]) {
     const player = playerCatalog.findById(playerId(seed.playerId));
     if (!player) continue;
 
