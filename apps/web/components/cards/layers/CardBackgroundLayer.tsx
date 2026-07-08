@@ -8,6 +8,7 @@ import { ImageLayer } from './ImageLayer';
 
 export function CardBackgroundLayer({ ctx }: { ctx: CardVisualCtx }) {
   const { kit, bgAlpha, rarityCode } = ctx;
+  if (ctx.hiddenLayers?.has('background')) return null;
 
   return (
     <div className="card-parallax-bg" style={{ position: 'absolute', inset: 0, zIndex: 0 }}>

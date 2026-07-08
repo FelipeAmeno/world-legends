@@ -13,6 +13,7 @@ import { ImageLayer } from './ImageLayer';
 
 export function CardKitLayer({ ctx }: { ctx: CardVisualCtx }) {
   const { card, dim } = ctx;
+  if (ctx.hiddenLayers?.has('kit')) return null;
 
   return (
     <ImageLayer

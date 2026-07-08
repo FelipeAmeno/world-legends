@@ -18,7 +18,9 @@ import {
   expectedFrames,
   expectedGlows,
   expectedKits,
+  expectedPatterns,
   expectedPlayerArt,
+  expectedPoses,
   expectedRarityEffects,
   expectedShine,
 } from './card-asset-expectations';
@@ -106,22 +108,6 @@ function buildCategory(
   };
 }
 
-/** Patterns não têm universo esperado fixo — lista só o que existe. */
-function buildPatternsCategory(): CategoryDiagnostics {
-  const found = CARD_ASSET_MANIFEST.patterns as Record<
-    string,
-    { src: string; meta: Record<string, unknown> }
-  >;
-  const assets = Object.keys(found).map((key) => diagnoseOne(key, key, 'patterns'));
-  return {
-    category: 'patterns',
-    manifestKind: 'patterns',
-    expectedCount: assets.length,
-    foundCount: assets.length,
-    assets,
-  };
-}
-
 export function buildAllCardAssetDiagnostics(): CategoryDiagnostics[] {
   return [
     buildCategory('frames', 'frames', expectedFrames()),
@@ -130,7 +116,8 @@ export function buildAllCardAssetDiagnostics(): CategoryDiagnostics[] {
     buildCategory('effects (glow)', 'effects', expectedGlows()),
     buildCategory('kits', 'kits', expectedKits()),
     buildCategory('player-art', 'player-art', expectedPlayerArt()),
+    buildCategory('poses', 'poses', expectedPoses()),
+    buildCategory('patterns', 'patterns', expectedPatterns()),
     buildCategory('shine', 'shine', expectedShine()),
-    buildPatternsCategory(),
   ];
 }

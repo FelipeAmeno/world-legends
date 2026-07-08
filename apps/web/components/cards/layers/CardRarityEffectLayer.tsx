@@ -15,6 +15,7 @@ import { ImageLayer } from './ImageLayer';
 
 export function CardRarityEffectLayer({ ctx }: { ctx: CardVisualCtx }) {
   const { rarityCode, isGoat, isUltra, isElitePlus } = ctx;
+  if (ctx.hiddenLayers?.has('rarityEffect')) return null;
 
   return (
     <ImageLayer

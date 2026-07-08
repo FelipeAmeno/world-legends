@@ -16,6 +16,8 @@ import type { CardVisualCtx } from '../card-types';
 import { ImageLayer } from './ImageLayer';
 
 export function CardFrameLayer({ ctx }: { ctx: CardVisualCtx }) {
+  if (ctx.hiddenLayers?.has('frame')) return null;
+
   return (
     <ImageLayer
       asset={resolveFrame(ctx.rarityCode)}

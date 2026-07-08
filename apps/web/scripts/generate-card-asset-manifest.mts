@@ -23,6 +23,7 @@ const CATEGORIES = [
   'kits',
   'patterns',
   'player-art',
+  'poses',
   'shine',
 ] as const;
 type Category = (typeof CATEGORIES)[number];

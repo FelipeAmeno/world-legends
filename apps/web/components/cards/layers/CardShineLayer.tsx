@@ -13,6 +13,8 @@ import type { CardVisualCtx } from '../card-types';
 import { ImageLayer } from './ImageLayer';
 
 export function CardShineLayer({ ctx }: { ctx: CardVisualCtx }) {
+  if (ctx.hiddenLayers?.has('shine')) return null;
+
   return (
     <ImageLayer
       asset={resolveShine(ctx.rarityCode)}

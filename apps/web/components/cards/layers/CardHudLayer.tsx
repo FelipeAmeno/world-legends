@@ -20,6 +20,7 @@ type Props = {
 
 export function CardHudLayer({ ctx, ovrSlot, positionSlot, ribbonSlot, nameSlot }: Props) {
   const { dim, accent } = ctx;
+  if (ctx.hiddenLayers?.has('hud')) return null;
 
   return (
     <>

@@ -73,6 +73,14 @@ export function expectedPlayerArt(): ExpectedEntry[] {
   return uniquePlayers().map((p) => ({ key: p.id, label: p.knownAs }));
 }
 
+export function expectedPoses(): ExpectedEntry[] {
+  return uniquePlayers().map((p) => ({ key: `pose-${p.id}`, label: p.knownAs }));
+}
+
+export function expectedPatterns(): ExpectedEntry[] {
+  return getAllKitNationalities().map((n) => ({ key: `pattern-${n}`, label: n }));
+}
+
 export function allKitNationalities(): readonly string[] {
   return getAllKitNationalities();
 }

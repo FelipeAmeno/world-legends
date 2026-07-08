@@ -16,6 +16,7 @@
 import { getKitColors } from '@/lib/kit-data';
 import { memo } from 'react';
 import { CardParticles } from './CardParticles';
+import { RARITY_MATERIAL } from './card-materials';
 import {
   type CardSize,
   RARITY_ACCENT,
@@ -27,18 +28,23 @@ import {
   RIBBON_FONT,
   SIZES,
 } from './card-tokens';
-import type { CardVisualCtx, PlayerCardData } from './card-types';
+import type { CardLayerName, CardVisualCtx, PlayerCardData } from './card-types';
+import { CardAmbientLightLayer } from './layers/CardAmbientLightLayer';
 import { type CardAttributes, CardAttributesLayer } from './layers/CardAttributesLayer';
 import { CardBackgroundLayer } from './layers/CardBackgroundLayer';
 import { CardFrameLayer } from './layers/CardFrameLayer';
 import { CardGlowLayer } from './layers/CardGlowLayer';
 import { CardHudLayer } from './layers/CardHudLayer';
 import { CardKitLayer } from './layers/CardKitLayer';
+import { CardMaterialLayer } from './layers/CardMaterialLayer';
 import { CardNameLayer } from './layers/CardNameLayer';
 import { CardOvrLayer } from './layers/CardOvrLayer';
+import { CardPatternLayer } from './layers/CardPatternLayer';
 import { CardPlayerArtLayer } from './layers/CardPlayerArtLayer';
+import { CardPoseLayer } from './layers/CardPoseLayer';
 import { CardPositionLayer } from './layers/CardPositionLayer';
 import { CardRarityEffectLayer } from './layers/CardRarityEffectLayer';
+import { CardReflectionLayer } from './layers/CardReflectionLayer';
 import { CardShineLayer } from './layers/CardShineLayer';
 import { useCardTilt } from './use-card-tilt';
 
@@ -50,9 +56,11 @@ type Props = {
   glow?: boolean;
   /** Layer 11 (opcional, off por padrão) — nenhum call site existente precisa passar isso. */
   attributes?: CardAttributes;
+  /** Modo Visual Debug (Sprint 19) — só usado por /dev/card-assets, nenhum call site existente precisa passar isso. */
+  hiddenLayers?: ReadonlySet<CardLayerName>;
 };
 
-function PlayerCardImpl({ card, size = 'md', glow, attributes }: Props) {
+function PlayerCardImpl({ card, size = 'md', glow, attributes, hiddenLayers }: Props) {
   const tiltRef = useCardTilt<HTMLDivElement>();
   const kit = getKitColors(card.nationality);
   const accent = RARITY_ACCENT[card.rarityCode];
@@ -89,6 +97,8 @@ function PlayerCardImpl({ card, size = 'md', glow, attributes }: Props) {
     isUltra,
     isGoat,
     rarityCode: card.rarityCode,
+    material: RARITY_MATERIAL[card.rarityCode],
+    hiddenLayers,
   };
 
   return (
@@ -121,10 +131,16 @@ function PlayerCardImpl({ card, size = 'md', glow, attributes }: Props) {
       >
         {/* Layer 1 */}
         <CardBackgroundLayer ctx={ctx} />
+        {/* Material (Sprint 19) — bezel físico da raridade, por cima do fundo ambiente */}
+        <CardMaterialLayer ctx={ctx} />
+        {/* Ambient Light (Sprint 19) — luz suave constante, intensidade por material */}
+        <CardAmbientLightLayer ctx={ctx} />
         {/* Layer 2 */}
         <CardRarityEffectLayer ctx={ctx} />
         {/* Layer 3 — aditiva; a moldura real é a classe CSS no container acima */}
         <CardFrameLayer ctx={ctx} />
+        {/* Reflection (Sprint 19) — feixe de luz fixo, intensidade/nitidez por material */}
+        <CardReflectionLayer ctx={ctx} />
 
         {/* Layer 4 (camisa) + Layer 5 (arte do jogador) + Layer 6 (glow), agrupadas
             no bloco central pois compartilham posicionamento/escala. */}
@@ -151,12 +167,18 @@ function PlayerCardImpl({ card, size = 'md', glow, attributes }: Props) {
             }}
           >
             <CardKitLayer ctx={ctx} />
+            {/* Pattern (Sprint 19) — textura reutilizável por cima do Kit, ponto de integração */}
+            <CardPatternLayer ctx={ctx} />
           </div>
         </div>
         <CardPlayerArtLayer ctx={ctx} />
+        {/* Pose (Sprint 19) — alternativa a Player Art, ponto de integração */}
+        <CardPoseLayer ctx={ctx} />
 
         {/* Partículas (item 6) — só legendary+ */}
-        {isLegendaryPlus && <CardParticles cardId={card.cardId} accent={accent} />}
+        {isLegendaryPlus && !hiddenLayers?.has('particles') && (
+          <CardParticles cardId={card.cardId} accent={accent} />
+        )}
 
         {/* Layer 7 (HUD/plates) recebe as Layers 8/9/10 (texto puro) como slots */}
         <CardHudLayer
@@ -207,7 +229,8 @@ function areEqual(prev: Props, next: Props): boolean {
     prev.card.era === next.card.era &&
     prev.size === next.size &&
     prev.glow === next.glow &&
-    prev.attributes === next.attributes
+    prev.attributes === next.attributes &&
+    prev.hiddenLayers === next.hiddenLayers
   );
 }
 

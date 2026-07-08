@@ -13,6 +13,7 @@ import { ImageLayer } from './ImageLayer';
 
 export function CardPlayerArtLayer({ ctx }: { ctx: CardVisualCtx }) {
   const { card } = ctx;
+  if (ctx.hiddenLayers?.has('playerArt')) return null;
 
   return (
     <ImageLayer

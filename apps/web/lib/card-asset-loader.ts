@@ -89,8 +89,23 @@ export function resolvePlayerArt(playerId: string): ResolvedCardAsset | null {
   return resolveCardAsset('player-art', playerId);
 }
 
-export function resolvePattern(patternKey: string): ResolvedCardAsset | null {
-  return resolveCardAsset('patterns', patternKey);
+/**
+ * Pattern (Sprint 19) — textura reutilizável associada à seleção (listras,
+ * xadrez etc.), pensada pra combinar com Kit. Convenção de chave:
+ * `pattern-{nacionalidade}`.
+ */
+export function resolvePattern(nationality: string): ResolvedCardAsset | null {
+  return resolveCardAsset('patterns', `pattern-${nationality}`);
+}
+
+/**
+ * Pose (Sprint 19) — pose/silhueta completa do jogador, alternativa ao
+ * retrato de Player Art. Ainda não existe nenhum asset; a camada cai
+ * silenciosamente (fallback null), igual Player Art antes da primeira
+ * entrega de arte.
+ */
+export function resolvePose(playerId: string): ResolvedCardAsset | null {
+  return resolveCardAsset('poses', `pose-${playerId}`);
 }
 
 /** Layer nova (Sprint 18.7) — reservada para um asset de shine/holo futuro. */

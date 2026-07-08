@@ -1,3 +1,8 @@
+> **Atualizado pela Sprint 19** — o guia atual e completo (frame,
+> background, kit, pattern, pose, player-art, shine, effects/glow) é
+> `WORLD_LEGENDS_ART_PIPELINE.md` na raiz do repositório. Este arquivo
+> fica como referência histórica da Sprint 18.5.
+
 # Guia de assets de carta — World Legends
 
 Este documento é para quem produz arte para as cartas (hoje: geração via

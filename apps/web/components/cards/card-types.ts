@@ -1,5 +1,6 @@
 import type { KitColors } from '@/lib/kit-data';
 import type { RarityCode } from '@world-legends/types';
+import type { MaterialDef } from './card-materials';
 import type { CardSize, SIZES } from './card-tokens';
 
 export type PlayerCardData = {
@@ -35,4 +36,24 @@ export type CardVisualCtx = {
   isUltra: boolean;
   isGoat: boolean;
   rarityCode: RarityCode;
+  material: MaterialDef;
+  /** Visual Debug (Sprint 19) — camadas explicitamente desligadas para QA. `undefined` = todas ligadas. */
+  hiddenLayers?: ReadonlySet<CardLayerName> | undefined;
 };
+
+/** Nomes usados pelo modo Visual Debug pra ligar/desligar cada camada individualmente. */
+export type CardLayerName =
+  | 'background'
+  | 'material'
+  | 'ambientLight'
+  | 'rarityEffect'
+  | 'frame'
+  | 'glow'
+  | 'kit'
+  | 'playerArt'
+  | 'pose'
+  | 'pattern'
+  | 'particles'
+  | 'reflection'
+  | 'hud'
+  | 'shine';

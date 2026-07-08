@@ -765,6 +765,129 @@ body {
   animation: float-y 3.5s ease-in-out infinite, twinkle 2.2s ease-in-out infinite;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════
+   CARD MATERIALS — Sprint 19 (World Legends Visual Identity)
+   Cada raridade tem um MATERIAL físico, não só uma cor. Renderizado como um
+   "bezel" (anel na borda da carta, mesma técnica de máscara do .card-metallic
+   da Sprint 18.7) — representa o material físico do "cartão" em si, por trás
+   da moldura (Frame) e por cima do fundo ambiente (Background). Ver
+   components/cards/card-materials.ts pra qual raridade usa qual material.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.card-material-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 4px;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Common — plástico fosco: baixo contraste, sem brilho, quase sem textura. */
+.card-material-plastic {
+  background: linear-gradient(160deg, #3a3d42 0%, #26282c 55%, #1c1e21 100%);
+}
+
+/* Rare — metal anodizado: linhas escovadas + faixa de luz direcional, tom violeta. */
+.card-material-anodized {
+  background: repeating-linear-gradient(
+      100deg,
+      rgba(255, 255, 255, 0.05) 0px,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 1px,
+      transparent 3px
+    ), linear-gradient(135deg, #8b7bc0 0%, #6b5b95 35%, #4a3a70 65%, #7c6bb0 100%);
+}
+
+/* Elite — carbono premium: trama cruzada clássica de fibra de carbono. */
+.card-material-carbon {
+  background: repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.05) 0px,
+      rgba(255, 255, 255, 0.05) 2px,
+      transparent 2px,
+      transparent 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(96, 165, 250, 0.06) 0px,
+      rgba(96, 165, 250, 0.06) 2px,
+      transparent 2px,
+      transparent 4px
+    ), linear-gradient(160deg, #1a2332 0%, #0d1520 60%, #060a10 100%);
+}
+
+/* Legendary — ouro lapidado: facetas diagonais simulando corte de joia. */
+.card-material-gold {
+  background: linear-gradient(
+      115deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.4) 38%,
+      transparent 46%
+    ), linear-gradient(65deg, transparent 55%, rgba(255, 241, 199, 0.3) 62%, transparent 70%),
+    linear-gradient(150deg, #8c6f27 0%, #e6c85a 45%, #fff6d8 55%, #c9a84c 70%, #8c6f27 100%);
+}
+
+/* Ultra — platina cromada: espelhado, feixe de luz estreito e nítido. */
+.card-material-platinum {
+  background: linear-gradient(
+      100deg,
+      transparent 40%,
+      rgba(255, 255, 255, 0.95) 48%,
+      transparent 56%
+    ), linear-gradient(160deg, #e8eaf0 0%, #b8bcc8 30%, #6b7080 55%, #d0d4dc 75%, #9498a4 100%);
+}
+
+/* World Champion — cerâmica branca premium: brilho difuso e amplo, tom cremoso. */
+.card-material-ceramic {
+  background: radial-gradient(
+      ellipse 60% 40% at 35% 20%,
+      rgba(255, 255, 255, 0.75),
+      transparent 60%
+    ), linear-gradient(160deg, #fdfdfb 0%, #f0efe8 40%, #e2ddd0 70%, #f5f3ee 100%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   REFLECTION & AMBIENT LIGHT — Sprint 19
+   ReflectionLayer: feixe de luz que varre a carta, largura/intensidade lidas
+   de MaterialDef (card-materials.ts) via CSS custom properties inline.
+   AmbientLightLayer: luz suave e constante, mais forte em materiais polidos.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.card-reflection-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 4;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(255, 255, 255, var(--reflection-intensity, 0.3)) 48%,
+    transparent 66%
+  );
+  background-size: 220% 220%;
+  animation: metallicSweep var(--reflection-duration, 4s) linear infinite;
+  filter: blur(var(--reflection-blur, 2px));
+}
+
+.card-ambient-light-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+  background: radial-gradient(
+    ellipse 90% 60% at 50% 0%,
+    rgba(255, 255, 255, var(--ambient-intensity, 0.2)) 0%,
+    transparent 65%
+  );
+}
+
 /* Pack animations */
 .pack-float {
   animation: packFloat 3s ease-in-out infinite;

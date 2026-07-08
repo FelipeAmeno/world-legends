@@ -19,6 +19,7 @@ import { ImageLayer } from './ImageLayer';
 
 export function CardGlowLayer({ ctx }: { ctx: CardVisualCtx }) {
   const { accent, rarityCode, glow } = ctx;
+  if (ctx.hiddenLayers?.has('glow')) return null;
 
   return (
     <ImageLayer
