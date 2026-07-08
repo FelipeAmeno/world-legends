@@ -1,5 +1,6 @@
 'use client';
 
+import { PlayerCard } from '@/components/cards/PlayerCard';
 import type { CollectionCard } from '@/lib/collection-data';
 import { RARITY_VISUAL } from '@/lib/collection-data';
 import { motion } from 'framer-motion';
@@ -119,23 +120,10 @@ export function CardDetailModal({ card, isFav, isComparing, onClose, onFav, onCo
               </div>
             </div>
 
-            {/* OVR + nome */}
+            {/* Carta (Card Preview — mesmo PlayerCard usado em toda a Sprint 18.5) + nome */}
             <div className="flex items-end gap-4 relative z-10">
-              <div className="text-center">
-                <p
-                  className="font-display leading-none"
-                  style={{
-                    fontSize: '72px',
-                    background: `linear-gradient(180deg, #fff, ${RARITY_COLORS[card.rarityCode] ?? '#c9a84c'})`,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    filter: `drop-shadow(0 0 12px ${RARITY_COLORS[card.rarityCode]})`,
-                  }}
-                >
-                  {card.overall}
-                </p>
-              </div>
-              <div className="pb-1">
+              <PlayerCard card={card} size="lg" glow />
+              <div className="pb-1 min-w-0">
                 <p
                   className={`text-[10px] font-black uppercase tracking-widest mb-1 ${visual.textClass}`}
                 >
