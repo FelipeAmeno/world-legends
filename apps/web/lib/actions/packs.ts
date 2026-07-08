@@ -2,6 +2,7 @@
 
 import { checkAndUnlockAchievementsInternal } from '@/lib/actions/achievements';
 import { checkAndMarkCompletedSetsInternal } from '@/lib/actions/collections';
+import type { CheckCollectionResult } from '@/lib/actions/collections.types';
 import { incrementMissionProgressInternal } from '@/lib/actions/missions';
 import { getCollectionMap } from '@/lib/collection-data';
 import { crash } from '@/lib/crash/sentry';
@@ -316,6 +317,25 @@ export async function openPackForUser(userId: string, packId: string): Promise<O
   ).length;
   const legendaryCount = drawn.filter((d) => LEGENDARY_RARITIES.has(d.rarityCode)).length;
 
+  // Detecção de conjuntos completos precisa do resultado na resposta (celebração
+  // ao vivo na tela de reveal), então roda no caminho síncrono — o resto do
+  // pós-processamento (missões, conquistas) continua em background.
+  let newlyCompletedSets: CheckCollectionResult['newlyCompleted'] = [];
+  try {
+    const setsResult = await checkAndMarkCompletedSetsInternal(
+      userId,
+      newCards.map((d) => d.cardId),
+    );
+    newlyCompletedSets = setsResult.newlyCompleted;
+  } catch (e) {
+    crash.captureError(e, {
+      context: 'pack_set_completion_check',
+      userId,
+      extras: { packId },
+      level: 'warning',
+    });
+  }
+
   void (async () => {
     try {
       await incrementMissionProgressInternal(userId, 'packsOpened', 1);
@@ -326,10 +346,6 @@ export async function openPackForUser(userId: string, packId: string): Promise<O
       if (brazilianCount > 0) {
         await incrementMissionProgressInternal(userId, 'brazilianCards', brazilianCount);
       }
-      await checkAndMarkCompletedSetsInternal(
-        userId,
-        newCards.map((d) => d.cardId),
-      );
       await checkAndUnlockAchievementsInternal(userId);
     } catch (e) {
       crash.captureError(e, {
@@ -341,5 +357,11 @@ export async function openPackForUser(userId: string, packId: string): Promise<O
     }
   })();
 
-  return { ok: true, drawn, newBalance, totalFragments: pendingFragments };
+  return {
+    ok: true,
+    drawn,
+    newBalance,
+    totalFragments: pendingFragments,
+    newlyCompletedSets,
+  };
 }

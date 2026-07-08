@@ -15,11 +15,13 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { AchievementPopup } from '@/components/ui/AchievementPopup';
 import { LevelUpModal } from '@/components/ui/LevelUpModal';
 import { openPackAction } from '@/lib/actions/packs';
 import type { DrawnCardInfo } from '@/lib/actions/packs.types';
 import type { CollectionCard } from '@/lib/collection-data';
 import { getCollection } from '@/lib/collection-data';
+import type { CollectionSetDef } from '@/lib/collection-sets';
 import { vibrate } from '@/lib/haptics';
 import { type DrawnCard, PACK_DEFS, type PackDefinitionUI } from '@/lib/pack-logic';
 import { deriveAccountProgress } from '@/lib/rewards-data';
@@ -125,6 +127,7 @@ export function PackExperience({
   const [insufficientFunds, setInsufficientFunds] = useState(false);
   const [collectionCount, setCollectionCount] = useState(initialCollectionCount);
   const [levelUpInfo, setLevelUpInfo] = useState<{ prevLevel: number; level: number } | null>(null);
+  const [completedSetsQueue, setCompletedSetsQueue] = useState<readonly CollectionSetDef[]>([]);
 
   const { elRef: shakeRef, shake } = useCameraShake();
 
@@ -218,6 +221,10 @@ export function PackExperience({
             }
             return nextCount;
           });
+
+          if (result.newlyCompletedSets.length > 0) {
+            setCompletedSetsQueue(result.newlyCompletedSets);
+          }
         } else {
           setBalance((b) => b + pack.price);
           toast.error(result.error ?? 'Erro ao abrir pack. Tente novamente.');
@@ -412,6 +419,18 @@ export function PackExperience({
         prevLevel={levelUpInfo?.prevLevel ?? 1}
         level={levelUpInfo?.level ?? 1}
         onDismiss={() => setLevelUpInfo(null)}
+      />
+
+      <AchievementPopup
+        open={phase === 'DONE' && completedSetsQueue.length > 0}
+        icon={completedSetsQueue[0]?.icon ?? '🏆'}
+        title={`Conjunto completo: ${completedSetsQueue[0]?.name ?? ''}`}
+        description={
+          completedSetsQueue[0]
+            ? `+${completedSetsQueue[0].rewardSoftCurrency.toLocaleString('pt-BR')} créditos no Álbum`
+            : undefined
+        }
+        onDismiss={() => setCompletedSetsQueue((q) => q.slice(1))}
       />
     </div>
   );

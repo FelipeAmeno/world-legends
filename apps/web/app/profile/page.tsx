@@ -18,7 +18,12 @@ import { TitlesGrid } from '@/components/profile/premium/TitlesGrid';
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
-  const collection = user ? await getUserCollection(user.id) : getCollection();
+
+  const [collection, stats, profile] = await Promise.all([
+    user ? getUserCollection(user.id) : Promise.resolve(getCollection()),
+    user ? getUserMatchStats(user.id) : Promise.resolve(null),
+    user ? getUserProfile(user.id) : Promise.resolve(null),
+  ]);
 
   let wins = 0;
   let draws = 0;
@@ -28,11 +33,7 @@ export default async function ProfilePage() {
   let fragments = 0;
   let username: string | undefined;
 
-  if (user) {
-    const [stats, profile] = await Promise.all([
-      getUserMatchStats(user.id),
-      getUserProfile(user.id),
-    ]);
+  if (user && stats) {
     wins = stats.wins;
     draws = stats.draws;
     losses = stats.losses;

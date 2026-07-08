@@ -11,15 +11,15 @@ import { getCurrentUser } from '@/lib/supabase/server';
 export default async function SquadPage() {
   const user = await getCurrentUser();
 
-  const [allCards, favoriteIds] = await Promise.all([
+  const [allCards, favoriteIds, savedSquad] = await Promise.all([
     user ? getUserCollection(user.id) : Promise.resolve(getCollection()),
     user ? getFavoriteCardIds() : Promise.resolve([]),
+    user ? getUserActiveSquad(user.id) : Promise.resolve(null),
   ]);
 
   let initialState = undefined;
-  if (user && allCards.length > 0) {
-    const saved = await getUserActiveSquad(user.id);
-    if (saved) initialState = buildSBStateFromSaved(saved, allCards);
+  if (savedSquad && allCards.length > 0) {
+    initialState = buildSBStateFromSaved(savedSquad, allCards);
   }
 
   return (

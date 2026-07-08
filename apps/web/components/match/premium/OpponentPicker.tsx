@@ -33,7 +33,7 @@ export function OpponentPicker({ opponents, userOvr, onSelect }: Props) {
             whileHover={{ scale: 1.03, y: -2 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => onSelect(opp.id)}
-            className="relative text-left p-4 rounded-2xl border border-white/10 bg-white/[0.03]
+            className="glass-card relative text-left p-4 rounded-2xl
                        hover:border-white/20 hover:bg-white/[0.05] transition-all overflow-hidden"
           >
             {/* Glow hover */}

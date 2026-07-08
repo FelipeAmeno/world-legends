@@ -16,7 +16,7 @@ type Props = {
   open: boolean;
   icon?: string;
   title: string;
-  description?: string;
+  description?: string | undefined;
   onDismiss: () => void;
   autoDismissMs?: number;
 };
