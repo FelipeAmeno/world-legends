@@ -2,6 +2,7 @@
 
 import { getKitColors } from '@/lib/kit-data';
 import type { RarityCode } from '@world-legends/types';
+import { motion } from 'framer-motion';
 import { JerseyArt } from './JerseyArt';
 
 export type PlayerCardData = {
@@ -74,16 +75,37 @@ const RARITY_GLOW_CLASS: Record<RarityCode, string> = {
   world_cup_hero: 'glow-wch',
 };
 
-const SIZES = {
-  xs: { card: { width: 62, height: 84 }, jersey: 'xs' as const, jerseyScale: 1.28 },
-  sm: { card: { width: 92, height: 124 }, jersey: 'sm' as const, jerseyScale: 1.22 },
-  md: { card: { width: 116, height: 156 }, jersey: 'md' as const, jerseyScale: 1.18 },
-  lg: { card: { width: 148, height: 199 }, jersey: 'lg' as const, jerseyScale: 1.16 },
+// Intensidade do banho de cor nacional no fundo — cresce com a raridade,
+// para que Common (quase sem cor) e Legendary/GOAT/Campeão (cor vibrante)
+// pareçam universos diferentes mesmo antes de olhar pra camisa.
+const RARITY_BG_ALPHA: Record<RarityCode, string> = {
+  common: '14',
+  rare: '2c',
+  elite: '3a',
+  legendary: '4a',
+  ultra: '52',
+  world_cup_hero: '5c',
 };
 
-const OVR_FONT: Record<keyof typeof SIZES, number> = { xs: 12, sm: 15, md: 18, lg: 23 };
+const RARITY_SHIMMER: Record<RarityCode, boolean> = {
+  common: false,
+  rare: true,
+  elite: true,
+  legendary: true,
+  ultra: true,
+  world_cup_hero: true,
+};
+
+const SIZES = {
+  xs: { card: { width: 62, height: 84 }, jersey: 'xs' as const, jerseyScale: 1.5 },
+  sm: { card: { width: 92, height: 124 }, jersey: 'sm' as const, jerseyScale: 1.42 },
+  md: { card: { width: 116, height: 156 }, jersey: 'md' as const, jerseyScale: 1.36 },
+  lg: { card: { width: 148, height: 199 }, jersey: 'lg' as const, jerseyScale: 1.32 },
+};
+
+const OVR_FONT: Record<keyof typeof SIZES, number> = { xs: 14, sm: 18, md: 22, lg: 28 };
 const POS_FONT: Record<keyof typeof SIZES, number> = { xs: 5, sm: 5.5, md: 6.5, lg: 8 };
-const NAME_FONT: Record<keyof typeof SIZES, number> = { xs: 6.5, sm: 9, md: 11.5, lg: 15 };
+const NAME_FONT: Record<keyof typeof SIZES, number> = { xs: 8, sm: 11.5, md: 15, lg: 20 };
 const SUB_FONT: Record<keyof typeof SIZES, number> = { xs: 5, sm: 6, md: 7, lg: 8.5 };
 const RIBBON_FONT: Record<keyof typeof SIZES, number> = { xs: 6, sm: 6.5, md: 7.5, lg: 9 };
 
@@ -99,6 +121,8 @@ export function PlayerCard({ card, size = 'md', glow }: Props) {
   const isGoat = card.rarityCode === 'world_cup_hero';
   const isUltra = card.rarityCode === 'ultra';
   const isLegendaryPlus = card.rarityCode === 'legendary' || isUltra || isGoat;
+  const isElitePlus = card.rarityCode === 'elite' || isLegendaryPlus;
+  const bgAlpha = RARITY_BG_ALPHA[card.rarityCode];
 
   return (
     <div
@@ -116,11 +140,52 @@ export function PlayerCard({ card, size = 'md', glow }: Props) {
         height: dim.card.height,
         borderRadius: Math.round(dim.card.width * 0.09),
         overflow: 'hidden',
-        // Identidade nacional: gradiente ambiente derivado da cor real do kit,
-        // não de uma lista fixa de "estádios" — funciona para as 65 seleções.
-        background: `radial-gradient(ellipse 95% 65% at 50% 0%, ${kit.primary}2e, #030308 78%)`,
+        // Identidade nacional: gradiente de duas cores reais do kit (não só
+        // uma tinta genérica), com intensidade que cresce por raridade — uma
+        // Common e uma Legendary do MESMO país já parecem cartas diferentes
+        // antes mesmo de olhar pra camisa.
+        background: [
+          `radial-gradient(ellipse 100% 70% at 50% 0%, ${kit.primary}${bgAlpha}, transparent 68%)`,
+          `radial-gradient(ellipse 90% 60% at 50% 100%, ${kit.secondary}${bgAlpha}, transparent 62%)`,
+          '#06060c',
+        ].join(', '),
       }}
     >
+      {/* Reflexo de vidro — diagonal, mais forte em raridades altas */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: 'none',
+          zIndex: 6,
+          background:
+            'linear-gradient(115deg, rgba(255,255,255,0.16) 0%, transparent 22%, transparent 78%, rgba(255,255,255,0.05) 100%)',
+          opacity: isElitePlus ? 1 : 0.5,
+        }}
+      />
+
+      {/* Sheen animado — todas as raridades exceto Common (que fica "chapada" de propósito) */}
+      {RARITY_SHIMMER[card.rarityCode] && (
+        <motion.div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            zIndex: 7,
+            background:
+              'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.22) 50%, transparent 60%)',
+            backgroundSize: '250% 100%',
+          }}
+          animate={{ backgroundPositionX: ['-120%', '220%'] }}
+          transition={{
+            duration: isGoat ? 2.2 : isUltra ? 2.6 : card.rarityCode === 'legendary' ? 3 : 3.6,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: 'easeInOut',
+            repeatDelay: isElitePlus ? 0.4 : 1.4,
+          }}
+        />
+      )}
+
       {/* Vinheta de profundidade */}
       <div
         style={{
@@ -148,11 +213,11 @@ export function PlayerCard({ card, size = 'md', glow }: Props) {
         />
       )}
 
-      {/* ── OVR — pequeno e elegante ── */}
+      {/* ── OVR — compacto mas com presença: glow colorido atrás do número ── */}
       <div
         style={{
           position: 'absolute',
-          top: dim.card.width * 0.055,
+          top: dim.card.width * 0.05,
           left: dim.card.width * 0.07,
           zIndex: 10,
           display: 'flex',
@@ -164,8 +229,8 @@ export function PlayerCard({ card, size = 'md', glow }: Props) {
           className="font-display"
           style={{
             fontSize: OVR_FONT[size],
-            color: '#f4f1ea',
-            textShadow: '0 1px 3px rgba(0,0,0,0.9)',
+            color: '#fffdf8',
+            textShadow: `0 0 10px ${accent}, 0 0 22px ${accent}90, 0 2px 4px rgba(0,0,0,0.95)`,
           }}
         >
           {card.overall}
@@ -177,6 +242,7 @@ export function PlayerCard({ card, size = 'md', glow }: Props) {
             color: accent,
             letterSpacing: '0.08em',
             marginTop: 1,
+            textShadow: `0 0 6px ${accent}80`,
           }}
         >
           {card.position}
@@ -184,11 +250,12 @@ export function PlayerCard({ card, size = 'md', glow }: Props) {
         <div
           style={{
             marginTop: 2,
-            width: '70%',
-            height: 1.5,
+            width: '75%',
+            height: 2,
             background: accent,
-            opacity: 0.85,
+            opacity: 0.95,
             borderRadius: 1,
+            boxShadow: `0 0 6px ${accent}`,
           }}
         />
       </div>
@@ -226,21 +293,41 @@ export function PlayerCard({ card, size = 'md', glow }: Props) {
         </div>
       )}
 
-      {/* ── Camisa — domina a carta (~70%+ da altura) ── */}
+      {/* ── Camisa — protagonista absoluta da carta ── */}
       <div
         style={{
           position: 'absolute',
-          top: dim.card.height * 0.1,
+          top: dim.card.height * 0.06,
           left: 0,
           right: 0,
-          bottom: dim.card.height * 0.24,
+          bottom: dim.card.height * 0.19,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'flex-start',
           overflow: 'visible',
         }}
       >
-        <div style={{ transform: `scale(${dim.jerseyScale})`, transformOrigin: 'top center' }}>
+        {/* Glow atrás da camisa — reforça a cor da raridade e dá profundidade */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '20%',
+            width: '70%',
+            height: '60%',
+            borderRadius: '50%',
+            background: `radial-gradient(ellipse, ${accent}45, transparent 72%)`,
+            filter: 'blur(4px)',
+            pointerEvents: 'none',
+          }}
+        />
+        <div
+          style={{
+            position: 'relative',
+            transform: `scale(${dim.jerseyScale})`,
+            transformOrigin: 'top center',
+            filter: `drop-shadow(0 6px 14px rgba(0,0,0,0.6)) drop-shadow(0 0 18px ${accent}50)`,
+          }}
+        >
           <JerseyArt
             playerId={card.playerId}
             displayName={card.displayName}
@@ -269,9 +356,10 @@ export function PlayerCard({ card, size = 'md', glow }: Props) {
         {isLegendaryPlus && (
           <div
             style={{
-              height: 1,
-              background: `linear-gradient(90deg, transparent, ${accent}80, transparent)`,
+              height: 1.5,
+              background: `linear-gradient(90deg, transparent, ${accent}, transparent)`,
               marginBottom: dim.card.height * 0.02,
+              boxShadow: `0 0 8px ${accent}`,
             }}
           />
         )}
@@ -279,14 +367,16 @@ export function PlayerCard({ card, size = 'md', glow }: Props) {
           className="font-display"
           style={{
             fontSize: NAME_FONT[size],
-            color: '#f7f3ea',
-            lineHeight: 1.05,
-            letterSpacing: '0.02em',
+            color: '#fffdf8',
+            lineHeight: 1.02,
+            letterSpacing: '0.015em',
             textOverflow: 'ellipsis',
             overflow: 'hidden',
             whiteSpace: 'nowrap',
             margin: 0,
-            textShadow: '0 1px 4px rgba(0,0,0,0.9)',
+            textShadow: isLegendaryPlus
+              ? `0 0 12px ${accent}90, 0 2px 5px rgba(0,0,0,0.95)`
+              : '0 2px 5px rgba(0,0,0,0.95)',
           }}
         >
           {card.displayName}

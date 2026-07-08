@@ -82,8 +82,15 @@ function guaranteedSlot(
  * abertura de um pack de entrada (250c) — fácil demais para um pack
  * "Clássico". Pesos reduzidos para ficar um degrau acima do Starter (75c)
  * sem repetir a generosidade do antigo Classic.
+ *
+ * Sprint 18 (Card Experience 5.0): ainda mais restrito — "Legendary
+ * extremamente rara, Ultra quase impossível" no Classic, e o slot
+ * garantido (que só floora em Rare+) também teve seu teto de
+ * Legendary/Ultra reduzido, para não ser possível emendar 2 Legendary na
+ * mesma abertura com facilidade.
  */
-const classicFreeSlot = { common: 62, rare: 28, elite: 8, legendary: 1.8, ultra: 0.2 };
+const classicFreeSlot = { common: 66, rare: 27, elite: 6.4, legendary: 0.55, ultra: 0.05 };
+const classicGuaranteedSlot = { rare: 62, elite: 30, legendary: 6.5, ultra: 1.5 };
 
 export const CLASSIC_PACK: Pack = Object.freeze({
   id: packId('classic'),
@@ -92,7 +99,7 @@ export const CLASSIC_PACK: Pack = Object.freeze({
   cardsPerPack: 5,
   dropTable: Object.freeze({
     slots: [
-      guaranteedSlot('rare', { world_cup_hero: 0 }), // garantido rare+
+      guaranteedSlot('rare', { ...classicGuaranteedSlot, common: 0, world_cup_hero: 0 }),
       freeSlot({ ...classicFreeSlot, world_cup_hero: 0 }),
       freeSlot({ ...classicFreeSlot, world_cup_hero: 0 }),
       freeSlot({ ...classicFreeSlot, world_cup_hero: 0 }),

@@ -107,6 +107,20 @@ export function JerseyArt({
           <stop offset="60%" stopColor="rgba(255,255,255,0)" />
         </linearGradient>
 
+        {/* Textura do tecido — trama fina diagonal, bem sutil */}
+        <pattern
+          id={`${uid}-fabric`}
+          x="0"
+          y="0"
+          width="3"
+          height="3"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
+          <rect width="3" height="3" fill="transparent" />
+          <line x1="0" y1="0" x2="0" y2="3" stroke="rgba(255,255,255,0.10)" strokeWidth="0.5" />
+        </pattern>
+
         {/* Legendary / WCH gold shimmer */}
         {over.jerseyGold && (
           <linearGradient id={`${uid}-gold`} x1="0" y1="0" x2="1" y2="1">
@@ -159,6 +173,26 @@ export function JerseyArt({
 
       {/* Fabric highlight (top-left corner sheen) */}
       <path d={JERSEY_PATH} fill={`url(#${uid}-hl)`} clipPath={`url(#${uid}-clip)`} />
+
+      {/* Textura do tecido — trama diagonal por cima de tudo, bem sutil */}
+      <path d={JERSEY_PATH} fill={`url(#${uid}-fabric)`} clipPath={`url(#${uid}-clip)`} />
+
+      {/* ── Brasão simplificado (peito, lado esquerdo) — roundel discreto ── */}
+      <g opacity="0.9" clipPath={`url(#${uid}-clip)`}>
+        <circle
+          cx="30"
+          cy="26"
+          r="4.2"
+          fill={kit.secondary}
+          stroke="rgba(0,0,0,0.35)"
+          strokeWidth="0.4"
+        />
+        <circle cx="30" cy="26" r="2.7" fill={kit.primary} />
+        <path
+          d="M 30,24.3 L 30.55,25.5 L 31.85,25.65 L 30.9,26.5 L 31.2,27.8 L 30,27.1 L 28.8,27.8 L 29.1,26.5 L 28.15,25.65 L 29.45,25.5 Z"
+          fill={kit.secondary}
+        />
+      </g>
 
       {/* ── Collar / V-neck ── */}
       <path

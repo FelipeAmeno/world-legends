@@ -72,42 +72,45 @@ describe('TC-PACK-06 — Distribuição estatística (Monte Carlo, 100k abertura
   // (legendary 4.5% / ultra 1.3%, que dava ~17% de chance de Legendary+ por
   // abertura de um pack de 250c) e passaram a ter pesos próprios, mais
   // conservadores — ver `classicFreeSlot` em `pack-definitions.ts`.
+  //
+  // Sprint 18 (Card Experience 5.0): apertado ainda mais — Legendary
+  // "extremamente rara" e Ultra "quase impossível" no Classic.
   const baseWeightsNoWCH = {
-    common: 62,
-    rare: 28,
-    elite: 8,
-    legendary: 1.8,
-    ultra: 0.2,
+    common: 66,
+    rare: 27,
+    elite: 6.4,
+    legendary: 0.55,
+    ultra: 0.05,
   };
   const totalWeight = Object.values(baseWeightsNoWCH).reduce((a, b) => a + b, 0);
 
   const TOLERANCE_PP = 0.5; // ±0.5 pontos percentuais
 
-  it('Common: frequência observada dentro de ±0.5pp do peso declarado (~62%)', () => {
+  it('Common: frequência observada dentro de ±0.5pp do peso declarado (~66%)', () => {
     const observed = ((counts.get('common') ?? 0) / totalObserved) * 100;
     const expected = (baseWeightsNoWCH.common / totalWeight) * 100;
     expect(Math.abs(observed - expected)).toBeLessThan(TOLERANCE_PP);
   });
 
-  it('Rare: frequência observada dentro de ±0.5pp do peso declarado (~28%)', () => {
+  it('Rare: frequência observada dentro de ±0.5pp do peso declarado (~27%)', () => {
     const observed = ((counts.get('rare') ?? 0) / totalObserved) * 100;
     const expected = (baseWeightsNoWCH.rare / totalWeight) * 100;
     expect(Math.abs(observed - expected)).toBeLessThan(TOLERANCE_PP);
   });
 
-  it('Elite: frequência observada dentro de ±0.5pp do peso declarado (~8%)', () => {
+  it('Elite: frequência observada dentro de ±0.5pp do peso declarado (~6.4%)', () => {
     const observed = ((counts.get('elite') ?? 0) / totalObserved) * 100;
     const expected = (baseWeightsNoWCH.elite / totalWeight) * 100;
     expect(Math.abs(observed - expected)).toBeLessThan(TOLERANCE_PP);
   });
 
-  it('Legendary: frequência observada dentro de ±0.5pp do peso declarado (~1.8%)', () => {
+  it('Legendary: frequência observada dentro de ±0.5pp do peso declarado (~0.55%)', () => {
     const observed = ((counts.get('legendary') ?? 0) / totalObserved) * 100;
     const expected = (baseWeightsNoWCH.legendary / totalWeight) * 100;
     expect(Math.abs(observed - expected)).toBeLessThan(TOLERANCE_PP);
   });
 
-  it('Ultra: frequência observada dentro de ±0.5pp do peso declarado (~0.2%)', () => {
+  it('Ultra: frequência observada dentro de ±0.5pp do peso declarado (~0.05%)', () => {
     const observed = ((counts.get('ultra') ?? 0) / totalObserved) * 100;
     const expected = (baseWeightsNoWCH.ultra / totalWeight) * 100;
     expect(Math.abs(observed - expected)).toBeLessThan(TOLERANCE_PP);

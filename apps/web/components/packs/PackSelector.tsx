@@ -2,6 +2,7 @@
 
 import { COMING_SOON_DEFS, type ComingSoonPack, type PackDefinitionUI } from '@/lib/pack-logic';
 import { motion } from 'framer-motion';
+import { PackArt } from './PackArt';
 
 type Props = {
   packs: readonly PackDefinitionUI[];
@@ -134,12 +135,14 @@ function PackCard({
           }}
         />
 
-        {/* Pack icon */}
-        <div
-          className="relative z-10 text-6xl mb-3 transition-transform duration-300 group-hover:scale-110"
-          style={{ filter: `drop-shadow(0 0 20px ${pack.glowColor})` }}
-        >
-          {pack.icon}
+        {/* Pack art — produto premium, não emoji de caixa */}
+        <div className="relative z-10 mb-2 transition-transform duration-300 group-hover:scale-110">
+          <PackArt
+            packId={pack.id}
+            borderColor={pack.borderColor}
+            glowColor={pack.glowColor}
+            size={112}
+          />
         </div>
 
         <p className="relative z-10 font-display text-2xl tracking-wider text-parchment">

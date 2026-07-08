@@ -16,20 +16,27 @@ type Props = {
 };
 
 // ─── Timing por raridade ──────────────────────────────────────────────────────
+//
+// Sprint 18: duração total por raridade agora segue a escala pedida no
+// briefing (200/400/600/1200/1600/2200ms — "Epic"/"Hero" descartados, ver
+// SPRINT_18_REPORT.md). Para Legendary/Ultra, o orçamento é dividido entre
+// antecipação em estágios (glow → silhueta → nome) e o flip/explosão final.
+// World Cup Hero usa seu próprio card de mistério (branch `isGoat` abaixo),
+// então não passa por este relógio.
 
 const RARITY_FLIP_DUR: Record<RevealEffect, number> = {
-  common: 0.5,
-  rare: 0.6,
-  elite: 0.68,
-  legendary: 1.0,
-  ultra: 1.25,
+  common: 0.2,
+  rare: 0.4,
+  elite: 0.6,
+  legendary: 0.45,
+  ultra: 0.55,
   world_cup_hero: 0,
 };
 
 const RARITY_SPRING: Record<RevealEffect, { stiffness: number; damping: number }> = {
-  common: { stiffness: 280, damping: 24 },
-  rare: { stiffness: 250, damping: 21 },
-  elite: { stiffness: 220, damping: 18 },
+  common: { stiffness: 320, damping: 26 },
+  rare: { stiffness: 270, damping: 22 },
+  elite: { stiffness: 230, damping: 19 },
   legendary: { stiffness: 140, damping: 12 },
   ultra: { stiffness: 110, damping: 10 },
   world_cup_hero: { stiffness: 100, damping: 10 },
@@ -40,9 +47,19 @@ const ANTICIPATION_DUR: Record<RevealEffect, number> = {
   common: 0,
   rare: 0,
   elite: 0,
-  legendary: 450,
-  ultra: 650,
+  legendary: 750,
+  ultra: 1050,
   world_cup_hero: 0,
+};
+
+// Sub-estágios da antecipação para Legendary/Ultra: glow → silhueta → nome.
+// Somados, cabem dentro de ANTICIPATION_DUR de cada raridade.
+const SUSPENSE_STAGES: Record<
+  'legendary' | 'ultra',
+  { glow: number; silhouette: number; name: number }
+> = {
+  legendary: { glow: 200, silhouette: 260, name: 290 },
+  ultra: { glow: 260, silhouette: 380, name: 410 },
 };
 
 const BACK_COLORS: Record<RevealEffect, { border: string; glow: string; bg: string }> = {
@@ -121,6 +138,7 @@ export function RevealedCard({ drawn, flipped, onFlip, onHighRarity }: Props) {
   const [anticipRings, setAnticipRings] = useState(false);
   const [fastReveal, setFastReveal] = useState(false);
   const [animating, setAnimating] = useState(false);
+  const [suspenseStage, setSuspenseStage] = useState<'glow' | 'silhouette' | 'name' | null>(null);
   const lastTapRef = useRef(0);
 
   const { card, effect, glowColor, particleColor } = drawn;
@@ -152,13 +170,29 @@ export function RevealedCard({ drawn, flipped, onFlip, onHighRarity }: Props) {
         vibrate('warning');
       }
 
+      // Suspense em estágios (glow → silhueta → nome) para Legendary/Ultra —
+      // "adicionar suspense" do briefing da Sprint 18.
+      const timers: ReturnType<typeof setTimeout>[] = [];
+      if (effect === 'legendary' || effect === 'ultra') {
+        const stages = SUSPENSE_STAGES[effect];
+        setSuspenseStage('glow');
+        timers.push(
+          setTimeout(() => setSuspenseStage('silhouette'), stages.glow),
+          setTimeout(() => setSuspenseStage('name'), stages.glow + stages.silhouette),
+        );
+      }
+
       const t = setTimeout(() => {
         setAnticipating(false);
         setAnticipRings(false);
+        setSuspenseStage(null);
         setVisuallyFlipped(true);
       }, anticipDur);
+      timers.push(t);
 
-      return () => clearTimeout(t);
+      return () => {
+        for (const timer of timers) clearTimeout(timer);
+      };
     }
 
     setVisuallyFlipped(true);
@@ -657,6 +691,43 @@ export function RevealedCard({ drawn, flipped, onFlip, onHighRarity }: Props) {
               transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY, ease: 'linear' }}
             />
           )}
+
+          {/* Suspense em estágios (Legendary/Ultra): glow → silhueta → nome */}
+          <AnimatePresence>
+            {(suspenseStage === 'silhouette' || suspenseStage === 'name') && (
+              <motion.div
+                key="silhouette"
+                className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                <div style={{ filter: 'brightness(0) saturate(0)', opacity: 0.88 }}>
+                  <PlayerCard card={card} size="md" />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <AnimatePresence>
+            {suspenseStage === 'name' && (
+              <motion.div
+                key="name"
+                className="absolute inset-0 flex items-end justify-center pb-6 pointer-events-none z-20"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <p
+                  className="font-display text-lg text-center px-3"
+                  style={{ color: back.border, textShadow: `0 0 16px ${back.glow}` }}
+                >
+                  {card.displayName.toUpperCase()}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* "toque" indicator */}
           {!visuallyFlipped && !anticipating && (
