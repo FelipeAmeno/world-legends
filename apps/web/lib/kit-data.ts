@@ -508,6 +508,11 @@ export function getKitColors(nationality: NationalityCode): KitColors {
   return KITS[nationality] ?? DEFAULT_KIT;
 }
 
+/** Todas as nacionalidades com kit mapeado — usado pelo inspetor de assets (Sprint 18.6.5). */
+export function getAllKitNationalities(): readonly string[] {
+  return Object.keys(KITS);
+}
+
 // ─── Rarity kit overrides ─────────────────────────────────────────────────────
 
 export type RarityKitOverride = {

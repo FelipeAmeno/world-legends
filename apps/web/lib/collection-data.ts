@@ -148,6 +148,11 @@ function flag(code: string): string {
   return FLAG_MAP[code] ?? '🏳';
 }
 
+/** Exportado para o inspetor de assets (Sprint 18.6.5). */
+export function getFlagEmoji(nationality: string): string {
+  return flag(nationality);
+}
+
 // ─── Helper: era textual ──────────────────────────────────────────────────────
 
 function eraText(start: number): string {
