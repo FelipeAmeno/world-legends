@@ -1,7 +1,7 @@
 'use client';
 
+import { PlayerCard } from '@/components/cards/PlayerCard';
 import type { CollectionCard } from '@/lib/collection-data';
-import { RARITY_VISUAL } from '@/lib/collection-data';
 import { getPositionCompat } from '@/lib/squad-builder';
 import type { DragSource } from '@/lib/squad-builder';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
@@ -16,15 +16,6 @@ type Props = {
   dragOver: boolean;
   onTapCard: (cardId: string) => void;
   onClose: () => void;
-};
-
-const GLOW: Record<string, string> = {
-  common: 'rgba(150,150,150,0.4)',
-  rare: 'rgba(147,51,234,0.6)',
-  elite: 'rgba(59,130,246,0.7)',
-  legendary: 'rgba(201,168,76,0.8)',
-  ultra: 'rgba(236,72,153,0.9)',
-  world_cup_hero: 'rgba(240,244,255,1)',
 };
 
 type Sector = 'all' | 'GK' | 'DEF' | 'MID' | 'ATT';
@@ -61,7 +52,6 @@ function PoolCard({
   isBestFit: boolean;
   onTap: () => void;
 }) {
-  const visual = RARITY_VISUAL[card.rarityCode];
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `pool-${card.cardId}`,
     data: { source: { kind: 'pool', cardId: card.cardId } satisfies DragSource },
@@ -78,13 +68,10 @@ function PoolCard({
       {...listeners}
       data-squad-pool
       className={[
-        'relative shrink-0 rounded-xl border-2 overflow-hidden cursor-grab active:cursor-grabbing touch-none',
-        'w-14 h-[76px] flex flex-col',
-        visual.bgClass,
-        visual.borderClass,
+        'relative shrink-0 rounded-xl overflow-hidden cursor-grab active:cursor-grabbing touch-none',
         isBestFit ? 'ring-2 ring-gold ring-offset-1 ring-offset-black' : '',
       ].join(' ')}
-      style={{ ...style, boxShadow: `0 0 ${isBestFit ? 16 : 8}px ${GLOW[card.rarityCode]}` }}
+      style={style}
       whileHover={{ scale: 1.1, y: -4 }}
       whileTap={{ scale: 0.92 }}
       animate={{ opacity: isDragging ? 0.25 : 1 }}
@@ -94,6 +81,8 @@ function PoolCard({
         onTap();
       }}
     >
+      <PlayerCard card={card} size="xs" glow />
+
       {/* Best-fit glow badge */}
       {isBestFit && (
         <motion.div
@@ -106,24 +95,6 @@ function PoolCard({
           }}
         />
       )}
-
-      <div className="flex-1 flex items-center justify-center">
-        <p
-          className={`font-display text-2xl leading-none ${visual.textClass}`}
-          style={{ filter: `drop-shadow(0 0 6px ${GLOW[card.rarityCode]})` }}
-        >
-          {card.overall}
-        </p>
-      </div>
-      <div
-        className="pb-1 px-0.5"
-        style={{ background: 'linear-gradient(0deg,rgba(0,0,0,0.85),transparent)' }}
-      >
-        <p className="text-parchment text-[6px] font-bold text-center truncate leading-tight">
-          {card.displayName.split(' ').pop()}
-        </p>
-        <p className={`text-[5px] font-bold text-center ${visual.textClass}`}>{card.position}</p>
-      </div>
     </motion.div>
   );
 }

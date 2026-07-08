@@ -1,7 +1,7 @@
 'use client';
 
+import { PlayerCard } from '@/components/cards/PlayerCard';
 import type { CollectionCard } from '@/lib/collection-data';
-import { RARITY_VISUAL } from '@/lib/collection-data';
 import { getPositionCompat } from '@/lib/squad-builder';
 import type { SBSnapshot } from '@/lib/squad-builder';
 import type { Position } from '@world-legends/types';
@@ -35,15 +35,6 @@ const SECTOR_IDLE: Record<Sector, string> = {
   ATT: 'border-red-500/40 text-red-400/70',
 };
 
-const GLOW: Record<string, string> = {
-  common: 'rgba(150,150,150,0.4)',
-  rare: 'rgba(147,51,234,0.6)',
-  elite: 'rgba(59,130,246,0.7)',
-  legendary: 'rgba(201,168,76,0.8)',
-  ultra: 'rgba(236,72,153,0.9)',
-  world_cup_hero: 'rgba(240,244,255,1)',
-};
-
 function positionSector(pos: Position): Sector {
   if (pos === 'GK') return 'GK';
   if (['CB', 'LB', 'RB', 'LWB', 'RWB'].includes(pos)) return 'DEF';
@@ -74,7 +65,6 @@ function CardCell({
   compat: 'natural' | 'ok' | 'awkward';
   onSelect: () => void;
 }) {
-  const visual = RARITY_VISUAL[card.rarityCode];
   const compatColor = compat === 'natural' ? '#22c55e' : compat === 'ok' ? '#eab308' : '#ef4444';
 
   return (
@@ -83,35 +73,14 @@ function CardCell({
       onClick={onSelect}
       whileHover={{ scale: 1.05, y: -2 }}
       whileTap={{ scale: 0.93 }}
-      className={[
-        'relative flex flex-col rounded-xl border-2 overflow-hidden shrink-0',
-        'w-[72px] h-[92px]',
-        visual.bgClass,
-        visual.borderClass,
-        compat === 'awkward' ? 'opacity-40' : '',
-      ].join(' ')}
-      style={{ boxShadow: `0 0 10px ${GLOW[card.rarityCode]}` }}
+      className={['relative shrink-0', compat === 'awkward' ? 'opacity-40' : ''].join(' ')}
     >
+      <PlayerCard card={card} size="xs" glow />
       {/* Compat dot */}
       <div
-        className="absolute top-1 right-1 w-2 h-2 rounded-full ring-1 ring-black/60 z-10"
+        className="absolute bottom-1.5 right-1.5 w-2 h-2 rounded-full ring-1 ring-black/60 z-10"
         style={{ background: compatColor }}
       />
-
-      <div className="flex-1 flex items-center justify-center">
-        <p className={`font-display text-2xl leading-none ${visual.textClass}`}>{card.overall}</p>
-      </div>
-      <div
-        className="pb-1.5 px-1"
-        style={{ background: 'linear-gradient(0deg,rgba(0,0,0,0.9),transparent)' }}
-      >
-        <p className="text-parchment text-[7px] font-bold text-center truncate leading-tight">
-          {card.displayName.split(' ').pop()}
-        </p>
-        <p className={`text-[6px] font-bold text-center ${visual.textClass}`}>
-          {card.flagEmoji} {card.position}
-        </p>
-      </div>
     </motion.button>
   );
 }
@@ -154,30 +123,14 @@ function DeltaRow({
 function MiniCard({ card, label }: { card: CollectionCard | null; label: string }) {
   if (!card) {
     return (
-      <div className="w-16 h-20 rounded-lg border-2 border-dashed border-white/10 flex items-center justify-center shrink-0">
+      <div className="w-[62px] h-[84px] rounded-lg border-2 border-dashed border-white/10 flex items-center justify-center shrink-0">
         <span className="text-white/20 text-[8px]">vazio</span>
       </div>
     );
   }
-  const visual = RARITY_VISUAL[card.rarityCode];
   return (
     <div className="flex flex-col items-center gap-1 shrink-0">
-      <div
-        className={`w-16 h-20 rounded-lg border-2 flex flex-col overflow-hidden ${visual.bgClass} ${visual.borderClass}`}
-        style={{ boxShadow: `0 0 10px ${GLOW[card.rarityCode]}` }}
-      >
-        <div className="flex-1 flex items-center justify-center">
-          <p className={`font-display text-xl leading-none ${visual.textClass}`}>{card.overall}</p>
-        </div>
-        <div
-          className="pb-1 px-0.5"
-          style={{ background: 'linear-gradient(0deg,rgba(0,0,0,0.9),transparent)' }}
-        >
-          <p className="text-parchment text-[6px] font-bold text-center truncate">
-            {card.displayName.split(' ').pop()}
-          </p>
-        </div>
-      </div>
+      <PlayerCard card={card} size="xs" glow />
       <span className="text-[8px] text-white/30 uppercase tracking-wide">{label}</span>
     </div>
   );

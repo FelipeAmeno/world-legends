@@ -1,5 +1,6 @@
 'use client';
 
+import { PlayerCard } from '@/components/cards/PlayerCard';
 import type { CollectionCard } from '@/lib/collection-data';
 import { RARITY_VISUAL } from '@/lib/collection-data';
 import { motion } from 'framer-motion';
@@ -38,71 +39,7 @@ export function BestCardShowcase({ card, avgOvr, legendaryPlus }: Props) {
           className="relative shrink-0"
           style={{ perspective: 800 }}
         >
-          <div
-            className={[
-              'w-32 h-44 rounded-2xl border-2 flex flex-col overflow-hidden relative',
-              visual.bgClass,
-              visual.borderClass,
-            ].join(' ')}
-            style={{
-              boxShadow: `0 0 40px ${glow}, 0 0 80px ${glow.replace(/[\d.]+\)$/, '0.25)')}`,
-            }}
-          >
-            {/* Rarity + position */}
-            <div className="flex items-start justify-between px-2 pt-2">
-              <span className={`text-[7px] font-black uppercase ${visual.textClass}`}>
-                {card.rarityCode === 'world_cup_hero'
-                  ? 'WCH'
-                  : card.rarityLabel.slice(0, 3).toUpperCase()}
-              </span>
-              <span className="text-[7px] font-bold text-white/40 bg-black/40 px-1 rounded">
-                {card.position}
-              </span>
-            </div>
-
-            {/* OVR */}
-            <div className="flex-1 flex items-center justify-center">
-              <motion.p
-                className="font-display leading-none"
-                style={{
-                  fontSize: 52,
-                  background: `linear-gradient(180deg, #ffffff, ${glow})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  filter: `drop-shadow(0 0 12px ${glow})`,
-                }}
-                animate={{ scale: [1, 1.04, 1] }}
-                transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
-              >
-                {card.overall}
-              </motion.p>
-            </div>
-
-            {/* Name */}
-            <div
-              className="px-1.5 pb-2 text-center"
-              style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.85), transparent)' }}
-            >
-              <p className="text-parchment font-bold text-[9px] leading-tight truncate">
-                {card.displayName}
-              </p>
-              <p className="text-white/30 text-[7px] mt-0.5">
-                {card.flagEmoji} {card.era}
-              </p>
-            </div>
-
-            {/* Shimmer */}
-            <motion.div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background:
-                  'linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.08) 50%, transparent 65%)',
-                backgroundSize: '200% 100%',
-              }}
-              animate={{ backgroundPositionX: ['-100%', '200%'] }}
-              transition={{ duration: 2.5, repeat: Number.POSITIVE_INFINITY, ease: 'linear' }}
-            />
-          </div>
+          <PlayerCard card={card} size="lg" glow />
 
           {/* Pulse rings */}
           {[0, 1].map((i) => (

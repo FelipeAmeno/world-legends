@@ -1210,8 +1210,8 @@ function AlbumSlot({
       >
         <PlayerCard card={card} size="sm" glow />
 
-        {/* Action buttons */}
-        <div className="absolute bottom-0.5 right-0.5 flex gap-0.5 z-20">
+        {/* Action buttons — meio da borda direita, longe do OVR e do nome (ambos maiores agora) */}
+        <div className="absolute right-0.5 top-1/2 -translate-y-1/2 flex flex-col gap-0.5 z-20">
           <motion.button
             type="button"
             onClick={(e) => {

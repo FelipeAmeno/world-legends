@@ -75,7 +75,16 @@ function guaranteedSlot(
 /**
  * 5 cartas. Slot 0 = garantido Rare-ou-melhor. Slots 1-4 = livres.
  * WCH tem peso zero nos slots livres — não cai em pack clássico.
+ *
+ * Sprint 17.1 (Card Art Revolution — revisão de economia): os slots livres
+ * usavam os pesos "default" de `freeSlot()` (legendary 4.5% / ultra 1.3%
+ * cada), o que dava ~17% de chance de sair pelo menos 1 Legendary por
+ * abertura de um pack de entrada (250c) — fácil demais para um pack
+ * "Clássico". Pesos reduzidos para ficar um degrau acima do Starter (75c)
+ * sem repetir a generosidade do antigo Classic.
  */
+const classicFreeSlot = { common: 62, rare: 28, elite: 8, legendary: 1.8, ultra: 0.2 };
+
 export const CLASSIC_PACK: Pack = Object.freeze({
   id: packId('classic'),
   name: 'Pacote Clássico',
@@ -84,10 +93,10 @@ export const CLASSIC_PACK: Pack = Object.freeze({
   dropTable: Object.freeze({
     slots: [
       guaranteedSlot('rare', { world_cup_hero: 0 }), // garantido rare+
-      freeSlot({ world_cup_hero: 0 }),
-      freeSlot({ world_cup_hero: 0 }),
-      freeSlot({ world_cup_hero: 0 }),
-      freeSlot({ world_cup_hero: 0 }),
+      freeSlot({ ...classicFreeSlot, world_cup_hero: 0 }),
+      freeSlot({ ...classicFreeSlot, world_cup_hero: 0 }),
+      freeSlot({ ...classicFreeSlot, world_cup_hero: 0 }),
+      freeSlot({ ...classicFreeSlot, world_cup_hero: 0 }),
     ],
   }),
 });
@@ -147,8 +156,11 @@ export const LEGEND_PACK: Pack = Object.freeze({
         }),
         guaranteedMinRarity: 'legendary' as const,
       }),
-      freeSlot({ world_cup_hero: 0 }),
-      freeSlot({ world_cup_hero: 0 }),
+      // Slots livres: Lenda custa ~3x mais que o Herói (20000c vs 7000c) —
+      // os slots livres precisam refletir isso, não usar os pesos default
+      // (que deixariam o Lenda pior que o Herói fora do slot garantido).
+      freeSlot({ common: 8, rare: 30, elite: 42, legendary: 18, ultra: 2, world_cup_hero: 0 }),
+      freeSlot({ common: 8, rare: 30, elite: 42, legendary: 18, ultra: 2, world_cup_hero: 0 }),
     ],
   }),
 });

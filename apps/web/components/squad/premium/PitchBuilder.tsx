@@ -3,7 +3,6 @@
 import { saveSquad } from '@/lib/actions/squad';
 import type { SaveSquadInput } from '@/lib/actions/squad.types';
 import type { CollectionCard } from '@/lib/collection-data';
-import { RARITY_VISUAL } from '@/lib/collection-data';
 import {
   type AutoBuildMode,
   type DragSource,
@@ -34,6 +33,7 @@ import {
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 
+import { PlayerCard } from '@/components/cards/PlayerCard';
 import { CardDetailModal } from '@/components/collection/CardDetailModal';
 import { Particles, useBurst } from '@/components/fx/Particles';
 import { toast } from '@/lib/wl-toast';
@@ -806,41 +806,9 @@ function SectorMini({ label, value, color }: { label: string; value: number; col
 // ─── DragPreviewCard ─────────────────────────────────────────────────────────
 
 function DragPreviewCard({ card }: { card: CollectionCard }) {
-  const visual = RARITY_VISUAL[card.rarityCode];
-  const GLOW: Record<string, string> = {
-    common: 'rgba(150,150,150,0.5)',
-    rare: 'rgba(147,51,234,0.7)',
-    elite: 'rgba(59,130,246,0.8)',
-    legendary: 'rgba(201,168,76,0.9)',
-    ultra: 'rgba(236,72,153,0.9)',
-    world_cup_hero: 'rgba(240,244,255,1)',
-  };
   return (
-    <div
-      className={`w-16 h-[84px] rounded-xl border-2 flex flex-col overflow-hidden shadow-2xl rotate-2 ${visual.bgClass} ${visual.borderClass}`}
-      style={{ boxShadow: `0 0 28px ${GLOW[card.rarityCode]}` }}
-    >
-      <div className="flex-1 flex items-center justify-center">
-        <p
-          className="font-display text-3xl leading-none"
-          style={{
-            background: `linear-gradient(180deg, #fff, ${GLOW[card.rarityCode]})`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}
-        >
-          {card.overall}
-        </p>
-      </div>
-      <div
-        className="pb-1.5 px-1"
-        style={{ background: 'linear-gradient(0deg,rgba(0,0,0,0.88),transparent)' }}
-      >
-        <p className="text-parchment text-[8px] font-bold text-center truncate">
-          {card.displayName.split(' ').slice(-1)[0]}
-        </p>
-        <p className="text-white/40 text-[7px] text-center">{card.position}</p>
-      </div>
+    <div className="rotate-2 shadow-2xl">
+      <PlayerCard card={card} size="xs" glow />
     </div>
   );
 }

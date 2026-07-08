@@ -3,7 +3,6 @@ import {
   getJerseySurname,
   getKitColors,
   getShirtNumber,
-  getStadiumBg,
 } from '@/lib/kit-data';
 import type { RarityCode } from '@world-legends/types';
 
@@ -13,10 +12,11 @@ type Props = {
   nationality: string;
   position: string;
   rarityCode: RarityCode;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
 };
 
 const SIZES = {
+  xs: { w: 52, h: 70, numSize: 20, nameSize: 5 },
   sm: { w: 72, h: 96, numSize: 28, nameSize: 6.5 },
   md: { w: 100, h: 130, numSize: 38, nameSize: 8 },
   lg: { w: 130, h: 168, numSize: 48, nameSize: 10 },
@@ -41,6 +41,9 @@ export function JerseyArt({
   const dim = SIZES[size];
   const uid = `j-${playerId}-${rarityCode}`;
 
+  const pattern = kit.pattern ?? (kit.stripes ? 'stripes' : 'solid');
+  const patternColor = kit.patternColor ?? kit.stripeColor ?? '#fff';
+
   const collarColor = over.collarColor === 'inherit' ? kit.secondary : over.collarColor;
   const cuffColor = over.cuffColor === 'inherit' ? kit.secondary : over.cuffColor;
   const hemColor = over.hemColor === 'inherit' ? kit.secondary : over.hemColor;
@@ -62,8 +65,8 @@ export function JerseyArt({
           <stop offset="100%" stopColor={kit.shadow} />
         </linearGradient>
 
-        {/* Stripes (Argentina etc.) */}
-        {kit.stripes && (
+        {/* Stripes (Argentina, Paraguai etc.) */}
+        {pattern === 'stripes' && (
           <pattern
             id={`${uid}-st`}
             x="0"
@@ -73,7 +76,23 @@ export function JerseyArt({
             patternUnits="userSpaceOnUse"
           >
             <rect x="0" y="0" width="6.5" height="130" fill={kit.primary} />
-            <rect x="6.5" y="0" width="6.5" height="130" fill={kit.stripeColor ?? '#fff'} />
+            <rect x="6.5" y="0" width="6.5" height="130" fill={patternColor} />
+          </pattern>
+        )}
+
+        {/* Checkerboard (Croácia) */}
+        {pattern === 'checker' && (
+          <pattern
+            id={`${uid}-ck`}
+            x="0"
+            y="0"
+            width="14"
+            height="14"
+            patternUnits="userSpaceOnUse"
+          >
+            <rect x="0" y="0" width="14" height="14" fill={kit.primary} />
+            <rect x="0" y="0" width="7" height="7" fill={patternColor} />
+            <rect x="7" y="7" width="7" height="7" fill={patternColor} />
           </pattern>
         )}
 
@@ -127,7 +146,7 @@ export function JerseyArt({
       {/* Jersey base fill */}
       <path
         d={JERSEY_PATH}
-        fill={kit.stripes ? `url(#${uid}-st)` : `url(#${uid}-g)`}
+        fill={`url(#${uid}-${pattern === 'stripes' ? 'st' : pattern === 'checker' ? 'ck' : 'g'})`}
         stroke={kit.secondary}
         strokeWidth="1.5"
         {...(over.jerseyGlowColor ? { filter: `url(#${uid}-glow)` } : {})}

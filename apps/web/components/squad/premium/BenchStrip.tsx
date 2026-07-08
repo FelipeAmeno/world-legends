@@ -1,7 +1,7 @@
 'use client';
 
+import { PlayerCard } from '@/components/cards/PlayerCard';
 import type { CollectionCard } from '@/lib/collection-data';
-import { RARITY_VISUAL } from '@/lib/collection-data';
 import { MAX_BENCH } from '@/lib/squad-builder';
 import type { DragSource } from '@/lib/squad-builder';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
@@ -13,15 +13,6 @@ type Props = {
   bench: (CollectionCard | null)[];
   dragOver: string | null;
   onRemove: (idx: number) => void;
-};
-
-const RARITY_GLOW: Record<string, string> = {
-  common: 'rgba(150,150,150,0.4)',
-  rare: 'rgba(147,51,234,0.6)',
-  elite: 'rgba(59,130,246,0.7)',
-  legendary: 'rgba(201,168,76,0.8)',
-  ultra: 'rgba(236,72,153,0.9)',
-  world_cup_hero: 'rgba(240,244,255,1)',
 };
 
 type Sector = 'all' | 'GK' | 'DEF' | 'MID' | 'ATT';
@@ -53,7 +44,6 @@ function BenchCard({
   dimmed,
   onRemove,
 }: { card: CollectionCard; idx: number; dimmed: boolean; onRemove: () => void }) {
-  const visual = RARITY_VISUAL[card.rarityCode];
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `bench-card-${idx}`,
     data: { source: { kind: 'bench', benchIdx: idx, cardId: card.cardId } satisfies DragSource },
@@ -68,24 +58,13 @@ function BenchCard({
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      className={`relative group shrink-0 rounded-lg border-2 w-14 h-[72px] flex flex-col overflow-hidden cursor-grab active:cursor-grabbing touch-none ${visual.bgClass} ${visual.borderClass}`}
-      style={{ ...style, boxShadow: `0 0 12px ${RARITY_GLOW[card.rarityCode]}` }}
+      className="relative group shrink-0 cursor-grab active:cursor-grabbing touch-none"
+      style={style}
       animate={{ opacity: isDragging ? 0.3 : dimmed ? 0.25 : 1 }}
       whileHover={{ scale: 1.06, y: -2 }}
       whileTap={{ scale: 0.95 }}
     >
-      <div className="flex-1 flex items-center justify-center">
-        <p className={`font-display text-xl leading-none ${visual.textClass}`}>{card.overall}</p>
-      </div>
-      <div
-        className="pb-1 px-0.5"
-        style={{ background: 'linear-gradient(0deg,rgba(0,0,0,0.8),transparent)' }}
-      >
-        <p className="text-[6px] font-bold text-parchment text-center truncate">
-          {card.displayName.split(' ').pop()}
-        </p>
-        <p className={`text-[5px] text-center ${visual.textClass}`}>{card.position}</p>
-      </div>
+      <PlayerCard card={card} size="xs" glow />
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -107,7 +86,7 @@ function BenchSlot({ idx, dragOver }: { idx: number; dragOver: string | null }) 
   return (
     <motion.div
       ref={setNodeRef}
-      className="shrink-0 rounded-lg border-2 border-dashed w-14 h-[72px] flex items-center justify-center"
+      className="shrink-0 rounded-lg border-2 border-dashed w-[62px] h-[84px] flex items-center justify-center"
       animate={{
         borderColor: active ? 'rgba(201,168,76,0.6)' : 'rgba(255,255,255,0.1)',
         backgroundColor: active ? 'rgba(201,168,76,0.08)' : 'transparent',

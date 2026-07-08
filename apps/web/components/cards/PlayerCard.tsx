@@ -1,6 +1,6 @@
 'use client';
 
-import { RARITY_KIT_OVERRIDE, getStadiumBg } from '@/lib/kit-data';
+import { getKitColors } from '@/lib/kit-data';
 import type { RarityCode } from '@world-legends/types';
 import { JerseyArt } from './JerseyArt';
 
@@ -19,287 +19,284 @@ export type PlayerCardData = {
 
 type Props = {
   card: PlayerCardData;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   glow?: boolean;
-  animate?: boolean;
 };
 
-// ─── Rarity chrome colors ─────────────────────────────────────────────────────
+// ─── Identidade de raridade — reconhecível sem ler texto ──────────────────────
+//
+// Cada raridade combina 4 sinais independentes (cor de borda/glow, ícone,
+// intensidade do brilho de fundo e efeito de acabamento) para que dê pra
+// reconhecer a raridade só pela silhueta/cor da carta, mesmo em miniatura.
 
-const RARITY_CHROME: Record<RarityCode, { border: string; ovrColor: string; badge: string }> = {
-  common: { border: 'rgba(150,150,150,0.35)', ovrColor: '#d1d5db', badge: '#6b7280' },
-  rare: { border: 'rgba(147,51,234,0.55)', ovrColor: '#c084fc', badge: '#a855f7' },
-  elite: { border: 'rgba(59,130,246,0.65)', ovrColor: '#60a5fa', badge: '#3b82f6' },
-  legendary: { border: 'rgba(201,168,76,0.80)', ovrColor: '#e6c85a', badge: '#c9a84c' },
-  ultra: { border: 'rgba(236,72,153,0.85)', ovrColor: '#f472b6', badge: '#ec4899' },
-  world_cup_hero: { border: 'rgba(240,244,255,0.90)', ovrColor: '#ffffff', badge: '#e2e8f0' },
+const RARITY_DISPLAY_LABEL: Record<RarityCode, string> = {
+  common: 'COMUM',
+  rare: 'RARA',
+  elite: 'ELITE',
+  legendary: 'LENDÁRIA',
+  ultra: 'GOAT',
+  world_cup_hero: 'CAMPEÃO',
 };
 
-const RARITY_LABEL_SHORT: Partial<Record<RarityCode, string>> = {
-  common: 'CMN',
-  rare: 'RAR',
-  elite: 'ELT',
-  legendary: 'LGD',
-  ultra: 'ULT',
-  world_cup_hero: 'WCH',
+const RARITY_ICON: Record<RarityCode, string> = {
+  common: '',
+  rare: '◆',
+  elite: '▲',
+  legendary: '★',
+  ultra: '⚡',
+  world_cup_hero: '🏆',
+};
+
+const RARITY_ACCENT: Record<RarityCode, string> = {
+  common: '#9ca3af',
+  rare: '#c084fc',
+  elite: '#60a5fa',
+  legendary: '#e6c85a',
+  ultra: '#f472b6',
+  world_cup_hero: '#ffffff',
+};
+
+const RARITY_FRAME_CLASS: Record<RarityCode, string> = {
+  common: 'card-frame-common',
+  rare: 'card-frame-rare',
+  elite: 'card-frame-elite',
+  legendary: 'card-frame-legendary',
+  ultra: 'card-frame-ultra',
+  world_cup_hero: 'card-frame-wch',
+};
+
+const RARITY_GLOW_CLASS: Record<RarityCode, string> = {
+  common: '',
+  rare: 'glow-rare',
+  elite: 'glow-elite',
+  legendary: 'glow-gold',
+  ultra: 'glow-ultra',
+  world_cup_hero: 'glow-wch',
 };
 
 const SIZES = {
-  sm: { card: { width: 88, height: 117 }, jersey: 'sm' as const },
-  md: { card: { width: 110, height: 148 }, jersey: 'md' as const },
-  lg: { card: { width: 138, height: 184 }, jersey: 'lg' as const },
+  xs: { card: { width: 62, height: 84 }, jersey: 'xs' as const, jerseyScale: 1.28 },
+  sm: { card: { width: 92, height: 124 }, jersey: 'sm' as const, jerseyScale: 1.22 },
+  md: { card: { width: 116, height: 156 }, jersey: 'md' as const, jerseyScale: 1.18 },
+  lg: { card: { width: 148, height: 199 }, jersey: 'lg' as const, jerseyScale: 1.16 },
 };
+
+const OVR_FONT: Record<keyof typeof SIZES, number> = { xs: 12, sm: 15, md: 18, lg: 23 };
+const POS_FONT: Record<keyof typeof SIZES, number> = { xs: 5, sm: 5.5, md: 6.5, lg: 8 };
+const NAME_FONT: Record<keyof typeof SIZES, number> = { xs: 6.5, sm: 9, md: 11.5, lg: 15 };
+const SUB_FONT: Record<keyof typeof SIZES, number> = { xs: 5, sm: 6, md: 7, lg: 8.5 };
+const RIBBON_FONT: Record<keyof typeof SIZES, number> = { xs: 6, sm: 6.5, md: 7.5, lg: 9 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function PlayerCard({ card, size = 'md', glow, animate }: Props) {
-  const stadium = getStadiumBg(card.nationality);
-  const chrome = RARITY_CHROME[card.rarityCode];
-  const over = RARITY_KIT_OVERRIDE[card.rarityCode];
+export function PlayerCard({ card, size = 'md', glow }: Props) {
+  const kit = getKitColors(card.nationality);
+  const accent = RARITY_ACCENT[card.rarityCode];
   const dim = SIZES[size];
-
+  const icon = RARITY_ICON[card.rarityCode];
+  const label = RARITY_DISPLAY_LABEL[card.rarityCode];
+  const isCommon = card.rarityCode === 'common';
   const isGoat = card.rarityCode === 'world_cup_hero';
   const isUltra = card.rarityCode === 'ultra';
-  const isLeg = card.rarityCode === 'legendary';
-
-  const glowCss =
-    glow && over.jerseyGlowColor
-      ? `0 0 28px ${over.jerseyGlowColor}, 0 4px 20px rgba(0,0,0,0.8)`
-      : '0 4px 20px rgba(0,0,0,0.75)';
+  const isLegendaryPlus = card.rarityCode === 'legendary' || isUltra || isGoat;
 
   return (
     <div
+      className={[
+        'noise relative shrink-0 overflow-hidden',
+        RARITY_FRAME_CLASS[card.rarityCode],
+        glow ? RARITY_GLOW_CLASS[card.rarityCode] : '',
+        isLegendaryPlus ? 'card-holo' : '',
+        card.rarityCode === 'legendary' && glow ? 'legendary-aura' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       style={{
-        position: 'relative',
         width: dim.card.width,
         height: dim.card.height,
-        borderRadius: 10,
+        borderRadius: Math.round(dim.card.width * 0.09),
         overflow: 'hidden',
-        border: `1.5px solid ${chrome.border}`,
-        boxShadow: glowCss,
-        background: `radial-gradient(ellipse 90% 60% at 50% 0%, ${stadium.mid}, ${stadium.to} 80%)`,
-        flexShrink: 0,
+        // Identidade nacional: gradiente ambiente derivado da cor real do kit,
+        // não de uma lista fixa de "estádios" — funciona para as 65 seleções.
+        background: `radial-gradient(ellipse 95% 65% at 50% 0%, ${kit.primary}2e, #030308 78%)`,
       }}
     >
-      {/* Stadium ambient glow — top */}
+      {/* Vinheta de profundidade */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
           pointerEvents: 'none',
-          background: `radial-gradient(ellipse 80% 50% at 50% 0%, ${over.jerseyGlowColor ?? 'rgba(255,255,255,0.03)'} 0%, transparent 65%)`,
+          background:
+            'radial-gradient(ellipse 120% 90% at 50% 100%, rgba(0,0,0,0.55) 0%, transparent 55%)',
         }}
       />
 
-      {/* Ultra rainbow shimmer */}
-      {isUltra && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            pointerEvents: 'none',
-            background:
-              'linear-gradient(90deg,#ff6b6b22,#ffd93d22,#6bcb7722,#4d96ff22,#c77dff22,#ff6b6b22)',
-            backgroundSize: '300% 100%',
-            animation: 'rainbowMove 3.5s ease infinite',
-          }}
-        />
-      )}
-
-      {/* WCH gold scan line */}
+      {/* Acabamento GOAT: chuva de estrelas sutil */}
       {isGoat && (
         <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            pointerEvents: 'none',
-            background:
-              'linear-gradient(105deg, transparent 35%, rgba(201,168,76,0.08) 50%, transparent 65%)',
-            backgroundSize: '200% 100%',
-            animation: 'holoSlide 2.5s ease-in-out infinite',
-          }}
+          className="goat-shimmer-overlay"
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.5 }}
         />
       )}
 
-      {/* Top chrome strip */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 1,
-          background: `linear-gradient(90deg, transparent, ${chrome.ovrColor}55, transparent)`,
-        }}
-      />
+      {/* Acabamento Ultra (GOAT-label): véu arco-íris */}
+      {isUltra && (
+        <div
+          className="ultra-rainbow-overlay"
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+        />
+      )}
 
-      {/* ── OVR badge (top-left) ── */}
+      {/* ── OVR — pequeno e elegante ── */}
       <div
         style={{
           position: 'absolute',
-          top: 5,
-          left: 6,
+          top: dim.card.width * 0.055,
+          left: dim.card.width * 0.07,
           zIndex: 10,
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          background: 'rgba(0,0,0,0.65)',
-          borderRadius: 5,
-          padding: '2px 5px',
-          border: `1px solid ${chrome.border}`,
+          lineHeight: 1,
         }}
       >
         <span
+          className="font-display"
           style={{
-            fontFamily: 'var(--font-display, "Bebas Neue", Impact)',
-            fontSize: size === 'sm' ? 18 : size === 'md' ? 22 : 28,
-            lineHeight: 1,
-            color: chrome.ovrColor,
-            textShadow: `0 0 8px ${chrome.ovrColor}80`,
-            display: 'block',
+            fontSize: OVR_FONT[size],
+            color: '#f4f1ea',
+            textShadow: '0 1px 3px rgba(0,0,0,0.9)',
           }}
         >
           {card.overall}
         </span>
         <span
           style={{
-            fontSize: size === 'sm' ? 6 : 7,
+            fontSize: POS_FONT[size],
             fontWeight: 700,
-            color: chrome.ovrColor,
-            letterSpacing: '0.05em',
-            opacity: 0.8,
-            lineHeight: 1,
+            color: accent,
+            letterSpacing: '0.08em',
+            marginTop: 1,
           }}
         >
           {card.position}
         </span>
-      </div>
-
-      {/* ── Rarity badge (top-right) ── */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 5,
-          right: 6,
-          zIndex: 10,
-          background: `${chrome.badge}22`,
-          border: `1px solid ${chrome.border}`,
-          borderRadius: 4,
-          padding: '2px 4px',
-        }}
-      >
-        <span
+        <div
           style={{
-            fontSize: size === 'sm' ? 6 : 7,
-            fontWeight: 800,
-            color: chrome.badge,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
+            marginTop: 2,
+            width: '70%',
+            height: 1.5,
+            background: accent,
+            opacity: 0.85,
+            borderRadius: 1,
           }}
-        >
-          {RARITY_LABEL_SHORT[card.rarityCode]}
-        </span>
-      </div>
-
-      {/* ── Jersey art (centered) ── */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '8%',
-          left: 0,
-          right: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          opacity: 0.95,
-        }}
-      >
-        <JerseyArt
-          playerId={card.playerId}
-          displayName={card.displayName}
-          nationality={card.nationality}
-          position={card.position}
-          rarityCode={card.rarityCode}
-          size={dim.jersey}
         />
       </div>
 
-      {/* WCH: trophy + year overlay */}
-      {isGoat && (
+      {/* ── Raridade — ícone + rótulo curto, sem precisar ler ── */}
+      {!isCommon && (
         <div
           style={{
             position: 'absolute',
-            bottom: 28,
-            left: 0,
-            right: 0,
+            top: dim.card.width * 0.055,
+            right: dim.card.width * 0.06,
+            zIndex: 10,
             display: 'flex',
-            justifyContent: 'center',
-            gap: 4,
-            zIndex: 5,
-            pointerEvents: 'none',
+            alignItems: 'center',
+            gap: 2,
+            background: 'rgba(0,0,0,0.4)',
+            borderRadius: 20,
+            padding: `${dim.card.width * 0.02}px ${dim.card.width * 0.045}px`,
+            border: `1px solid ${accent}55`,
           }}
         >
-          <span style={{ fontSize: 10, opacity: 0.6, color: '#c9a84c' }}>🏆</span>
-          <span
-            style={{
-              fontSize: 7,
-              color: '#c9a84c',
-              opacity: 0.7,
-              letterSpacing: '0.2em',
-              alignSelf: 'center',
-            }}
-          >
-            {card.era}
-          </span>
+          <span style={{ fontSize: RIBBON_FONT[size], lineHeight: 1 }}>{icon}</span>
+          {size !== 'xs' && (
+            <span
+              style={{
+                fontSize: RIBBON_FONT[size] - 1.5,
+                fontWeight: 800,
+                color: accent,
+                letterSpacing: '0.06em',
+              }}
+            >
+              {label}
+            </span>
+          )}
         </div>
       )}
 
-      {/* ── Bottom info strip ── */}
+      {/* ── Camisa — domina a carta (~70%+ da altura) ── */}
+      <div
+        style={{
+          position: 'absolute',
+          top: dim.card.height * 0.1,
+          left: 0,
+          right: 0,
+          bottom: dim.card.height * 0.24,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          overflow: 'visible',
+        }}
+      >
+        <div style={{ transform: `scale(${dim.jerseyScale})`, transformOrigin: 'top center' }}>
+          <JerseyArt
+            playerId={card.playerId}
+            displayName={card.displayName}
+            nationality={card.nationality}
+            position={card.position}
+            rarityCode={card.rarityCode}
+            size={dim.jersey}
+          />
+        </div>
+      </div>
+
+      {/* ── Nome — muito mais destacado ── */}
       <div
         style={{
           position: 'absolute',
           bottom: 0,
           left: 0,
           right: 0,
-          background:
-            'linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.6) 60%, transparent 100%)',
-          padding: '14px 6px 5px',
-          textAlign: 'center',
           zIndex: 8,
+          background:
+            'linear-gradient(0deg, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.72) 55%, transparent 100%)',
+          padding: `${dim.card.height * 0.1}px ${dim.card.width * 0.05}px ${dim.card.height * 0.035}px`,
+          textAlign: 'center',
         }}
       >
-        {/* Legendary/WCH: gold shimmer line above name */}
-        {(isLeg || isGoat) && (
+        {isLegendaryPlus && (
           <div
             style={{
               height: 1,
-              background: `linear-gradient(90deg, transparent, ${chrome.ovrColor}60, transparent)`,
-              marginBottom: 4,
+              background: `linear-gradient(90deg, transparent, ${accent}80, transparent)`,
+              marginBottom: dim.card.height * 0.02,
             }}
           />
         )}
         <p
+          className="font-display"
           style={{
-            fontWeight: 700,
-            fontSize: size === 'sm' ? 8 : 9,
-            color: '#e8e2d8',
-            lineHeight: 1.2,
+            fontSize: NAME_FONT[size],
+            color: '#f7f3ea',
+            lineHeight: 1.05,
             letterSpacing: '0.02em',
             textOverflow: 'ellipsis',
             overflow: 'hidden',
             whiteSpace: 'nowrap',
             margin: 0,
+            textShadow: '0 1px 4px rgba(0,0,0,0.9)',
           }}
         >
           {card.displayName}
         </p>
         <p
           style={{
-            fontSize: size === 'sm' ? 6.5 : 7.5,
-            color: chrome.badge,
-            margin: '2px 0 0',
+            fontSize: SUB_FONT[size],
+            color: 'rgba(255,255,255,0.55)',
+            margin: `${dim.card.height * 0.012}px 0 0`,
             lineHeight: 1,
-            opacity: 0.85,
           }}
         >
           {card.flagEmoji} {card.era}

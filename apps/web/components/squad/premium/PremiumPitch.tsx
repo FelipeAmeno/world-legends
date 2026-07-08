@@ -1,6 +1,6 @@
 'use client';
 
-import { JerseyArt } from '@/components/cards/JerseyArt';
+import { PlayerCard } from '@/components/cards/PlayerCard';
 import type { CollectionCard } from '@/lib/collection-data';
 import { RARITY_VISUAL } from '@/lib/collection-data';
 import type { ChemLine, SBSnapshot, SlotDef, SquadSlots } from '@/lib/squad-builder';
@@ -9,7 +9,6 @@ import type { FormationKey } from '@/lib/squad-builder';
 import type { DragSource } from '@/lib/squad-builder';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import type { RarityCode } from '@world-legends/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback } from 'react';
 
@@ -27,16 +26,7 @@ type Props = {
   onRemove: (slotId: string) => void;
 };
 
-// ─── Rarity chrome ────────────────────────────────────────────────────────────
-
-const RARITY_CHROME: Record<RarityCode, { border: string; ovrColor: string; badge: string }> = {
-  common: { border: 'rgba(150,150,150,0.40)', ovrColor: '#d1d5db', badge: '#6b7280' },
-  rare: { border: 'rgba(147,51,234,0.60)', ovrColor: '#c084fc', badge: '#a855f7' },
-  elite: { border: 'rgba(59,130,246,0.70)', ovrColor: '#60a5fa', badge: '#3b82f6' },
-  legendary: { border: 'rgba(201,168,76,0.85)', ovrColor: '#e6c85a', badge: '#c9a84c' },
-  ultra: { border: 'rgba(236,72,153,0.90)', ovrColor: '#f472b6', badge: '#ec4899' },
-  world_cup_hero: { border: 'rgba(240,244,255,0.95)', ovrColor: '#ffffff', badge: '#e2e8f0' },
-};
+// ─── Rarity chrome (usado pelo SuggestionPanel) ───────────────────────────────
 
 const RARITY_GLOW: Record<string, string> = {
   common: 'rgba(150,150,150,0.45)',
@@ -65,7 +55,7 @@ const POS_COLOR: Record<string, string> = {
   ST: '#ef4444',
 };
 
-// ─── PitchCard — 64×84px card with jersey art ────────────────────────────────
+// ─── PitchCard — versão xs da carta premium compartilhada ────────────────────
 
 function PitchCard({
   card,
@@ -78,11 +68,6 @@ function PitchCard({
   chemScore: number;
   compat: 'natural' | 'ok' | 'awkward';
 }) {
-  const chrome = RARITY_CHROME[card.rarityCode] ?? RARITY_CHROME.common;
-  const glow = RARITY_GLOW[card.rarityCode] ?? RARITY_GLOW.common;
-  const isUltra = card.rarityCode === 'ultra';
-  const isWCH = card.rarityCode === 'world_cup_hero';
-
   const compatDot = compat === 'natural' ? '#22c55e' : compat === 'ok' ? '#eab308' : '#ef4444';
   const chemDot =
     chemScore >= 7
@@ -94,121 +79,24 @@ function PitchCard({
           : '#ef4444';
 
   return (
-    <div
-      style={{
-        width: 64,
-        height: 84,
-        borderRadius: 9,
-        overflow: 'hidden',
-        border: `1.5px solid ${chrome.border}`,
-        boxShadow: isDragging ? 'none' : `0 0 18px ${glow}, 0 6px 16px rgba(0,0,0,0.8)`,
-        position: 'relative',
-        background: 'rgba(4,8,16,0.7)',
-        opacity: isDragging ? 0.2 : 1,
-        flexShrink: 0,
-      }}
-    >
-      {/* Jersey art — slightly offset so body fills card */}
-      <div style={{ position: 'absolute', top: -4, left: -4, pointerEvents: 'none' }}>
-        <JerseyArt
-          playerId={card.playerId}
-          displayName={card.displayName}
-          nationality={card.nationality}
-          position={card.position}
-          rarityCode={card.rarityCode}
-          size="sm"
-        />
-      </div>
+    <div style={{ position: 'relative', opacity: isDragging ? 0.2 : 1, flexShrink: 0 }}>
+      <PlayerCard card={card} size="xs" glow />
 
-      {/* Ultra rainbow shimmer */}
-      {isUltra && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            pointerEvents: 'none',
-            zIndex: 4,
-            background:
-              'linear-gradient(90deg,#ff6b6b22,#ffd93d22,#6bcb7722,#4d96ff22,#c77dff22,#ff6b6b22)',
-            backgroundSize: '300% 100%',
-            animation: 'rainbowMove 3.5s ease infinite',
-          }}
-        />
-      )}
-
-      {/* WCH gold scan */}
-      {isWCH && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            pointerEvents: 'none',
-            zIndex: 4,
-            background:
-              'linear-gradient(105deg, transparent 35%, rgba(201,168,76,0.13) 50%, transparent 65%)',
-            backgroundSize: '200% 100%',
-            animation: 'holoSlide 2.5s ease-in-out infinite',
-          }}
-        />
-      )}
-
-      {/* OVR + position badge */}
+      {/* Status dots: compat + química — canto inferior direito, sobre a faixa do nome */}
       <div
         style={{
           position: 'absolute',
-          top: 3,
-          left: 4,
-          zIndex: 10,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          background: 'rgba(0,0,0,0.78)',
-          borderRadius: 5,
-          padding: '2px 5px',
-          border: `1px solid ${chrome.border}`,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: 'var(--font-display, "Bebas Neue", Impact)',
-            fontSize: 15,
-            lineHeight: 1,
-            color: chrome.ovrColor,
-            textShadow: `0 0 6px ${chrome.ovrColor}80`,
-          }}
-        >
-          {card.overall}
-        </span>
-        <span
-          style={{
-            fontSize: 5,
-            fontWeight: 700,
-            color: chrome.ovrColor,
-            letterSpacing: '0.05em',
-            opacity: 0.85,
-            lineHeight: 1,
-          }}
-        >
-          {card.position}
-        </span>
-      </div>
-
-      {/* Status dots: compat (top-right) and chem (below it) */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 3,
+          bottom: 4,
           right: 4,
           zIndex: 10,
           display: 'flex',
-          flexDirection: 'column',
           gap: 3,
         }}
       >
         <div
           style={{
-            width: 6,
-            height: 6,
+            width: 5,
+            height: 5,
             borderRadius: '50%',
             background: compatDot,
             boxShadow: `0 0 4px ${compatDot}`,
@@ -216,44 +104,13 @@ function PitchCard({
         />
         <div
           style={{
-            width: 6,
-            height: 6,
+            width: 5,
+            height: 5,
             borderRadius: '50%',
             background: chemDot,
             boxShadow: `0 0 4px ${chemDot}`,
           }}
         />
-      </div>
-
-      {/* Name strip */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 8,
-          background:
-            'linear-gradient(0deg, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.55) 65%, transparent 100%)',
-          padding: '10px 4px 4px',
-          textAlign: 'center',
-        }}
-      >
-        <p
-          style={{
-            fontSize: 7,
-            fontWeight: 700,
-            color: '#e8e2d8',
-            textOverflow: 'ellipsis',
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-            lineHeight: 1,
-            margin: 0,
-            letterSpacing: '0.02em',
-          }}
-        >
-          {card.displayName.split(' ').slice(-1)[0] ?? card.displayName}
-        </p>
       </div>
     </div>
   );
@@ -567,7 +424,6 @@ function PitchSlot({
 
     return (
       <div data-squad-slot style={style}>
-        {/* biome-ignore lint/a11y/useKeyWithClickEvents: drag interaction */}
         <div
           ref={mergedRef}
           {...attributes}
