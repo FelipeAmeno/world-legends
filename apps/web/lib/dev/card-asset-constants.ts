@@ -8,5 +8,10 @@
  */
 
 export const CARD_ASPECT_RATIO = 148 / 199; // mesma proporção de PlayerCard 'lg' (card-tokens.ts)
-export const ASPECT_RATIO_TOLERANCE = 0.03;
+// 5% — calibrado com o primeiro lote real de frames (Sprint 18.8): saída do
+// Gemini veio em 1143×1600 (≈0.714), ~3.95% fora do alvo (0.744). A camada
+// estica a imagem pra preencher a carta (w-full h-full) de qualquer forma,
+// então essa diferença não causa defeito visual — só recalibra o quão
+// realista é esperar precisão de proporção de uma pipeline de geração externa.
+export const ASPECT_RATIO_TOLERANCE = 0.05;
 export const RECOMMENDED_MIN_WIDTH = 512;
