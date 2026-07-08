@@ -18,6 +18,7 @@ import {
   resolveKit,
   resolvePlayerArt,
   resolveRarityEffect,
+  resolveShine,
 } from '@/lib/card-asset-loader';
 import { getFlagEmoji } from '@/lib/collection-data';
 import type { RarityCode } from '@world-legends/types';
@@ -68,6 +69,7 @@ export function CardPreviewPanel({ rarityCodes, nationalities, players }: Props)
     { label: 'Glow', hasAsset: resolveGlow(rarityCode) !== null },
     { label: 'Camisa (kit)', hasAsset: resolveKit(nationality, rarityCode) !== null },
     { label: 'Arte do jogador', hasAsset: resolvePlayerArt(playerId) !== null },
+    { label: 'Shine', hasAsset: resolveShine(rarityCode) !== null },
   ];
 
   return (

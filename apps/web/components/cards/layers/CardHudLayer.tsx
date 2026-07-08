@@ -25,6 +25,7 @@ export function CardHudLayer({ ctx, ovrSlot, positionSlot, ribbonSlot, nameSlot 
     <>
       {/* Plate superior-esquerdo: OVR + posição + barra de destaque */}
       <div
+        className="card-parallax-hud"
         style={{
           position: 'absolute',
           top: dim.card.width * 0.05,
@@ -53,6 +54,7 @@ export function CardHudLayer({ ctx, ovrSlot, positionSlot, ribbonSlot, nameSlot 
       {/* Plate superior-direito: ribbon de raridade */}
       {ribbonSlot && (
         <div
+          className="card-parallax-hud"
           style={{
             position: 'absolute',
             top: dim.card.width * 0.055,
@@ -73,6 +75,7 @@ export function CardHudLayer({ ctx, ovrSlot, positionSlot, ribbonSlot, nameSlot 
 
       {/* Plate inferior: rodapé do nome */}
       <div
+        className="card-parallax-hud"
         style={{
           position: 'absolute',
           bottom: 0,

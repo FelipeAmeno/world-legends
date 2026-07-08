@@ -40,6 +40,10 @@ export function expectedGlows(): ExpectedEntry[] {
   return ALL_RARITY_CODES.map((r) => ({ key: `glow-${r}`, label: r }));
 }
 
+export function expectedShine(): ExpectedEntry[] {
+  return ALL_RARITY_CODES.map((r) => ({ key: `shine-${r}`, label: r }));
+}
+
 export function expectedKits(): ExpectedEntry[] {
   const nationalities = getAllKitNationalities();
   const out: ExpectedEntry[] = [];

@@ -15,4 +15,5 @@ export const CARD_ASSET_MANIFEST = {
   kits: {},
   patterns: {},
   'player-art': {},
+  shine: {},
 } as const;

@@ -10,7 +10,7 @@ export function CardBackgroundLayer({ ctx }: { ctx: CardVisualCtx }) {
   const { kit, bgAlpha, rarityCode } = ctx;
 
   return (
-    <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+    <div className="card-parallax-bg" style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
       <ImageLayer
         asset={resolveBackground(rarityCode)}
         alt=""

@@ -20,7 +20,7 @@ export function CardFrameLayer({ ctx }: { ctx: CardVisualCtx }) {
     <ImageLayer
       asset={resolveFrame(ctx.rarityCode)}
       alt=""
-      className="absolute inset-0 w-full h-full pointer-events-none"
+      className="absolute inset-0 w-full h-full pointer-events-none card-parallax-frame"
       style={{ zIndex: 11 }}
       fallback={null}
       eager

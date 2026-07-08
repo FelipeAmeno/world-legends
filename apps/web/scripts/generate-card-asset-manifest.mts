@@ -16,7 +16,15 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const CATEGORIES = ['backgrounds', 'effects', 'frames', 'kits', 'patterns', 'player-art'] as const;
+const CATEGORIES = [
+  'backgrounds',
+  'effects',
+  'frames',
+  'kits',
+  'patterns',
+  'player-art',
+  'shine',
+] as const;
 type Category = (typeof CATEGORIES)[number];
 
 const IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.svg']);

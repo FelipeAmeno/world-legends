@@ -93,6 +93,11 @@ export function resolvePattern(patternKey: string): ResolvedCardAsset | null {
   return resolveCardAsset('patterns', patternKey);
 }
 
+/** Layer nova (Sprint 18.7) — reservada para um asset de shine/holo futuro. */
+export function resolveShine(rarityCode: RarityCode): ResolvedCardAsset | null {
+  return resolveCardAsset('shine', `shine-${rarityCode}`);
+}
+
 export const ALL_RARITY_CODES: readonly RarityCode[] = [
   'common',
   'rare',

@@ -20,6 +20,7 @@ import {
   expectedKits,
   expectedPlayerArt,
   expectedRarityEffects,
+  expectedShine,
 } from './card-asset-expectations';
 import { bytesToKb, inspectImageFile } from './png-inspect';
 
@@ -129,6 +130,7 @@ export function buildAllCardAssetDiagnostics(): CategoryDiagnostics[] {
     buildCategory('effects (glow)', 'effects', expectedGlows()),
     buildCategory('kits', 'kits', expectedKits()),
     buildCategory('player-art', 'player-art', expectedPlayerArt()),
+    buildCategory('shine', 'shine', expectedShine()),
     buildPatternsCategory(),
   ];
 }

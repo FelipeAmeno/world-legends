@@ -1,19 +1,21 @@
 'use client';
 
 /**
- * components/cards/PlayerCard.tsx — Sprint 18.5 (Card Rendering Engine)
+ * components/cards/PlayerCard.tsx — Sprint 18.5 (Card Rendering Engine) +
+ * Sprint 18.7 (Premium Card Engine — tilt/parallax/glass/breathing/metallic)
  *
  * Motor de renderização em camadas. A API pública ({ card, size, glow }) é
  * idêntica à de antes da Sprint 18.5 — todo call site existente (Coleção,
  * Pack Opening, Squad Builder, Perfil, Hall of Legends, Match) continua
  * funcionando sem nenhuma mudança. Nenhuma arte existe ainda: cada camada
  * asset-capable cai no visual procedural (CSS/SVG) de sempre via onError,
- * então o resultado visual hoje é idêntico ao de antes desta sprint — ver
- * SPRINT_18_5_REPORT.md para a lista de assets esperados pelo Gemini.
+ * então o resultado visual hoje é idêntico ao de antes das Sprints 18.5/18.7
+ * quando o mouse não se move — ver SPRINT_18_7_REPORT.md.
  */
 
 import { getKitColors } from '@/lib/kit-data';
 import { memo } from 'react';
+import { CardParticles } from './CardParticles';
 import {
   type CardSize,
   RARITY_ACCENT,
@@ -37,6 +39,8 @@ import { CardOvrLayer } from './layers/CardOvrLayer';
 import { CardPlayerArtLayer } from './layers/CardPlayerArtLayer';
 import { CardPositionLayer } from './layers/CardPositionLayer';
 import { CardRarityEffectLayer } from './layers/CardRarityEffectLayer';
+import { CardShineLayer } from './layers/CardShineLayer';
+import { useCardTilt } from './use-card-tilt';
 
 export type { PlayerCardData };
 
@@ -49,6 +53,7 @@ type Props = {
 };
 
 function PlayerCardImpl({ card, size = 'md', glow, attributes }: Props) {
+  const tiltRef = useCardTilt<HTMLDivElement>();
   const kit = getKitColors(card.nationality);
   const accent = RARITY_ACCENT[card.rarityCode];
   const dim = SIZES[size];
@@ -60,6 +65,13 @@ function PlayerCardImpl({ card, size = 'md', glow, attributes }: Props) {
   const isLegendaryPlus = card.rarityCode === 'legendary' || isUltra || isGoat;
   const isElitePlus = card.rarityCode === 'elite' || isLegendaryPlus;
   const bgAlpha = RARITY_BG_ALPHA[card.rarityCode];
+  const metallicSuffix =
+    card.rarityCode === 'ultra'
+      ? 'ultra'
+      : card.rarityCode === 'world_cup_hero'
+        ? 'wch'
+        : card.rarityCode;
+  const metallicClass = isCommon ? '' : `card-metallic card-metallic-${metallicSuffix}`;
 
   const ctx: CardVisualCtx = {
     card,
@@ -80,88 +92,105 @@ function PlayerCardImpl({ card, size = 'md', glow, attributes }: Props) {
   };
 
   return (
+    // Wrapper de respiração (item 4, Sprint 18.7) — separado do container de
+    // tilt abaixo porque uma animação CSS de `transform` substitui o valor
+    // inteiro da propriedade; misturar scale (respiração) com rotate (tilt)
+    // no mesmo elemento faria um sobrescrever o outro.
     <div
-      className={[
-        'noise relative shrink-0 overflow-hidden',
-        RARITY_FRAME_CLASS[card.rarityCode],
-        glow ? RARITY_GLOW_CLASS[card.rarityCode] : '',
-        isLegendaryPlus ? 'card-holo' : '',
-        card.rarityCode === 'legendary' && glow ? 'legendary-aura' : '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      style={{
-        width: dim.card.width,
-        height: dim.card.height,
-        borderRadius: Math.round(dim.card.width * 0.09),
-        overflow: 'hidden',
-      }}
+      className={isLegendaryPlus ? 'card-breathe' : undefined}
+      style={{ display: 'inline-block' }}
     >
-      {/* Layer 1 */}
-      <CardBackgroundLayer ctx={ctx} />
-      {/* Layer 2 */}
-      <CardRarityEffectLayer ctx={ctx} />
-      {/* Layer 3 — aditiva; a moldura real é a classe CSS no container acima */}
-      <CardFrameLayer ctx={ctx} />
-
-      {/* Layer 4 (camisa) + Layer 5 (arte do jogador) + Layer 6 (glow), agrupadas
-          no bloco central pois compartilham posicionamento/escala. */}
       <div
+        ref={tiltRef}
+        className={[
+          'noise relative shrink-0 overflow-hidden card-tilt-root',
+          RARITY_FRAME_CLASS[card.rarityCode],
+          glow ? RARITY_GLOW_CLASS[card.rarityCode] : '',
+          isLegendaryPlus ? 'card-holo' : '',
+          card.rarityCode === 'legendary' && glow ? 'legendary-aura' : '',
+          metallicClass,
+        ]
+          .filter(Boolean)
+          .join(' ')}
         style={{
-          position: 'absolute',
-          top: dim.card.height * 0.06,
-          left: 0,
-          right: 0,
-          bottom: dim.card.height * 0.19,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          overflow: 'visible',
+          width: dim.card.width,
+          height: dim.card.height,
+          borderRadius: Math.round(dim.card.width * 0.09),
+          overflow: 'hidden',
         }}
       >
-        <CardGlowLayer ctx={ctx} />
+        {/* Layer 1 */}
+        <CardBackgroundLayer ctx={ctx} />
+        {/* Layer 2 */}
+        <CardRarityEffectLayer ctx={ctx} />
+        {/* Layer 3 — aditiva; a moldura real é a classe CSS no container acima */}
+        <CardFrameLayer ctx={ctx} />
+
+        {/* Layer 4 (camisa) + Layer 5 (arte do jogador) + Layer 6 (glow), agrupadas
+            no bloco central pois compartilham posicionamento/escala. */}
         <div
           style={{
-            position: 'relative',
-            transform: `scale(${dim.jerseyScale})`,
-            transformOrigin: 'top center',
-            filter: `drop-shadow(0 6px 14px rgba(0,0,0,0.6)) drop-shadow(0 0 18px ${accent}50)`,
+            position: 'absolute',
+            top: dim.card.height * 0.06,
+            left: 0,
+            right: 0,
+            bottom: dim.card.height * 0.19,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'flex-start',
+            overflow: 'visible',
           }}
         >
-          <CardKitLayer ctx={ctx} />
+          <CardGlowLayer ctx={ctx} />
+          <div
+            style={{
+              position: 'relative',
+              transform: `scale(${dim.jerseyScale}) translate(calc(var(--px, 0) * 7px), calc(var(--py, 0) * 7px))`,
+              transformOrigin: 'top center',
+              filter: `drop-shadow(0 6px 14px rgba(0,0,0,0.6)) drop-shadow(0 0 18px ${accent}50)`,
+            }}
+          >
+            <CardKitLayer ctx={ctx} />
+          </div>
         </div>
+        <CardPlayerArtLayer ctx={ctx} />
+
+        {/* Partículas (item 6) — só legendary+ */}
+        {isLegendaryPlus && <CardParticles cardId={card.cardId} accent={accent} />}
+
+        {/* Layer 7 (HUD/plates) recebe as Layers 8/9/10 (texto puro) como slots */}
+        <CardHudLayer
+          ctx={ctx}
+          ovrSlot={<CardOvrLayer ctx={ctx} />}
+          positionSlot={<CardPositionLayer ctx={ctx} />}
+          ribbonSlot={
+            isCommon ? null : (
+              <>
+                <span style={{ fontSize: RIBBON_FONT[size], lineHeight: 1 }}>{icon}</span>
+                {size !== 'xs' && (
+                  <span
+                    style={{
+                      fontSize: RIBBON_FONT[size] - 1.5,
+                      fontWeight: 800,
+                      color: accent,
+                      letterSpacing: '0.06em',
+                    }}
+                  >
+                    {label}
+                  </span>
+                )}
+              </>
+            )
+          }
+          nameSlot={<CardNameLayer ctx={ctx} />}
+        />
+
+        {/* Layer 11 — opcional, off por padrão */}
+        {attributes && <CardAttributesLayer ctx={ctx} attributes={attributes} />}
+
+        {/* Shine/glass reagindo ao mouse (itens 3 + 8) — sempre por cima de tudo */}
+        <CardShineLayer ctx={ctx} />
       </div>
-      <CardPlayerArtLayer ctx={ctx} />
-
-      {/* Layer 7 (HUD/plates) recebe as Layers 8/9/10 (texto puro) como slots */}
-      <CardHudLayer
-        ctx={ctx}
-        ovrSlot={<CardOvrLayer ctx={ctx} />}
-        positionSlot={<CardPositionLayer ctx={ctx} />}
-        ribbonSlot={
-          isCommon ? null : (
-            <>
-              <span style={{ fontSize: RIBBON_FONT[size], lineHeight: 1 }}>{icon}</span>
-              {size !== 'xs' && (
-                <span
-                  style={{
-                    fontSize: RIBBON_FONT[size] - 1.5,
-                    fontWeight: 800,
-                    color: accent,
-                    letterSpacing: '0.06em',
-                  }}
-                >
-                  {label}
-                </span>
-              )}
-            </>
-          )
-        }
-        nameSlot={<CardNameLayer ctx={ctx} />}
-      />
-
-      {/* Layer 11 — opcional, off por padrão */}
-      {attributes && <CardAttributesLayer ctx={ctx} attributes={attributes} />}
     </div>
   );
 }
