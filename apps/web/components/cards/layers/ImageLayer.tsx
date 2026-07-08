@@ -1,19 +1,22 @@
 'use client';
 
 /**
- * components/cards/layers/ImageLayer.tsx — Sprint 18.5 (Card Rendering Engine)
+ * components/cards/layers/ImageLayer.tsx — Sprint 18.5/18.6 (Card Rendering Engine)
  *
  * Primitiva compartilhada por toda camada de carta que pode virar imagem.
- * Tenta carregar `src`; se não existir (404) ou não for passado, renderiza
- * `fallback` (o visual procedural CSS/SVG de hoje) sem nenhuma diferença
- * visual. Isso é o que permite preparar o motor sem ter arte nenhuma ainda:
- * basta colocar um PNG no caminho certo depois que ele passa a aparecer.
+ * Recebe um `ResolvedCardAsset` já resolvido pelo carregador único
+ * (`lib/card-asset-loader.ts`) — se `asset` for `null` (chave não existe no
+ * manifesto) ou o carregamento falhar (404 em runtime, defesa extra),
+ * renderiza `fallback` (o visual procedural CSS/SVG de sempre) sem nenhuma
+ * diferença visual. Quando `asset` existir, aplica scale/offset/rotation/
+ * blendMode/intensity vindos dos metadados do asset.
  */
 
+import type { ResolvedCardAsset } from '@/lib/card-asset-loader';
 import { memo, useState } from 'react';
 
 type Props = {
-  src: string | undefined;
+  asset: ResolvedCardAsset | null;
   alt: string;
   fallback: React.ReactNode;
   className?: string;
@@ -23,7 +26,7 @@ type Props = {
 };
 
 export const ImageLayer = memo(function ImageLayer({
-  src,
+  asset,
   alt,
   fallback,
   className,
@@ -32,16 +35,31 @@ export const ImageLayer = memo(function ImageLayer({
 }: Props) {
   const [failed, setFailed] = useState(false);
 
-  if (!src || failed) {
+  if (!asset || failed) {
     return <>{fallback}</>;
   }
 
+  const transform = [
+    asset.scale !== 1 ? `scale(${asset.scale})` : '',
+    asset.offsetX !== 0 || asset.offsetY !== 0
+      ? `translate(${asset.offsetX}px, ${asset.offsetY}px)`
+      : '',
+    asset.rotation !== 0 ? `rotate(${asset.rotation}deg)` : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <img
-      src={src}
+      src={asset.src}
       alt={alt}
       className={className}
-      style={style}
+      style={{
+        ...style,
+        ...(transform ? { transform } : {}),
+        ...(asset.blendMode !== 'normal' ? { mixBlendMode: asset.blendMode } : {}),
+        ...(asset.intensity !== 1 ? { opacity: asset.intensity } : {}),
+      }}
       loading={eager ? 'eager' : 'lazy'}
       fetchPriority={eager ? 'high' : 'low'}
       decoding="async"

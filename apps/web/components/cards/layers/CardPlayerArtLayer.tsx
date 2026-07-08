@@ -7,7 +7,7 @@
  * Pensada para ficar por cima da camisa e por baixo do HUD/texto.
  */
 
-import { getPlayerArtAssetPath } from '@/lib/card-assets';
+import { resolvePlayerArt } from '@/lib/card-asset-loader';
 import type { CardVisualCtx } from '../card-types';
 import { ImageLayer } from './ImageLayer';
 
@@ -16,7 +16,7 @@ export function CardPlayerArtLayer({ ctx }: { ctx: CardVisualCtx }) {
 
   return (
     <ImageLayer
-      src={getPlayerArtAssetPath(card.playerId)}
+      asset={resolvePlayerArt(card.playerId)}
       alt={card.displayName}
       className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none"
       style={{ zIndex: 5 }}

@@ -7,7 +7,7 @@
  * ausente, cai no efeito procedural atual (idêntico ao de antes da Sprint 18.5).
  */
 
-import { getRarityEffectAssetPath } from '@/lib/card-assets';
+import { resolveRarityEffect } from '@/lib/card-asset-loader';
 import { motion } from 'framer-motion';
 import { RARITY_SHIMMER } from '../card-tokens';
 import type { CardVisualCtx } from '../card-types';
@@ -18,7 +18,7 @@ export function CardRarityEffectLayer({ ctx }: { ctx: CardVisualCtx }) {
 
   return (
     <ImageLayer
-      src={getRarityEffectAssetPath(rarityCode)}
+      asset={resolveRarityEffect(rarityCode)}
       alt=""
       className="absolute inset-0 w-full h-full object-cover pointer-events-none"
       style={{ zIndex: 6 }}

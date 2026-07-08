@@ -6,7 +6,7 @@
  * Sprint 17 "Card Art Revolution").
  */
 
-import { getKitAssetPath } from '@/lib/card-assets';
+import { resolveKit } from '@/lib/card-asset-loader';
 import { JerseyArt } from '../JerseyArt';
 import type { CardVisualCtx } from '../card-types';
 import { ImageLayer } from './ImageLayer';
@@ -16,7 +16,7 @@ export function CardKitLayer({ ctx }: { ctx: CardVisualCtx }) {
 
   return (
     <ImageLayer
-      src={getKitAssetPath(card.nationality, card.rarityCode)}
+      asset={resolveKit(card.nationality, card.rarityCode)}
       alt={`Camisa ${card.nationality}`}
       style={{ width: dim.card.width * 0.62, height: 'auto' }}
       fallback={

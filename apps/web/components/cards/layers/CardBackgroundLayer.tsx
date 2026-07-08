@@ -2,7 +2,7 @@
 
 /** Layer 1 — fundo ambiente atrás de tudo, por raridade + cor nacional. */
 
-import { getBackgroundAssetPath } from '@/lib/card-assets';
+import { resolveBackground } from '@/lib/card-asset-loader';
 import type { CardVisualCtx } from '../card-types';
 import { ImageLayer } from './ImageLayer';
 
@@ -12,7 +12,7 @@ export function CardBackgroundLayer({ ctx }: { ctx: CardVisualCtx }) {
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
       <ImageLayer
-        src={getBackgroundAssetPath(rarityCode)}
+        asset={resolveBackground(rarityCode)}
         alt=""
         className="w-full h-full object-cover"
         fallback={

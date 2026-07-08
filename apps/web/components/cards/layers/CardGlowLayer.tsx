@@ -9,7 +9,7 @@
  * ver nota de arquitetura no relatório da sprint.
  */
 
-import { getGlowAssetPath } from '@/lib/card-assets';
+import { resolveGlow } from '@/lib/card-asset-loader';
 import type { CardVisualCtx } from '../card-types';
 import { ImageLayer } from './ImageLayer';
 
@@ -18,7 +18,7 @@ export function CardGlowLayer({ ctx }: { ctx: CardVisualCtx }) {
 
   return (
     <ImageLayer
-      src={getGlowAssetPath(rarityCode)}
+      asset={resolveGlow(rarityCode)}
       alt=""
       className="pointer-events-none"
       style={{ position: 'absolute', top: '20%', width: '70%', height: '60%' }}

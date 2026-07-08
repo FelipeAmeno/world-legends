@@ -11,14 +11,14 @@
  * moldura real da carta).
  */
 
-import { getFrameAssetPath } from '@/lib/card-assets';
+import { resolveFrame } from '@/lib/card-asset-loader';
 import type { CardVisualCtx } from '../card-types';
 import { ImageLayer } from './ImageLayer';
 
 export function CardFrameLayer({ ctx }: { ctx: CardVisualCtx }) {
   return (
     <ImageLayer
-      src={getFrameAssetPath(ctx.rarityCode)}
+      asset={resolveFrame(ctx.rarityCode)}
       alt=""
       className="absolute inset-0 w-full h-full pointer-events-none"
       style={{ zIndex: 11 }}

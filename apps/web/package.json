@@ -3,10 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "predev": "node --experimental-strip-types scripts/generate-card-asset-manifest.mts",
     "dev": "next dev --turbopack",
+    "prebuild": "node --experimental-strip-types scripts/generate-card-asset-manifest.mts",
     "build": "next build",
     "start": "next start",
     "lint": "biome check .",
+    "generate:card-assets": "node --experimental-strip-types scripts/generate-card-asset-manifest.mts",
     "test": "vitest run"
   },
   "dependencies": {
