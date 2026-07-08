@@ -15,12 +15,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { LevelUpModal } from '@/components/ui/LevelUpModal';
 import { openPackAction } from '@/lib/actions/packs';
 import type { DrawnCardInfo } from '@/lib/actions/packs.types';
 import type { CollectionCard } from '@/lib/collection-data';
 import { getCollection } from '@/lib/collection-data';
 import { vibrate } from '@/lib/haptics';
 import { type DrawnCard, PACK_DEFS, type PackDefinitionUI } from '@/lib/pack-logic';
+import { deriveAccountProgress } from '@/lib/rewards-data';
 import { SFX } from '@/lib/sound-manager';
 import { toast } from '@/lib/wl-toast';
 import type { RarityCode } from '@world-legends/types';
@@ -100,12 +102,18 @@ type Props = {
   initialBalance?: number;
   initialFragments?: number;
   isWelcome?: boolean;
+  initialWins?: number;
+  initialDraws?: number;
+  initialCollectionCount?: number;
 };
 
 export function PackExperience({
   initialBalance = 500,
   initialFragments = 0,
   isWelcome = false,
+  initialWins = 0,
+  initialDraws = 0,
+  initialCollectionCount = 0,
 }: Props) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>('SELECT');
@@ -115,6 +123,8 @@ export function PackExperience({
   const [fragments, setFragments] = useState(initialFragments);
   const [totalFragmentsGained, setTotalFragmentsGained] = useState(0);
   const [insufficientFunds, setInsufficientFunds] = useState(false);
+  const [collectionCount, setCollectionCount] = useState(initialCollectionCount);
+  const [levelUpInfo, setLevelUpInfo] = useState<{ prevLevel: number; level: number } | null>(null);
 
   const { elRef: shakeRef, shake } = useCameraShake();
 
@@ -186,6 +196,28 @@ export function PackExperience({
           const drawn = buildDrawnCardsFromServer(result.drawn, allCards);
           setCards(drawn);
           setPhase('REVEAL');
+
+          // Novas cartas (não-duplicatas) aumentam a coleção → pode subir de
+          // nível. Nível é derivado (ver lib/rewards-data.ts), então basta
+          // comparar antes/depois com o mesmo cálculo usado em Home/Perfil.
+          const newUniqueCards = result.drawn.filter((d) => !d.isDuplicate).length;
+          setCollectionCount((prevCount) => {
+            const nextCount = prevCount + newUniqueCards;
+            const prevProgress = deriveAccountProgress({
+              wins: initialWins,
+              draws: initialDraws,
+              collectionCount: prevCount,
+            });
+            const nextProgress = deriveAccountProgress({
+              wins: initialWins,
+              draws: initialDraws,
+              collectionCount: nextCount,
+            });
+            if (nextProgress.level > prevProgress.level) {
+              setLevelUpInfo({ prevLevel: prevProgress.level, level: nextProgress.level });
+            }
+            return nextCount;
+          });
         } else {
           setBalance((b) => b + pack.price);
           toast.error(result.error ?? 'Erro ao abrir pack. Tente novamente.');
@@ -374,6 +406,13 @@ export function PackExperience({
           </motion.div>
         )}
       </AnimatePresence>
+
+      <LevelUpModal
+        open={phase === 'DONE' && levelUpInfo !== null}
+        prevLevel={levelUpInfo?.prevLevel ?? 1}
+        level={levelUpInfo?.level ?? 1}
+        onDismiss={() => setLevelUpInfo(null)}
+      />
     </div>
   );
 }

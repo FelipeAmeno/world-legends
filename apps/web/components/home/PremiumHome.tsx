@@ -14,16 +14,36 @@ import { RetentionPanel } from './RetentionPanel';
 
 type Props = {
   serverBalance: number;
+  fragmentBalance?: number;
+  username?: string | undefined;
   collectionCount?: number;
   squadFormation?: FormationKey | null | undefined;
   activeEventCount?: number;
+  squadOverall?: number;
+  squadChemistry?: number;
+  wins?: number;
+  draws?: number;
+  losses?: number;
+  level?: number;
+  xp?: number;
+  xpForNext?: number;
 };
 
 export function PremiumHome({
   serverBalance,
+  fragmentBalance = 0,
+  username,
   collectionCount = 0,
   squadFormation,
   activeEventCount = 0,
+  squadOverall = 0,
+  squadChemistry = 0,
+  wins = 0,
+  draws = 0,
+  losses = 0,
+  level = 1,
+  xp = 0,
+  xpForNext = 105,
 }: Props) {
   return (
     <div
@@ -100,14 +120,27 @@ export function PremiumHome({
         className="relative z-10 flex flex-col gap-4"
         style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}
       >
-        <PlayerHeader serverBalance={serverBalance} />
+        <PlayerHeader
+          serverBalance={serverBalance}
+          fragmentBalance={fragmentBalance}
+          username={username}
+          level={level}
+          xp={xp}
+          xpForNext={xpForNext}
+        />
         <DreamTeamWidget />
         <GameGrid
           collectionCount={collectionCount}
           squadFormation={squadFormation}
           activeEventCount={activeEventCount}
         />
-        <QuickStats />
+        <QuickStats
+          overall={squadOverall}
+          chemistry={squadChemistry}
+          wins={wins}
+          draws={draws}
+          losses={losses}
+        />
         <RetentionPanel />
         <ProgressTracker />
         <EventBanner />

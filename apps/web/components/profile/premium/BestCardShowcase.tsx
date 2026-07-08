@@ -21,7 +21,18 @@ const RARITY_GLOW: Record<string, string> = {
 };
 
 export function BestCardShowcase({ card, avgOvr, legendaryPlus }: Props) {
-  if (!card) return null;
+  if (!card) {
+    return (
+      <section>
+        <SectionTitle>🏆 Melhor Carta</SectionTitle>
+        <div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
+          <span className="text-3xl opacity-30">🎴</span>
+          <p className="text-white/35 text-xs">Nenhuma carta ainda.</p>
+          <p className="text-white/20 text-[11px]">Abra um pack para começar sua coleção.</p>
+        </div>
+      </section>
+    );
+  }
 
   const visual = RARITY_VISUAL[card.rarityCode];
   const glow = RARITY_GLOW[card.rarityCode] ?? 'rgba(201,168,76,0.4)';

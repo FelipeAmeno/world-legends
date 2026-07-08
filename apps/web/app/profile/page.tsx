@@ -1,6 +1,7 @@
 import { getCollection } from '@/lib/collection-data';
 import { SEASONS, buildAchievements, buildAdvancedStats, buildTitles } from '@/lib/profile-data';
-import { getUserCollection, getUserMatchStats } from '@/lib/server/game-data';
+import { deriveAccountProgress } from '@/lib/rewards-data';
+import { getUserCollection, getUserMatchStats, getUserProfile } from '@/lib/server/game-data';
 import { getCurrentUser } from '@/lib/supabase/server';
 
 import { AchievementsGrid } from '@/components/profile/premium/AchievementsGrid';
@@ -23,21 +24,31 @@ export default async function ProfilePage() {
   let draws = 0;
   let losses = 0;
   let recentMatches: Awaited<ReturnType<typeof getUserMatchStats>>['recentMatches'] = [];
+  let credits = 0;
+  let fragments = 0;
+  let username: string | undefined;
 
   if (user) {
-    const stats = await getUserMatchStats(user.id);
+    const [stats, profile] = await Promise.all([
+      getUserMatchStats(user.id),
+      getUserProfile(user.id),
+    ]);
     wins = stats.wins;
     draws = stats.draws;
     losses = stats.losses;
     recentMatches = stats.recentMatches;
+    credits = profile?.softCurrency ?? 0;
+    fragments = profile?.fragmentBalance ?? 0;
+    username = profile?.username;
   }
 
   const total = wins + draws + losses;
   const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+  const progress = deriveAccountProgress({ wins, draws, collectionCount: collection.length });
 
   const advStats = buildAdvancedStats(collection);
-  const titles = buildTitles(wins, 1, collection);
-  const achiev = buildAchievements(wins, draws, losses, 1, 0, collection);
+  const titles = buildTitles(wins, progress.level, collection);
+  const achiev = buildAchievements(wins, draws, losses, progress.level, credits, collection);
   advStats.winRate = winRate;
 
   return (
@@ -53,7 +64,18 @@ export default async function ProfilePage() {
     >
       <div className="max-w-2xl mx-auto space-y-8 pb-10 px-4">
         <div className="glass rounded-3xl overflow-hidden border border-white/5">
-          <ProfileHero wins={wins} draws={draws} losses={losses} winRate={winRate} />
+          <ProfileHero
+            wins={wins}
+            draws={draws}
+            losses={losses}
+            winRate={winRate}
+            username={username}
+            credits={credits}
+            fragments={fragments}
+            level={progress.level}
+            xp={progress.xp}
+            xpForNext={progress.xpForNext}
+          />
         </div>
 
         <div className="px-5 py-5 glass rounded-3xl border border-white/5">

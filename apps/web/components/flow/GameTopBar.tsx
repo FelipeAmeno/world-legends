@@ -1,25 +1,27 @@
 'use client';
 
 /**
- * GameTopBar — reads from GameContext.
- * If onboarded → real values; otherwise → mock data.
+ * GameTopBar — recebe o resumo real do perfil (Supabase) via prop, montado
+ * uma vez no root layout. Ver AppShell/app/layout.tsx.
  */
-import { useGame } from '@/lib/game-context';
-import { USER_PROFILE } from '@/lib/mock-data';
+type Summary = {
+  balance: number;
+  fragments: number;
+  level: number;
+  xp: number;
+  xpForNext: number;
+  winRate: number;
+};
 
-export function GameTopBar() {
-  const { state } = useGame();
+type Props = { summary?: Summary | undefined };
 
-  const level = state.isOnboarded ? state.level : USER_PROFILE.level;
-  const credits = state.isOnboarded ? state.credits : USER_PROFILE.credits;
-  const frags = state.isOnboarded ? state.fragments : USER_PROFILE.fragments;
-  const xpCur = state.isOnboarded ? state.currentXp : USER_PROFILE.currentXp;
-  const xpNext = state.isOnboarded ? state.xpForNext : USER_PROFILE.xpForNext;
-  const wins = state.isOnboarded ? state.wins : USER_PROFILE.wins;
-  const total = state.isOnboarded
-    ? state.wins + state.draws + state.losses
-    : USER_PROFILE.wins + USER_PROFILE.draws + USER_PROFILE.losses;
-  const winRate = total > 0 ? Math.round((wins / total) * 100) : USER_PROFILE.winRate;
+export function GameTopBar({ summary }: Props) {
+  const level = summary?.level ?? 1;
+  const credits = summary?.balance ?? 0;
+  const frags = summary?.fragments ?? 0;
+  const xpCur = summary?.xp ?? 0;
+  const xpNext = summary?.xpForNext ?? 105;
+  const winRate = summary?.winRate ?? 0;
   const xpPct = Math.round((xpCur / Math.max(1, xpNext)) * 100);
 
   return (

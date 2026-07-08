@@ -8,11 +8,20 @@ import { usePathname } from 'next/navigation';
 import { MobileHeader } from './MobileHeader';
 import { Sidebar } from './Sidebar';
 
-type Props = { children: React.ReactNode };
+type HeaderSummary = {
+  balance: number;
+  fragments: number;
+  level: number;
+  xp: number;
+  xpForNext: number;
+  winRate: number;
+};
+
+type Props = { children: React.ReactNode; headerSummary?: HeaderSummary };
 
 const FULLSCREEN_ROUTES = ['/', '/enter', '/packs', '/match', '/rewards', '/login'];
 
-export function AppShell({ children }: Props) {
+export function AppShell({ children, headerSummary }: Props) {
   const pathname = usePathname();
   const isFull = FULLSCREEN_ROUTES.includes(pathname);
 
@@ -25,7 +34,7 @@ export function AppShell({ children }: Props) {
     <>
       {/* Mobile */}
       <div className="lg:hidden flex flex-col h-screen overflow-hidden">
-        <MobileHeader />
+        <MobileHeader balance={headerSummary?.balance} />
         <FlowProgress />
         <main
           className="flex-1 overflow-y-auto px-4 py-4"
@@ -40,7 +49,7 @@ export function AppShell({ children }: Props) {
       <div className="hidden lg:flex h-screen overflow-hidden">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
-          <GameTopBar />
+          <GameTopBar summary={headerSummary} />
           <FlowProgress />
           <main className="flex-1 overflow-y-auto px-6 py-5">
             <PageTransition key={pathname}>{children}</PageTransition>

@@ -16,8 +16,6 @@
  */
 
 import { useAuth } from '@/lib/auth-context';
-import { useGameState } from '@/lib/game-context';
-import { USER_PROFILE } from '@/lib/mock-data';
 import {
   FPS_LABELS,
   type FpsTarget,
@@ -48,14 +46,15 @@ const SECTIONS: Array<{ id: SectionId; icon: string; label: string }> = [
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function SettingsPage() {
+type Props = { level?: number };
+
+export function SettingsPage({ level = 1 }: Props) {
   const [settings, setSettings] = useState<GameSettings>(DEFAULT_LAZY);
   const [activeSection, setActive] = useState<SectionId>('account');
   const [saved, setSaved] = useState(false);
   const [resetConfirm, setResetConfirm] = useState(false);
   const savedTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
-  const state = useGameState();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
 
   // Carregar do localStorage no cliente
   useEffect(() => {
@@ -83,9 +82,9 @@ export function SettingsPage() {
     setResetConfirm(false);
   };
 
-  const profile = state.isOnboarded
-    ? { username: state.username, level: state.level }
-    : { username: USER_PROFILE.username, level: USER_PROFILE.level };
+  const guestName =
+    (user?.user_metadata?.name as string | undefined) ?? user?.email?.split('@')[0] ?? 'Jogador';
+  const profile = { username: guestName, level };
 
   return (
     <div className="max-w-2xl mx-auto">

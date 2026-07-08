@@ -78,6 +78,33 @@ export function applyXp(
   return { level, xp, xpForNext, leveledUp: levelsGained > 0, levelsGained };
 }
 
+// ─── Progresso de conta derivado (Sprint 19 — fix do nível/XP sempre-zerado) ──
+//
+// Não existe uma coluna de "XP total" persistida no perfil ainda — nível/XP
+// eram lidos de um GameContext client-side (protótipo antigo, nunca
+// alimentado pelo fluxo real de auth/partidas) que ficava permanentemente
+// travado no estado inicial. Em vez de inventar uma tabela nova, derivamos
+// o XP total a partir de sinais reais e já persistidos (vitórias, empates,
+// tamanho da coleção) com a MESMA curva de nível (`xpForLevel`/`applyXp`)
+// já usada na tela de recompensas — real, determinístico, sem novo schema.
+export function deriveAccountXp(input: {
+  wins: number;
+  draws: number;
+  collectionCount: number;
+}): number {
+  return input.wins * 100 + input.draws * 30 + input.collectionCount * 15;
+}
+
+export function deriveAccountProgress(input: {
+  wins: number;
+  draws: number;
+  collectionCount: number;
+}): { level: number; xp: number; xpForNext: number } {
+  const totalXp = deriveAccountXp(input);
+  const { level, xp, xpForNext } = applyXp(1, 0, totalXp);
+  return { level, xp, xpForNext };
+}
+
 // ─── Demo reward (match win) ──────────────────────────────────────────────────
 
 export function buildDemoReward(): RewardData {

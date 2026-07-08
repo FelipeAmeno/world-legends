@@ -2,7 +2,6 @@
 
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { SyncIndicator } from '@/components/sync/SyncIndicator';
-import { useGameState } from '@/lib/game-context';
 import { useAutoSave } from '@/lib/sync/useAutoSave';
 import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
@@ -80,11 +79,12 @@ const NAV_ITEMS = [
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function MobileHeader() {
+type Props = { balance?: number | undefined };
+
+export function MobileHeader({ balance }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const state = useGameState();
   useAutoSave();
 
   const pageTitle = PAGE_TITLES[pathname];
@@ -178,7 +178,7 @@ export function MobileHeader() {
         {/* Right side */}
         <div className="flex items-center gap-2">
           <SyncIndicator />
-          {state.isOnboarded && (
+          {balance !== undefined && (
             <div
               className="flex items-center gap-1 px-2.5 py-1 rounded-full"
               style={{
@@ -190,7 +190,7 @@ export function MobileHeader() {
                 <circle cx="12" cy="12" r="10" />
               </svg>
               <span className="font-display text-[13px] leading-none" style={{ color: '#c9a84c' }}>
-                {state.credits.toLocaleString('pt-BR')}
+                {balance.toLocaleString('pt-BR')}
               </span>
             </div>
           )}

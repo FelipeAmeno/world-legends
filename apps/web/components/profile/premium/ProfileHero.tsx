@@ -1,7 +1,6 @@
 'use client';
 
 import { useAuth } from '@/lib/auth-context';
-import { useGameState } from '@/lib/game-context';
 import { motion } from 'framer-motion';
 
 function levelTitle(lv: number): string {
@@ -21,21 +20,35 @@ type Props = {
   draws: number;
   losses: number;
   winRate: number;
+  username?: string | undefined;
+  credits?: number;
+  fragments?: number;
+  level?: number;
+  xp?: number;
+  xpForNext?: number;
 };
 
-export function ProfileHero({ wins, draws, losses, winRate }: Props) {
-  const state = useGameState();
+export function ProfileHero({
+  wins,
+  draws,
+  losses,
+  winRate,
+  username,
+  credits = 0,
+  fragments = 0,
+  level = 1,
+  xp = 0,
+  xpForNext = 100,
+}: Props) {
   const { user } = useAuth();
 
   const guestName =
     (user?.user_metadata?.name as string | undefined) ?? user?.email?.split('@')[0] ?? 'Jogador';
 
-  const name = state.isOnboarded ? state.username : guestName;
-  const level = state.isOnboarded ? state.level : 1;
-  const xpCur = state.isOnboarded ? state.currentXp : 0;
-  const xpNext = state.isOnboarded ? state.xpForNext : 100;
-  const credits = state.isOnboarded ? state.credits : 0;
-  const frags = state.isOnboarded ? state.fragments : 0;
+  const name = username ?? guestName;
+  const xpCur = xp;
+  const xpNext = xpForNext;
+  const frags = fragments;
   const title = levelTitle(level);
   const xpPct = Math.round((xpCur / Math.max(1, xpNext)) * 100);
   const initial = name.charAt(0).toUpperCase();

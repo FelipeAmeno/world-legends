@@ -1,10 +1,10 @@
 import type { MatchOpponent } from '@/lib/match-data';
 import { computeWinProbability } from '@/lib/match-data';
-import { SQUAD_RATING } from '@/lib/mock-data';
 import { motion } from 'framer-motion';
 
 type Props = {
   opponents: readonly MatchOpponent[];
+  userOvr: number;
   onSelect: (id: string) => void;
 };
 
@@ -19,9 +19,7 @@ const DIFF_LABEL: Record<string, string> = {
   hard: 'Difícil',
 };
 
-export function OpponentPicker({ opponents, onSelect }: Props) {
-  const userOvr = SQUAD_RATING.overall;
-
+export function OpponentPicker({ opponents, userOvr, onSelect }: Props) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
       {opponents.map((opp, i) => {

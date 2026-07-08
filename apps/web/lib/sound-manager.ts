@@ -274,4 +274,18 @@ export const REWARD_SFX = {
     });
     playTone(1320, 0.3, 'sine', 0.08, 0.32);
   },
+
+  /** Fragmentos ganhos (cristal) */
+  fragment: () => {
+    playTone(1200, 0.07, 'sine', 0.09);
+    playTone(1500, 0.1, 'sine', 0.07, 0.05);
+  },
+
+  /** Conquista desbloqueada */
+  achievement: () => {
+    [523, 659, 784, 1046].forEach((f, i) => {
+      playTone(f, 0.25, 'triangle', 0.09, i * 0.06);
+    });
+    playTone(1568, 0.4, 'sine', 0.1, 0.3);
+  },
 } as const;

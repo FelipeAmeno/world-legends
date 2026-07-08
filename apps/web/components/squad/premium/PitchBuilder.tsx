@@ -516,7 +516,11 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
 
           {snapshot.rating.overall === 0 && (
             <div className="flex-1 min-w-0">
-              <p className="text-muted text-[10px]">Abrindo seu time…</p>
+              <p className="text-muted text-[10px]">
+                {allCards.length === 0
+                  ? 'Abra um pack para conseguir jogadores'
+                  : 'Montando seu time…'}
+              </p>
             </div>
           )}
 

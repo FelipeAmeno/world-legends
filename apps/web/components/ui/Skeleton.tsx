@@ -20,7 +20,10 @@ import type { ReactNode } from 'react';
 
 // ─── Base shimmer ─────────────────────────────────────────────────────────────
 
-function Shimmer({ className = '', style }: { className?: string; style?: React.CSSProperties }) {
+export function Shimmer({
+  className = '',
+  style,
+}: { className?: string; style?: React.CSSProperties }) {
   return (
     <div
       className={`relative overflow-hidden rounded-lg bg-white/[0.04] ${className}`}

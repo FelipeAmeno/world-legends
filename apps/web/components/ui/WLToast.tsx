@@ -39,6 +39,30 @@ const STYLE: Record<ToastType, { bg: string; border: string; color: string; icon
     color: '#fb923c',
     iconBg: 'rgba(251,146,60,0.12)',
   },
+  achievement: {
+    bg: 'rgba(30,10,40,0.96)',
+    border: 'rgba(192,132,252,0.5)',
+    color: '#d8b4fe',
+    iconBg: 'rgba(192,132,252,0.14)',
+  },
+  mission: {
+    bg: 'rgba(6,30,40,0.96)',
+    border: 'rgba(45,212,191,0.45)',
+    color: '#5eead4',
+    iconBg: 'rgba(45,212,191,0.12)',
+  },
+  pack: {
+    bg: 'rgba(20,10,40,0.96)',
+    border: 'rgba(168,85,247,0.5)',
+    color: '#c084fc',
+    iconBg: 'rgba(168,85,247,0.14)',
+  },
+  level: {
+    bg: 'rgba(35,22,0,0.97)',
+    border: 'rgba(230,200,90,0.6)',
+    color: '#f5e098',
+    iconBg: 'rgba(230,200,90,0.16)',
+  },
 };
 
 // ─── WLToast (root) ───────────────────────────────────────────────────────────

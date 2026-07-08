@@ -19,6 +19,8 @@ import { NotificationToast } from '@/components/notifications/NotificationToast'
 import { WLToast } from '@/components/ui/WLToast';
 import { SessionProvider } from '@/lib/auth-context';
 import { GameProvider } from '@/lib/game-context';
+import { deriveAccountProgress } from '@/lib/rewards-data';
+import { getUserCollection, getUserMatchStats, getUserProfile } from '@/lib/server/game-data';
 import { getCurrentUser } from '@/lib/supabase/server';
 
 // ─── Fonts (preload + subset automático) ─────────────────────────────────────
@@ -72,6 +74,33 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const initialUser = await getCurrentUser();
 
+  // Resumo de perfil real (créditos/fragmentos/nível/XP) para os headers
+  // globais (MobileHeader, GameTopBar) — antes lia de um GameContext
+  // client-only que nunca era alimentado pelo fluxo real de auth, então
+  // ficava sempre zerado/oculto. Ver SPRINT_19_REPORT.md.
+  let headerSummary = { balance: 0, fragments: 0, level: 1, xp: 0, xpForNext: 105, winRate: 0 };
+  if (initialUser) {
+    const [profile, matchStats, collection] = await Promise.all([
+      getUserProfile(initialUser.id),
+      getUserMatchStats(initialUser.id),
+      getUserCollection(initialUser.id),
+    ]);
+    const total = matchStats.wins + matchStats.draws + matchStats.losses;
+    const progress = deriveAccountProgress({
+      wins: matchStats.wins,
+      draws: matchStats.draws,
+      collectionCount: collection.length,
+    });
+    headerSummary = {
+      balance: profile?.softCurrency ?? 0,
+      fragments: profile?.fragmentBalance ?? 0,
+      level: progress.level,
+      xp: progress.xp,
+      xpForNext: progress.xpForNext,
+      winRate: total > 0 ? Math.round((matchStats.wins / total) * 100) : 0,
+    };
+  }
+
   return (
     <html lang="pt-BR" className={`${bebasNeue.variable} ${inter.variable}`}>
       <head>
@@ -97,7 +126,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <RewardToast />
               <NotificationToast />
               <WLToast />
-              <AppShell>{children}</AppShell>
+              <AppShell headerSummary={headerSummary}>{children}</AppShell>
             </PostHogProvider>
           </GameProvider>
         </SessionProvider>

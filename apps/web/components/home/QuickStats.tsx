@@ -1,13 +1,23 @@
-import { SQUAD_CHEMISTRY, SQUAD_RATING, USER_PROFILE } from '@/lib/mock-data';
+'use client';
 
-export function QuickStats() {
-  const total = USER_PROFILE.wins + USER_PROFILE.draws + USER_PROFILE.losses;
-  const winRate = total > 0 ? Math.round((USER_PROFILE.wins / total) * 100) : 0;
+import { AnimatePresence, motion } from 'framer-motion';
+
+type Props = {
+  overall: number;
+  chemistry: number;
+  wins: number;
+  draws: number;
+  losses: number;
+};
+
+export function QuickStats({ overall, chemistry, wins, draws, losses }: Props) {
+  const total = wins + draws + losses;
+  const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
 
   const STATS = [
     {
       label: 'OVR',
-      value: SQUAD_RATING.overall,
+      value: overall || '—',
       color: '#c9a84c',
       icon: (
         <svg
@@ -26,7 +36,7 @@ export function QuickStats() {
     },
     {
       label: 'Química',
-      value: `${SQUAD_CHEMISTRY.total}`,
+      value: chemistry ? `${chemistry}` : '—',
       color: '#10b981',
       icon: (
         <svg
@@ -46,7 +56,7 @@ export function QuickStats() {
     },
     {
       label: 'Vitórias',
-      value: USER_PROFILE.wins,
+      value: wins,
       color: '#3b82f6',
       icon: (
         <svg
@@ -107,16 +117,23 @@ export function QuickStats() {
             >
               {/* Colored icon */}
               <span style={{ color: s.color, opacity: 0.7 }}>{s.icon}</span>
-              {/* Value */}
-              <p
-                className="font-display text-[20px] leading-none"
-                style={{
-                  color: s.color,
-                  textShadow: `0 0 10px ${s.color}55`,
-                }}
-              >
-                {s.value}
-              </p>
+              {/* Value — anima quando muda (HUD viva, Sprint 19) */}
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={s.value}
+                  className="font-display text-[20px] leading-none"
+                  style={{
+                    color: s.color,
+                    textShadow: `0 0 10px ${s.color}55`,
+                  }}
+                  initial={{ opacity: 0, y: -6, scale: 1.15 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 24 }}
+                >
+                  {s.value}
+                </motion.p>
+              </AnimatePresence>
               {/* Label */}
               <p
                 className="text-[8px] uppercase tracking-wider"

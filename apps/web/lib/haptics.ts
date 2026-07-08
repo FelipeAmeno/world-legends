@@ -109,3 +109,22 @@ export const UI_HAPTIC = {
   reward: (size: 'small' | 'medium' | 'large' = 'medium') =>
     vibrate(size === 'small' ? 'rewardSmall' : size === 'large' ? 'rewardLarge' : 'rewardMedium'),
 } as const;
+
+// ─── Camada única de intensidade (Sprint 19 — entregável do briefing) ─────────
+//
+// Nomes genéricos de intensidade para microinterações sem contexto de
+// domínio próprio (botões, cards, sheets). Fluxos com contexto específico
+// (pack/carta/partida/recompensa) continuam usando `vibrate()`/`UI_HAPTIC`
+// diretamente, que já têm padrões mais nuançados por caso.
+export function triggerLight(): void {
+  vibrate('tap');
+}
+export function triggerMedium(): void {
+  vibrate('tapHeavy');
+}
+export function triggerHeavy(): void {
+  vibrate('warning');
+}
+export function triggerSuccess(): void {
+  vibrate('success');
+}

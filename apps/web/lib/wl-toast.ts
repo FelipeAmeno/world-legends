@@ -13,7 +13,16 @@
  *   toast.error('Créditos insuficientes');
  */
 
-export type ToastType = 'success' | 'error' | 'reward' | 'info' | 'warning';
+export type ToastType =
+  | 'success'
+  | 'error'
+  | 'reward'
+  | 'info'
+  | 'warning'
+  | 'achievement'
+  | 'mission'
+  | 'pack'
+  | 'level';
 
 export type ToastItem = {
   id: string;
@@ -68,6 +77,10 @@ const ICONS: Record<ToastType, string> = {
   reward: '🏆',
   info: 'ℹ',
   warning: '⚠',
+  achievement: '🏅',
+  mission: '🎯',
+  pack: '📦',
+  level: '⭐',
 };
 
 function push(type: ToastType, message: string, icon?: string, duration = 3200): string {
@@ -90,5 +103,13 @@ export const toast = {
     push('info', message, icon, duration),
   warning: (message: string, icon?: string, duration?: number) =>
     push('warning', message, icon, duration),
+  achievement: (message: string, icon?: string, duration?: number) =>
+    push('achievement', message, icon, duration ?? 4200),
+  mission: (message: string, icon?: string, duration?: number) =>
+    push('mission', message, icon, duration),
+  pack: (message: string, icon?: string, duration?: number) =>
+    push('pack', message, icon, duration),
+  level: (message: string, icon?: string, duration?: number) =>
+    push('level', message, icon, duration ?? 4200),
   dismiss: (id: string) => toastStore.remove(id),
 };

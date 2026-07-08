@@ -27,7 +27,11 @@ import { StadiumIntro } from './StadiumIntro';
 
 type Phase = 'SELECT' | 'LOADING' | 'INTRO' | 'PRE' | 'LIVE' | 'HT' | 'RESULT';
 
-export function MatchExperience() {
+type Props = {
+  userOvr?: number;
+};
+
+export function MatchExperience({ userOvr = 0 }: Props) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>('SELECT');
   const [data, setData] = useState<MatchExperienceData | null>(null);
@@ -150,7 +154,11 @@ export function MatchExperience() {
                 ⚠️ {loadError}
               </motion.p>
             )}
-            <OpponentPicker opponents={MATCH_OPPONENTS} onSelect={handleSelectOpponent} />
+            <OpponentPicker
+              opponents={MATCH_OPPONENTS}
+              userOvr={userOvr}
+              onSelect={handleSelectOpponent}
+            />
           </motion.div>
         )}
 

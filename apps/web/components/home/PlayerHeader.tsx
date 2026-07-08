@@ -1,11 +1,16 @@
 'use client';
 
 import { useAuth } from '@/lib/auth-context';
-import { useGameState } from '@/lib/game-context';
+import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
 
 type Props = {
   serverBalance?: number;
+  fragmentBalance?: number;
+  username?: string | undefined;
+  level?: number;
+  xp?: number;
+  xpForNext?: number;
 };
 
 function getTitle(level: number): string {
@@ -20,21 +25,26 @@ function getTitle(level: number): string {
   return 'Recruta';
 }
 
-export function PlayerHeader({ serverBalance }: Props) {
-  const state = useGameState();
+export function PlayerHeader({
+  serverBalance,
+  fragmentBalance,
+  username,
+  level = 1,
+  xp = 0,
+  xpForNext = 105,
+}: Props) {
   const { user } = useAuth();
 
   const guestName =
     (user?.user_metadata?.name as string | undefined) ?? user?.email?.split('@')[0] ?? 'Jogador';
 
-  const name = state.isOnboarded ? state.username : guestName;
-  const level = state.isOnboarded ? state.level : 1;
-  const xpCur = state.isOnboarded ? state.currentXp : 0;
-  const xpNext = state.isOnboarded ? state.xpForNext : 105;
-  // serverBalance é a fonte autoritativa (Supabase); fallback para GameContext
-  // apenas se o prop não foi fornecido (ex: componente usado fora da home page).
-  const credits = serverBalance ?? (state.isOnboarded ? state.credits : 500);
-  const frags = state.isOnboarded ? state.fragments : 0;
+  // Props (Supabase real) são a fonte autoritativa; fallback só quando o
+  // componente é usado fora da home page sem os props reais.
+  const name = username ?? guestName;
+  const xpCur = xp;
+  const xpNext = xpForNext;
+  const credits = serverBalance ?? 0;
+  const frags = fragmentBalance ?? 0;
   const initial = name.charAt(0).toUpperCase();
   const title = getTitle(level);
   const xpPct = Math.round((xpCur / Math.max(1, xpNext)) * 100);
@@ -202,9 +212,19 @@ function ResourcePill({
       }}
     >
       {icon}
-      <span className="font-display text-[13px] leading-none" style={{ color }}>
-        {value}
-      </span>
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={value}
+          className="font-display text-[13px] leading-none"
+          style={{ color }}
+          initial={{ opacity: 0, y: -4, scale: 1.2 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 4 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 24 }}
+        >
+          {value}
+        </motion.span>
+      </AnimatePresence>
       <span className="text-[9px]" style={{ color: `${color}88` }}>
         {label}
       </span>
