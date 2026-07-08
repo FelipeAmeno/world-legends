@@ -14,6 +14,7 @@ import type { SquadChemistry } from '@world-legends/chemistry';
 import { calculateSquadRating } from '@world-legends/squad-rating';
 import type { SquadRating } from '@world-legends/squad-rating';
 import type { CollectionCard } from './collection-data';
+import { sameContinent } from './geo/continents';
 import {
   FORMATIONS,
   FORMATION_LABELS,
@@ -334,7 +335,7 @@ export function buildChemLines(state: SBState, snapshot: SBSnapshot): ChemLine[]
         total = snapshot.chemLinkMap.get(`${cardA.cardId}-${cardB.cardId}`) ?? 0;
       }
 
-      const { color, glow } = chemLineStyle(total, cardA !== null && cardB !== null);
+      const { color, glow } = chemLineStyle(cardA, cardB, total);
 
       lines.push({ slotA: a, slotB: b, cardA, cardB, total, color, glow });
     }
@@ -343,12 +344,23 @@ export function buildChemLines(state: SBState, snapshot: SBSnapshot): ChemLine[]
   return lines;
 }
 
-function chemLineStyle(total: number, hasBothCards: boolean): { color: string; glow: string } {
-  if (!hasBothCards) return { color: 'rgba(255,255,255,0.04)', glow: 'transparent' };
-  if (total >= 4) return { color: 'rgba(201,168,76,0.9)', glow: 'rgba(201,168,76,0.6)' };
-  if (total >= 3) return { color: 'rgba(34,197,94,0.85)', glow: 'rgba(34,197,94,0.5)' };
-  if (total >= 1) return { color: 'rgba(234,179,8,0.80)', glow: 'rgba(234,179,8,0.45)' };
-  return { color: 'rgba(239,68,68,0.70)', glow: 'rgba(239,68,68,0.4)' };
+// Cor da linha reflete a RELAÇÃO real entre as duas cartas (país/continente),
+// não só o score — ouro é reservado para link perfeito (Dream Team: total máximo).
+function chemLineStyle(
+  cardA: CollectionCard | null,
+  cardB: CollectionCard | null,
+  total: number,
+): { color: string; glow: string } {
+  if (!cardA || !cardB) return { color: 'rgba(255,255,255,0.04)', glow: 'transparent' };
+  if (total >= 4) return { color: 'rgba(201,168,76,0.9)', glow: 'rgba(201,168,76,0.6)' }; // Dream Team — ouro
+  if (cardA.nationality === cardB.nationality) {
+    return { color: 'rgba(34,197,94,0.85)', glow: 'rgba(34,197,94,0.5)' }; // mesmo país — verde
+  }
+  if (sameContinent(cardA.nationality, cardB.nationality)) {
+    return { color: 'rgba(59,130,246,0.8)', glow: 'rgba(59,130,246,0.45)' }; // mesmo continente — azul
+  }
+  if (total > 0) return { color: 'rgba(234,179,8,0.75)', glow: 'rgba(234,179,8,0.4)' }; // sinergia parcial (competição/era)
+  return { color: 'rgba(148,163,184,0.35)', glow: 'transparent' }; // sem sinergia — cinza
 }
 
 // ─── Pool cards (não no squad/banco) ─────────────────────────────────────────

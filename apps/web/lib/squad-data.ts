@@ -17,7 +17,7 @@ import type { CollectionCard } from './collection-data';
 
 // ─── FormationKey ─────────────────────────────────────────────────────────────
 
-export type FormationKey = '4-3-3' | '4-4-2' | '4-2-3-1' | '3-5-2' | '5-3-2';
+export type FormationKey = '4-3-3' | '4-4-2' | '4-2-3-1' | '3-5-2' | '5-3-2' | '3-4-3';
 
 export const FORMATION_LABELS: Record<FormationKey, string> = {
   '4-3-3': '4-3-3',
@@ -25,6 +25,7 @@ export const FORMATION_LABELS: Record<FormationKey, string> = {
   '4-2-3-1': '4-2-3-1',
   '3-5-2': '3-5-2',
   '5-3-2': '5-3-2',
+  '3-4-3': '3-4-3',
 };
 
 // ─── SlotDef — slot do campo ──────────────────────────────────────────────────
@@ -103,6 +104,19 @@ export const FORMATIONS: Record<FormationKey, readonly SlotDef[]> = {
     { slotId: 'CM3', position: 'CM', top: 47, left: 32 },
     { slotId: 'ST1', position: 'ST', top: 20, left: 62 },
     { slotId: 'ST2', position: 'ST', top: 20, left: 38 },
+  ],
+  '3-4-3': [
+    { slotId: 'GK', position: 'GK', top: 85, left: 50 },
+    { slotId: 'CB1', position: 'CB', top: 67, left: 70 },
+    { slotId: 'CB2', position: 'CB', top: 67, left: 50 },
+    { slotId: 'CB3', position: 'CB', top: 67, left: 30 },
+    { slotId: 'RM', position: 'RM', top: 46, left: 84 },
+    { slotId: 'CM1', position: 'CM', top: 46, left: 60 },
+    { slotId: 'CM2', position: 'CM', top: 46, left: 40 },
+    { slotId: 'LM', position: 'LM', top: 46, left: 16 },
+    { slotId: 'RW', position: 'RW', top: 20, left: 78 },
+    { slotId: 'ST', position: 'ST', top: 15, left: 50 },
+    { slotId: 'LW', position: 'LW', top: 20, left: 22 },
   ],
 };
 

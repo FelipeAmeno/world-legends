@@ -7,7 +7,7 @@ import type { DragSource } from '@/lib/squad-builder';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import type { Position } from '@world-legends/types';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
 
 type Props = {
@@ -15,6 +15,7 @@ type Props = {
   selectedSlotPos: Position | null;
   dragOver: boolean;
   onTapCard: (cardId: string) => void;
+  onClose: () => void;
 };
 
 const GLOW: Record<string, string> = {
@@ -129,9 +130,8 @@ function PoolCard({
 
 // ─── Main CardPoolSheet ───────────────────────────────────────────────────────
 
-export function CardPoolSheet({ cards, selectedSlotPos, dragOver, onTapCard }: Props) {
+export function CardPoolSheet({ cards, selectedSlotPos, dragOver, onTapCard, onClose }: Props) {
   const [search, setSearch] = useState('');
-  const [open, setOpen] = useState(true);
   const [sector, setSector] = useState<Sector>('all');
 
   const { setNodeRef, isOver } = useDroppable({ id: 'pool' });
@@ -166,102 +166,107 @@ export function CardPoolSheet({ cards, selectedSlotPos, dragOver, onTapCard }: P
     );
   }, [filtered, selectedSlotPos]);
 
+  // Nunca renderiza a coleção inteira de uma vez — corta em lotes de 80 cartas
+  const RENDER_CAP = 80;
+  const visible = filtered.slice(0, RENDER_CAP);
+  const hiddenCount = filtered.length - visible.length;
+
   return (
     <div
       ref={setNodeRef}
       data-squad-pool
-      className="border-t border-white/5"
+      className="rounded-t-2xl border-t border-x border-white/10 shadow-2xl"
       style={{
-        background: isDropActive ? 'rgba(201,168,76,0.06)' : 'rgba(0,0,0,0.5)',
+        background: isDropActive ? 'rgba(201,168,76,0.1)' : 'rgba(8,10,16,0.98)',
+        backdropFilter: 'blur(12px)',
         transition: 'background 0.2s',
       }}
     >
+      {/* Drag handle */}
+      <div className="flex justify-center pt-2 pb-1">
+        <div className="w-9 h-1 rounded-full bg-white/15" />
+      </div>
+
       {/* Header */}
-      <div
-        className="flex items-center justify-between px-3 py-2 cursor-pointer select-none"
-        onClick={() => setOpen((o) => !o)}
-      >
+      <div className="flex items-center justify-between px-3 pb-2">
         <div className="flex items-center gap-2">
-          <span className="text-[9px] text-white/30 uppercase tracking-widest">DISPONÍVEIS</span>
-          <span className="text-[8px] text-white/20">{filtered.length}</span>
+          <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
+            Coleção
+          </span>
+          <span className="text-[9px] text-white/25">{filtered.length} disponíveis</span>
           {isDropActive && <span className="text-gold text-[9px]">↓ solte aqui para devolver</span>}
           {selectedSlotPos && !isDropActive && (
             <span className="text-gold text-[9px]">toque numa carta para colocá-la</span>
           )}
         </div>
-        <motion.span className="text-white/30 text-xs" animate={{ rotate: open ? 180 : 0 }}>
-          ▲
-        </motion.span>
+        <button
+          type="button"
+          data-squad-pool
+          onClick={onClose}
+          className="text-white/40 hover:text-white/70 text-sm px-2 -mr-1"
+        >
+          ✕
+        </button>
       </div>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ height: 0 }}
-            animate={{ height: 'auto' }}
-            exit={{ height: 0 }}
-            className="overflow-hidden"
-          >
-            {/* Sector filter + search */}
-            <div className="px-3 pb-1.5 flex items-center gap-2 flex-wrap">
-              {/* Sector chips */}
-              <div className="flex gap-1">
-                {(Object.keys(SECTOR_POSITIONS) as Sector[]).map((s) => (
-                  <button
-                    key={s}
-                    data-squad-pool
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSector(s);
-                    }}
-                    className={[
-                      'px-2 py-0.5 rounded-full border text-[9px] font-bold transition-all',
-                      sector === s ? SECTOR_ACTIVE[s] : SECTOR_COLOR[s],
-                    ].join(' ')}
-                  >
-                    {s === 'all' ? 'TODOS' : s}
-                  </button>
-                ))}
-              </div>
-              {/* Search */}
-              <input
-                type="search"
-                value={search}
-                data-squad-pool
-                onChange={(e) => setSearch(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-                placeholder="nome, posição…"
-                className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-lg px-2 py-1
-                           text-parchment text-[10px] placeholder:text-white/20
-                           focus:outline-none focus:border-gold-dim/50 transition-colors"
-              />
-            </div>
-
-            {/* Cards scroll */}
-            <div
-              className="flex gap-2 overflow-x-auto px-3 pb-3 scroll-smooth"
-              style={{ WebkitOverflowScrolling: 'touch' }}
+      {/* Sector filter + search */}
+      <div className="px-3 pb-2 flex items-center gap-2 flex-wrap">
+        <div className="flex gap-1">
+          {(Object.keys(SECTOR_POSITIONS) as Sector[]).map((s) => (
+            <button
+              key={s}
+              data-squad-pool
+              onClick={(e) => {
+                e.stopPropagation();
+                setSector(s);
+              }}
+              className={[
+                'px-2 py-0.5 rounded-full border text-[9px] font-bold transition-all',
+                sector === s ? SECTOR_ACTIVE[s] : SECTOR_COLOR[s],
+              ].join(' ')}
             >
-              {filtered.length === 0 ? (
-                <p className="text-white/20 text-xs py-4 w-full text-center">
-                  {search || sector !== 'all'
-                    ? 'Nenhum resultado'
-                    : 'Todos os jogadores estão no campo!'}
-                </p>
-              ) : (
-                filtered.map((card) => (
-                  <PoolCard
-                    key={card.cardId}
-                    card={card}
-                    isBestFit={bestFitIds.has(card.cardId)}
-                    onTap={() => onTapCard(card.cardId)}
-                  />
-                ))
-              )}
-            </div>
-          </motion.div>
+              {s === 'all' ? 'TODOS' : s}
+            </button>
+          ))}
+        </div>
+        <input
+          type="search"
+          value={search}
+          data-squad-pool
+          onChange={(e) => setSearch(e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+          placeholder="nome, posição…"
+          className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-lg px-2 py-1
+                     text-parchment text-[10px] placeholder:text-white/20
+                     focus:outline-none focus:border-gold-dim/50 transition-colors"
+        />
+      </div>
+
+      {/* Cards scroll */}
+      <div
+        className="flex gap-2 overflow-x-auto px-3 pb-3 scroll-smooth"
+        style={{ WebkitOverflowScrolling: 'touch', maxHeight: '30vh' }}
+      >
+        {filtered.length === 0 ? (
+          <p className="text-white/20 text-xs py-4 w-full text-center">
+            {search || sector !== 'all' ? 'Nenhum resultado' : 'Todos os jogadores estão no campo!'}
+          </p>
+        ) : (
+          visible.map((card) => (
+            <PoolCard
+              key={card.cardId}
+              card={card}
+              isBestFit={bestFitIds.has(card.cardId)}
+              onTap={() => onTapCard(card.cardId)}
+            />
+          ))
         )}
-      </AnimatePresence>
+      </div>
+      {hiddenCount > 0 && (
+        <p className="text-white/20 text-[9px] text-center pb-2">
+          +{hiddenCount} cartas — refine a busca para ver mais
+        </p>
+      )}
     </div>
   );
 }

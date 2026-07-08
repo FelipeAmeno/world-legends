@@ -34,6 +34,7 @@ import {
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 
+import { CardDetailModal } from '@/components/collection/CardDetailModal';
 import { Particles, useBurst } from '@/components/fx/Particles';
 import { toast } from '@/lib/wl-toast';
 import Link from 'next/link';
@@ -44,6 +45,7 @@ import { FormationSelect } from './FormationSelect';
 import { PlayerSelectModal } from './PlayerSelectModal';
 import { PremiumPitch } from './PremiumPitch';
 import { SwapSuggestionsSheet } from './SwapSuggestionsSheet';
+import { TeamAnalysisSheet } from './TeamAnalysisSheet';
 
 // ─── DnD helpers ─────────────────────────────────────────────────────────────
 
@@ -195,6 +197,10 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
   const [playerModalSlotId, setPlayerModalSlotId] = useState<string | null>(null);
   const [autoBuildOpen, setAutoBuildOpen] = useState(false);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const [poolOpen, setPoolOpen] = useState(false);
+  const [previewCard, setPreviewCard] = useState<CollectionCard | null>(null);
+  const [previewSlotId, setPreviewSlotId] = useState<string | null>(null);
+  const [analysisOpen, setAnalysisOpen] = useState(false);
 
   const selectedSlotDef = useMemo(
     () =>
@@ -217,19 +223,46 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
     [selectedSlotDef, pool],
   );
 
+  // Preview de "antes/depois" para a troca — nunca aplica no escuro (Sprint 17).
+  const getSlotPreview = useCallback(
+    (cardId: string) => {
+      if (!playerModalSlotId) return null;
+      const card = allCards.find((c) => c.cardId === cardId);
+      if (!card) return null;
+      const nextState: SBState = {
+        ...state,
+        slots: { ...state.slots, [playerModalSlotId]: card },
+      };
+      return { before: snapshot, after: calcSnapshot(nextState) };
+    },
+    [playerModalSlotId, allCards, state, snapshot],
+  );
+
   const swapSuggestions = useMemo(
     () => (suggestionsOpen ? getSwapSuggestions(state, pool) : []),
     [suggestionsOpen, state, pool],
   );
 
-  const handleSlotClick = useCallback((slotId: string, occupied: boolean) => {
-    if (occupied) {
-      setSelectedSlotId(null);
-      return;
-    }
-    setPlayerModalSlotId(slotId);
-    setSelectedSlotId(slotId);
-  }, []);
+  const handleSlotClick = useCallback(
+    (slotId: string, occupied: boolean) => {
+      if (occupied) {
+        setSelectedSlotId(null);
+        setPreviewCard(state.slots[slotId] ?? null);
+        setPreviewSlotId(slotId);
+        return;
+      }
+      setPlayerModalSlotId(slotId);
+      setSelectedSlotId(slotId);
+    },
+    [state.slots],
+  );
+
+  const handleTrocarFromPreview = useCallback(() => {
+    if (!previewSlotId) return;
+    setPreviewCard(null);
+    setPlayerModalSlotId(previewSlotId);
+    setSelectedSlotId(previewSlotId);
+  }, [previewSlotId]);
 
   const handlePlayerModalSelect = useCallback(
     (cardId: string) => {
@@ -435,8 +468,12 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
           className="flex items-center gap-3 px-4 py-2.5"
           style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
         >
-          {/* OVR */}
-          <div className="flex items-baseline gap-1.5 shrink-0">
+          {/* OVR — toque para abrir a Análise do Time */}
+          <button
+            type="button"
+            onClick={() => setAnalysisOpen(true)}
+            className="flex items-baseline gap-1.5 shrink-0"
+          >
             <AnimatePresence mode="wait">
               <motion.span
                 key={snapshot.rating.overall}
@@ -464,7 +501,7 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
               </span>
               <span className="text-[8px] text-muted">{snapshot.starterCount}/11</span>
             </div>
-          </div>
+          </button>
 
           <div className="w-px h-10 bg-white/8 shrink-0" />
 
@@ -514,8 +551,8 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
           </div>
         </div>
 
-        {/* ── PITCH ──────────────────────────────────────────────────────── */}
-        <div className="flex-1 min-h-0 relative">
+        {/* ── PITCH — espaço dominante garantido, nunca espremido ─────────── */}
+        <div className="flex-1 min-h-[380px] relative">
           <PremiumPitch
             formation={state.formation}
             slots={FORMATIONS[state.formation]}
@@ -536,7 +573,7 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
 
         {/* ── ACTION BAR ─────────────────────────────────────────────────── */}
         <div
-          className="flex items-center gap-2 px-3 py-2.5"
+          className="grid grid-cols-2 gap-2 px-3 py-2.5"
           style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
         >
           {/* Auto Fill */}
@@ -544,14 +581,29 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
             type="button"
             onClick={handleAutoFill}
             whileTap={{ scale: 0.96 }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all"
+            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all"
             style={{
               background: 'linear-gradient(135deg, #c9a84c, #e6c85a)',
               color: '#050508',
               boxShadow: '0 4px 16px rgba(201,168,76,0.35)',
             }}
           >
-            ⚡ Auto Fill
+            ⚡ Melhor Time
+          </motion.button>
+
+          {/* Coleção (abre a lista completa como bottom sheet sob demanda) */}
+          <motion.button
+            type="button"
+            onClick={() => setPoolOpen(true)}
+            whileTap={{ scale: 0.96 }}
+            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all"
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.14)',
+              color: 'rgba(255,255,255,0.75)',
+            }}
+          >
+            📚 Coleção
           </motion.button>
 
           {/* Sugestões */}
@@ -559,7 +611,7 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
             type="button"
             onClick={() => setSuggestionsOpen(true)}
             whileTap={{ scale: 0.96 }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all"
+            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all"
             style={{
               background: 'rgba(147,51,234,0.14)',
               border: '1px solid rgba(147,51,234,0.32)',
@@ -572,16 +624,10 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
           {/* Advanced build or Play */}
           <AnimatePresence mode="wait">
             {snapshot.starterCount >= 11 ? (
-              <motion.div
-                key="play"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ type: 'spring', stiffness: 280, damping: 20 }}
-              >
+              <motion.div key="play" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <Link
                   href="/match"
-                  className="flex items-center justify-center gap-1 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all"
+                  className="flex items-center justify-center gap-1 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all"
                   style={{
                     background: 'linear-gradient(135deg, #064e3b, #065f46)',
                     border: '1px solid rgba(16,185,129,0.4)',
@@ -598,32 +644,59 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
                 type="button"
                 onClick={() => setAutoBuildOpen(true)}
                 whileTap={{ scale: 0.96 }}
-                className="px-3 py-2.5 rounded-xl text-[11px] font-bold transition-all"
+                className="py-2.5 rounded-xl text-[11px] font-bold transition-all"
                 style={{
                   background: 'rgba(255,255,255,0.06)',
                   border: '1px solid rgba(255,255,255,0.1)',
                   color: 'rgba(255,255,255,0.45)',
                 }}
               >
-                ⚙
+                ⚙ Opções
               </motion.button>
             )}
           </AnimatePresence>
         </div>
 
-        {/* ── CARD POOL SHEET ─────────────────────────────────────────────── */}
-        <CardPoolSheet
-          cards={pool}
-          selectedSlotPos={selectedSlotDef?.position ?? null}
-          dragOver={state.dragOver === 'pool'}
-          onTapCard={handleTapCard}
-        />
+        {/* ── CARD POOL — bottom sheet sob demanda, nunca ocupa espaço fixo ── */}
+        <AnimatePresence>
+          {poolOpen && (
+            <>
+              <motion.div
+                className="absolute inset-0 z-30 bg-black/50"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setPoolOpen(false)}
+              />
+              <motion.div
+                className="absolute inset-x-0 bottom-0 z-40"
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', stiffness: 340, damping: 32 }}
+              >
+                <CardPoolSheet
+                  cards={pool}
+                  selectedSlotPos={selectedSlotDef?.position ?? null}
+                  dragOver={state.dragOver === 'pool'}
+                  onTapCard={(cardId) => {
+                    handleTapCard(cardId);
+                    setPoolOpen(false);
+                  }}
+                  onClose={() => setPoolOpen(false)}
+                />
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         {/* ── PLAYER SELECT MODAL ─────────────────────────────────────────── */}
         <PlayerSelectModal
           open={playerModalSlotId !== null}
           slotPosition={playerModalSlotDef?.position ?? null}
+          currentCard={playerModalSlotId ? (state.slots[playerModalSlotId] ?? null) : null}
           pool={pool}
+          getPreview={getSlotPreview}
           onSelect={handlePlayerModalSelect}
           onClose={() => {
             setPlayerModalSlotId(null);
@@ -648,6 +721,47 @@ export function PitchBuilder({ allCards, initialState, favoriteIds }: Props) {
           onApply={handleSwapApply}
           onClose={() => setSuggestionsOpen(false)}
         />
+
+        {/* ── ANÁLISE DO TIME (toque no OVR) ──────────────────────────────── */}
+        <TeamAnalysisSheet
+          open={analysisOpen}
+          snapshot={snapshot}
+          slots={state.slots}
+          starterCount={snapshot.starterCount}
+          onClose={() => setAnalysisOpen(false)}
+        />
+
+        {/* ── CARD PREVIEW (tap num jogador já no campo) ──────────────────── */}
+        <AnimatePresence>
+          {previewCard && (
+            <>
+              <CardDetailModal
+                card={previewCard}
+                isFav={favoriteIds?.has(previewCard.cardId) ?? false}
+                isComparing={false}
+                onClose={() => setPreviewCard(null)}
+                onFav={() => {}}
+                onCompare={() => {}}
+              />
+              <motion.button
+                type="button"
+                onClick={handleTrocarFromPreview}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 12 }}
+                whileTap={{ scale: 0.96 }}
+                className="fixed left-1/2 -translate-x-1/2 bottom-[calc(env(safe-area-inset-bottom)+16px)] z-[62] px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-wider"
+                style={{
+                  background: 'linear-gradient(135deg, #c9a84c, #e6c85a)',
+                  color: '#050508',
+                  boxShadow: '0 4px 20px rgba(201,168,76,0.5)',
+                }}
+              >
+                🔄 Trocar jogador
+              </motion.button>
+            </>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Drag overlay */}

@@ -7,7 +7,7 @@ import type { DragSource } from '@/lib/squad-builder';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'framer-motion';
-import { useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 type Props = {
   bench: (CollectionCard | null)[];
@@ -24,11 +24,35 @@ const RARITY_GLOW: Record<string, string> = {
   world_cup_hero: 'rgba(240,244,255,1)',
 };
 
+type Sector = 'all' | 'GK' | 'DEF' | 'MID' | 'ATT';
+const SECTOR_POSITIONS: Record<Sector, string[]> = {
+  all: [],
+  GK: ['GK'],
+  DEF: ['CB', 'LB', 'RB', 'LWB', 'RWB'],
+  MID: ['CDM', 'CM', 'CAM', 'LM', 'RM'],
+  ATT: ['LW', 'RW', 'CF', 'ST'],
+};
+const SECTOR_ACTIVE: Record<Sector, string> = {
+  all: 'bg-white/10 border-white/40 text-white',
+  GK: 'bg-amber-900/30 border-amber-500 text-amber-300',
+  DEF: 'bg-blue-900/30 border-blue-500 text-blue-300',
+  MID: 'bg-emerald-900/30 border-emerald-500 text-emerald-300',
+  ATT: 'bg-red-900/30 border-red-500 text-red-300',
+};
+const SECTOR_IDLE: Record<Sector, string> = {
+  all: 'border-white/15 text-white/35',
+  GK: 'border-amber-500/30 text-amber-400/60',
+  DEF: 'border-blue-500/30 text-blue-400/60',
+  MID: 'border-emerald-500/30 text-emerald-400/60',
+  ATT: 'border-red-500/30 text-red-400/60',
+};
+
 function BenchCard({
   card,
   idx,
+  dimmed,
   onRemove,
-}: { card: CollectionCard; idx: number; onRemove: () => void }) {
+}: { card: CollectionCard; idx: number; dimmed: boolean; onRemove: () => void }) {
   const visual = RARITY_VISUAL[card.rarityCode];
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `bench-card-${idx}`,
@@ -46,7 +70,7 @@ function BenchCard({
       {...listeners}
       className={`relative group shrink-0 rounded-lg border-2 w-14 h-[72px] flex flex-col overflow-hidden cursor-grab active:cursor-grabbing touch-none ${visual.bgClass} ${visual.borderClass}`}
       style={{ ...style, boxShadow: `0 0 12px ${RARITY_GLOW[card.rarityCode]}` }}
-      animate={{ opacity: isDragging ? 0.3 : 1 }}
+      animate={{ opacity: isDragging ? 0.3 : dimmed ? 0.25 : 1 }}
       whileHover={{ scale: 1.06, y: -2 }}
       whileTap={{ scale: 0.95 }}
     >
@@ -98,14 +122,37 @@ function BenchSlot({ idx, dragOver }: { idx: number; dragOver: string | null }) 
 
 export function BenchStrip({ bench, dragOver, onRemove }: Props) {
   const slots = Array.from({ length: MAX_BENCH }, (_, i) => bench[i] ?? null);
+  const [sector, setSector] = useState<Sector>('all');
+
+  const filledCount = useMemo(() => bench.filter(Boolean).length, [bench]);
+  const matches = useCallback(
+    (card: CollectionCard) => sector === 'all' || SECTOR_POSITIONS[sector].includes(card.position),
+    [sector],
+  );
 
   return (
     <div className="border-t border-white/5 bg-black/40 px-3 py-2">
-      <div className="flex items-center gap-1 mb-1.5">
+      <div className="flex items-center gap-2 mb-1.5">
         <span className="text-[9px] text-white/30 uppercase tracking-widest">BANCO</span>
         <span className="text-[8px] text-white/20">
-          ({bench.filter(Boolean).length}/{MAX_BENCH})
+          ({filledCount}/{MAX_BENCH})
         </span>
+        <div className="flex-1" />
+        <div className="flex gap-1">
+          {(Object.keys(SECTOR_POSITIONS) as Sector[]).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setSector(s)}
+              className={[
+                'px-1.5 py-0.5 rounded-full border text-[8px] font-bold transition-all',
+                sector === s ? SECTOR_ACTIVE[s] : SECTOR_IDLE[s],
+              ].join(' ')}
+            >
+              {s === 'all' ? 'TODOS' : s}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="flex gap-2 overflow-x-auto pb-1">
         {slots.map((card, idx) =>
@@ -114,6 +161,7 @@ export function BenchStrip({ bench, dragOver, onRemove }: Props) {
               key={`bench-${idx}-${card.cardId}`}
               card={card}
               idx={idx}
+              dimmed={!matches(card)}
               onRemove={() => onRemove(idx)}
             />
           ) : (
