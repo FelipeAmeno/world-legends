@@ -1,7 +1,21 @@
+import type { BlendMode } from '@/lib/card-asset-loader';
 import type { KitColors } from '@/lib/kit-data';
 import type { RarityCode } from '@world-legends/types';
 import type { MaterialDef } from './card-materials';
 import type { CardSize, SIZES } from './card-tokens';
+
+/**
+ * Overrides ao vivo só usados pelo Dev Tool (`/dev/card-assets`) pra
+ * experimentar intensidade/blend/velocidade antes de escrever um sidecar
+ * JSON de verdade — nunca setado por nenhum call site de produção
+ * (Sprint 18.9). `undefined` (padrão) = usa os valores de `material`/preset.
+ */
+export type CardDebugOverride = {
+  reflectionIntensity?: number;
+  ambientIntensity?: number;
+  blendMode?: BlendMode;
+  animationSpeedMultiplier?: number;
+};
 
 export type PlayerCardData = {
   cardId: string;
@@ -39,6 +53,8 @@ export type CardVisualCtx = {
   material: MaterialDef;
   /** Visual Debug (Sprint 19) — camadas explicitamente desligadas para QA. `undefined` = todas ligadas. */
   hiddenLayers?: ReadonlySet<CardLayerName> | undefined;
+  /** Dev Tool only (Sprint 18.9) — ver `CardDebugOverride`. */
+  debugOverride?: CardDebugOverride | undefined;
 };
 
 /** Nomes usados pelo modo Visual Debug pra ligar/desligar cada camada individualmente. */

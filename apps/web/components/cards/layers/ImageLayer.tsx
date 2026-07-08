@@ -9,7 +9,10 @@
  * manifesto) ou o carregamento falhar (404 em runtime, defesa extra),
  * renderiza `fallback` (o visual procedural CSS/SVG de sempre) sem nenhuma
  * diferença visual. Quando `asset` existir, aplica scale/offset/rotation/
- * blendMode/intensity vindos dos metadados do asset.
+ * blendMode/intensity/blur vindos dos metadados do asset, e expõe a
+ * velocidade (`animationSpeed`) como `--asset-speed` — camadas que animam
+ * (Reflection/Particle) leem essa variável pra ajustar a duração do CSS
+ * `@keyframes` que já usam (Sprint 18.9).
  */
 
 import type { ResolvedCardAsset } from '@/lib/card-asset-loader';
@@ -49,6 +52,10 @@ export const ImageLayer = memo(function ImageLayer({
     .filter(Boolean)
     .join(' ');
 
+  const filter = [style?.filter, asset.blur > 0 ? `blur(${asset.blur}px)` : '']
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <img
       src={asset.src}
@@ -59,6 +66,8 @@ export const ImageLayer = memo(function ImageLayer({
         ...(transform ? { transform } : {}),
         ...(asset.blendMode !== 'normal' ? { mixBlendMode: asset.blendMode } : {}),
         ...(asset.intensity !== 1 ? { opacity: asset.intensity } : {}),
+        ...(filter ? { filter } : {}),
+        ...({ '--asset-speed': asset.animationSpeed } as React.CSSProperties),
       }}
       loading={eager ? 'eager' : 'lazy'}
       fetchPriority={eager ? 'high' : 'low'}

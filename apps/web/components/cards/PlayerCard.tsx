@@ -15,7 +15,6 @@
 
 import { getKitColors } from '@/lib/kit-data';
 import { memo } from 'react';
-import { CardParticles } from './CardParticles';
 import { RARITY_MATERIAL } from './card-materials';
 import {
   type CardSize,
@@ -28,7 +27,7 @@ import {
   RIBBON_FONT,
   SIZES,
 } from './card-tokens';
-import type { CardLayerName, CardVisualCtx, PlayerCardData } from './card-types';
+import type { CardDebugOverride, CardLayerName, CardVisualCtx, PlayerCardData } from './card-types';
 import { CardAmbientLightLayer } from './layers/CardAmbientLightLayer';
 import { type CardAttributes, CardAttributesLayer } from './layers/CardAttributesLayer';
 import { CardBackgroundLayer } from './layers/CardBackgroundLayer';
@@ -39,6 +38,7 @@ import { CardKitLayer } from './layers/CardKitLayer';
 import { CardMaterialLayer } from './layers/CardMaterialLayer';
 import { CardNameLayer } from './layers/CardNameLayer';
 import { CardOvrLayer } from './layers/CardOvrLayer';
+import { CardParticleLayer } from './layers/CardParticleLayer';
 import { CardPatternLayer } from './layers/CardPatternLayer';
 import { CardPlayerArtLayer } from './layers/CardPlayerArtLayer';
 import { CardPoseLayer } from './layers/CardPoseLayer';
@@ -58,9 +58,18 @@ type Props = {
   attributes?: CardAttributes;
   /** Modo Visual Debug (Sprint 19) — só usado por /dev/card-assets, nenhum call site existente precisa passar isso. */
   hiddenLayers?: ReadonlySet<CardLayerName>;
+  /** Dev Tool only (Sprint 18.9) — ver `CardDebugOverride`. Nenhum call site de produção precisa passar isso. */
+  debugOverride?: CardDebugOverride;
 };
 
-function PlayerCardImpl({ card, size = 'md', glow, attributes, hiddenLayers }: Props) {
+function PlayerCardImpl({
+  card,
+  size = 'md',
+  glow,
+  attributes,
+  hiddenLayers,
+  debugOverride,
+}: Props) {
   const tiltRef = useCardTilt<HTMLDivElement>();
   const kit = getKitColors(card.nationality);
   const accent = RARITY_ACCENT[card.rarityCode];
@@ -99,6 +108,7 @@ function PlayerCardImpl({ card, size = 'md', glow, attributes, hiddenLayers }: P
     rarityCode: card.rarityCode,
     material: RARITY_MATERIAL[card.rarityCode],
     hiddenLayers,
+    debugOverride,
   };
 
   return (
@@ -175,10 +185,8 @@ function PlayerCardImpl({ card, size = 'md', glow, attributes, hiddenLayers }: P
         {/* Pose (Sprint 19) — alternativa a Player Art, ponto de integração */}
         <CardPoseLayer ctx={ctx} />
 
-        {/* Partículas (item 6) — só legendary+ */}
-        {isLegendaryPlus && !hiddenLayers?.has('particles') && (
-          <CardParticles cardId={card.cardId} accent={accent} />
-        )}
+        {/* Partículas (item 6, Sprint 18.7) — asset-capable desde a Sprint 18.9; a própria camada decide se renderiza (só legendary+) */}
+        <CardParticleLayer ctx={ctx} />
 
         {/* Layer 7 (HUD/plates) recebe as Layers 8/9/10 (texto puro) como slots */}
         <CardHudLayer
@@ -230,7 +238,8 @@ function areEqual(prev: Props, next: Props): boolean {
     prev.size === next.size &&
     prev.glow === next.glow &&
     prev.attributes === next.attributes &&
-    prev.hiddenLayers === next.hiddenLayers
+    prev.hiddenLayers === next.hiddenLayers &&
+    prev.debugOverride === next.debugOverride
   );
 }
 

@@ -27,7 +27,8 @@ export type BlendMode =
   | 'color-dodge'
   | 'color-burn'
   | 'lighten'
-  | 'darken';
+  | 'darken'
+  | 'plus-lighter';
 
 export type ResolvedCardAsset = {
   src: string;
@@ -38,6 +39,10 @@ export type ResolvedCardAsset = {
   blendMode: BlendMode;
   /** Opacidade efetiva do asset (0–1). */
   intensity: number;
+  /** Desfoque em px aplicado ao asset (Sprint 18.9). */
+  blur: number;
+  /** Multiplicador de velocidade pra qualquer animação CSS da camada (Sprint 18.9) — 1 = velocidade padrão do preset da raridade, <1 mais rápido, >1 mais lento. */
+  animationSpeed: number;
 };
 
 type CardAssetKind = keyof typeof CARD_ASSET_MANIFEST;
@@ -49,6 +54,8 @@ const DEFAULT_META: Omit<ResolvedCardAsset, 'src'> = {
   rotation: 0,
   blendMode: 'normal',
   intensity: 1,
+  blur: 0,
+  animationSpeed: 1,
 };
 
 /** Carregador único — toda camada asset-capable passa por aqui. */
@@ -112,6 +119,40 @@ export function resolvePose(playerId: string): ResolvedCardAsset | null {
 export function resolveShine(rarityCode: RarityCode): ResolvedCardAsset | null {
   return resolveCardAsset('shine', `shine-${rarityCode}`);
 }
+
+/**
+ * Reflection (Sprint 18.9) — feixe de luz físico, oficialmente asset-capable.
+ * Compartilha a pasta `effects/` com rarityEffect/glow (mesmo padrão já
+ * usado desde a Sprint 18.5: uma pasta, várias chaves por prefixo).
+ */
+export function resolveReflection(rarityCode: RarityCode): ResolvedCardAsset | null {
+  return resolveCardAsset('effects', `reflection-${rarityCode}`);
+}
+
+/** Ambient Light (Sprint 18.9) — oficialmente asset-capable, mesma pasta `effects/`. */
+export function resolveAmbient(rarityCode: RarityCode): ResolvedCardAsset | null {
+  return resolveCardAsset('effects', `ambient-${rarityCode}`);
+}
+
+/** Partículas (Sprint 18.9) — textura de partículas por raridade, mesma pasta `effects/`. */
+export function resolveParticles(rarityCode: RarityCode): ResolvedCardAsset | null {
+  return resolveCardAsset('effects', `particle-${rarityCode}`);
+}
+
+/** Lista em runtime dos valores de `BlendMode` — usada pelo seletor de blend mode do Dev Tool (Sprint 18.9). */
+export const ALL_BLEND_MODES: readonly BlendMode[] = [
+  'normal',
+  'multiply',
+  'screen',
+  'overlay',
+  'soft-light',
+  'hard-light',
+  'color-dodge',
+  'color-burn',
+  'lighten',
+  'darken',
+  'plus-lighter',
+];
 
 export const ALL_RARITY_CODES: readonly RarityCode[] = [
   'common',
