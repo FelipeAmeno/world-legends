@@ -5,11 +5,36 @@
  * editar à mão. Reflete o que existe em public/assets/cards/ no momento em
  * que `pnpm dev` ou `pnpm build` rodou por último (predev/prebuild).
  *
- * Total de assets encontrados: 6
+ * Total de assets encontrados: 12
  */
 
 export const CARD_ASSET_MANIFEST = {
-  backgrounds: {},
+  backgrounds: {
+    'bg-common': {
+      src: '/assets/cards/backgrounds/bg-common.webp',
+      meta: {},
+    },
+    'bg-elite': {
+      src: '/assets/cards/backgrounds/bg-elite.webp',
+      meta: {},
+    },
+    'bg-legendary': {
+      src: '/assets/cards/backgrounds/bg-legendary.webp',
+      meta: {},
+    },
+    'bg-rare': {
+      src: '/assets/cards/backgrounds/bg-rare.webp',
+      meta: {},
+    },
+    'bg-ultra': {
+      src: '/assets/cards/backgrounds/bg-ultra.webp',
+      meta: {},
+    },
+    'bg-world_cup_hero': {
+      src: '/assets/cards/backgrounds/bg-world_cup_hero.webp',
+      meta: {},
+    },
+  },
   effects: {},
   frames: {
     'frame-common': {
