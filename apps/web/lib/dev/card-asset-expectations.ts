@@ -81,6 +81,11 @@ export function expectedPatterns(): ExpectedEntry[] {
   return getAllKitNationalities().map((n) => ({ key: `pattern-${n}`, label: n }));
 }
 
+/** Scene (Sprint 21) — cenário cinematográfico por jogador, `scene-{playerId}.webp`. */
+export function expectedScenes(): ExpectedEntry[] {
+  return uniquePlayers().map((p) => ({ key: `scene-${p.id}`, label: p.knownAs }));
+}
+
 export function allKitNationalities(): readonly string[] {
   return getAllKitNationalities();
 }

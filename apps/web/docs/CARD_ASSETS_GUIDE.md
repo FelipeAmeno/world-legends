@@ -1,5 +1,6 @@
-> **Atualizado pela Sprint 19** — o guia atual e completo (frame,
-> background, kit, pattern, pose, player-art, shine, effects/glow) é
+> **Atualizado pela Sprint 21** — o guia atual e completo (frame,
+> background, kit, pattern, pose, player-art, scene, shine,
+> effects/glow/reflection/ambient/partícula) é
 > `WORLD_LEGENDS_ART_PIPELINE.md` na raiz do repositório. Este arquivo
 > fica como referência histórica da Sprint 18.5.
 

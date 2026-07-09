@@ -22,6 +22,7 @@ import {
   expectedPlayerArt,
   expectedPoses,
   expectedRarityEffects,
+  expectedScenes,
   expectedShine,
 } from './card-asset-expectations';
 import { bytesToKb, inspectImageFile } from './png-inspect';
@@ -118,6 +119,7 @@ export function buildAllCardAssetDiagnostics(): CategoryDiagnostics[] {
     buildCategory('player-art', 'player-art', expectedPlayerArt()),
     buildCategory('poses', 'poses', expectedPoses()),
     buildCategory('patterns', 'patterns', expectedPatterns()),
+    buildCategory('scenes', 'scenes', expectedScenes()),
     buildCategory('shine', 'shine', expectedShine()),
   ];
 }

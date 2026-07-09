@@ -1,11 +1,11 @@
 /**
  * scripts/generate-card-asset-manifest.mts — Sprint 18.6 (Card Rendering Engine — Pipeline)
  *
- * Varre public/assets/cards/{backgrounds,effects,frames,kits,patterns,player-art}
- * e gera lib/card-asset-manifest.generated.ts com a lista de assets que
- * realmente existem em disco, mais os metadados de transform (scale, offset,
- * rotation, blendMode, intensity) lidos de um sidecar opcional `<nome>.json`
- * ao lado de cada imagem.
+ * Varre public/assets/cards/{backgrounds,effects,frames,kits,patterns,
+ * player-art,poses,scenes,shine} e gera lib/card-asset-manifest.generated.ts
+ * com a lista de assets que realmente existem em disco, mais os metadados
+ * de transform (scale, offset, rotation, blendMode, intensity) lidos de um
+ * sidecar opcional `<nome>.json` ao lado de cada imagem.
  *
  * Roda automaticamente via `predev`/`prebuild` (package.json) — ninguém
  * precisa lembrar de rodar isso à mão depois de soltar uma arte nova.
@@ -24,6 +24,7 @@ const CATEGORIES = [
   'patterns',
   'player-art',
   'poses',
+  'scenes',
   'shine',
 ] as const;
 type Category = (typeof CATEGORIES)[number];

@@ -139,6 +139,17 @@ export function resolveParticles(rarityCode: RarityCode): ResolvedCardAsset | nu
   return resolveCardAsset('effects', `particle-${rarityCode}`);
 }
 
+/**
+ * Scene (Sprint 21 — Cinematic Scene Engine) — cenário completo por jogador
+ * (estádio, ambiente, iluminação), renderizado por trás da camisa/arte do
+ * jogador. Convenção de arquivo: `scene-{playerId}.webp` em `scenes/`.
+ * Sem asset (padrão hoje, nenhum ainda existe): camada não renderiza nada —
+ * o centro da carta continua exatamente como antes (camisa + arte/pose).
+ */
+export function resolveScene(playerId: string): ResolvedCardAsset | null {
+  return resolveCardAsset('scenes', `scene-${playerId}`);
+}
+
 /** Lista em runtime dos valores de `BlendMode` — usada pelo seletor de blend mode do Dev Tool (Sprint 18.9). */
 export const ALL_BLEND_MODES: readonly BlendMode[] = [
   'normal',

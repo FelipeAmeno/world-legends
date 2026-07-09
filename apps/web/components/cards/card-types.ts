@@ -63,6 +63,7 @@ export type CardLayerName =
   | 'material'
   | 'ambientLight'
   | 'rarityEffect'
+  | 'scene'
   | 'frame'
   | 'glow'
   | 'kit'

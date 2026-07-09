@@ -45,6 +45,7 @@ import { CardPoseLayer } from './layers/CardPoseLayer';
 import { CardPositionLayer } from './layers/CardPositionLayer';
 import { CardRarityEffectLayer } from './layers/CardRarityEffectLayer';
 import { CardReflectionLayer } from './layers/CardReflectionLayer';
+import { CardSceneLayer } from './layers/CardSceneLayer';
 import { CardShineLayer } from './layers/CardShineLayer';
 import { useCardTilt } from './use-card-tilt';
 
@@ -149,6 +150,8 @@ function PlayerCardImpl({
         <CardRarityEffectLayer ctx={ctx} />
         {/* Layer 3 — aditiva; a moldura real é a classe CSS no container acima */}
         <CardFrameLayer ctx={ctx} />
+        {/* Scene (Sprint 21) — cenário cinematográfico por trás da camisa/arte; sem asset, não renderiza nada */}
+        <CardSceneLayer ctx={ctx} />
         {/* Reflection (Sprint 19) — feixe de luz fixo, intensidade/nitidez por material */}
         <CardReflectionLayer ctx={ctx} />
 

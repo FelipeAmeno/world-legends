@@ -1,10 +1,11 @@
 # World Legends — Art Pipeline
 
-**Sprint 19.** Guia completo pra quem produz arte pro Card Engine —
-frame, background, kit, pattern, pose, player-art, shine, effects/glow.
-Descreve exatamente como adicionar cada tipo sem tocar em código.
-Substitui/atualiza `apps/web/docs/CARD_ASSETS_GUIDE.md` (mantido como
-referência histórica da Sprint 18.5, mas este documento é o atual).
+**Atualizado pela Sprint 21.** Guia completo pra quem produz arte pro Card
+Engine — frame, background, kit, pattern, pose, player-art, scene, shine,
+effects/glow/reflection/ambient/partícula. Descreve exatamente como
+adicionar cada tipo sem tocar em código. Substitui/atualiza
+`apps/web/docs/CARD_ASSETS_GUIDE.md` (mantido como referência histórica da
+Sprint 18.5, mas este documento é o atual).
 
 ---
 
@@ -25,17 +26,18 @@ um preview ao vivo da carta de verdade com um modo **Visual Debug** que
 liga/desliga cada camada individualmente (útil pra ver exatamente onde
 seu asset entra na composição).
 
-## As 8 categorias
+## As 9 categorias
 
 ```
 public/assets/cards/
   frames/         — moldura decorativa da carta
   backgrounds/    — fundo atrás de tudo
-  effects/        — efeito de acabamento por raridade (+ glow)
+  effects/        — efeito de acabamento por raridade (+ glow, reflection, ambient, partículas)
   kits/           — camisa da seleção
   patterns/       — textura reutilizável associada à seleção (listras, xadrez)
   poses/          — pose/silhueta completa do jogador (corpo inteiro)
   player-art/     — retrato do jogador
+  scenes/         — cenário cinematográfico completo por jogador (Sprint 21)
   shine/          — holo/shine especial (reservado — hoje é um efeito de vidro que reage ao mouse, 100% CSS)
 ```
 
@@ -45,10 +47,14 @@ public/assets/cards/
 | Background | `bg-{raridade}.png` ou `.webp` | `bg-ultra.webp` | **Em uso** — 6/6 já integrados |
 | Efeito de raridade | `effect-{raridade}.png` | `effect-common.png` | Preparado, nenhum asset ainda |
 | Glow | `glow-{raridade}.png` | `glow-world_cup_hero.png` | Preparado, nenhum asset ainda |
+| Reflection | `reflection-{raridade}.png` | `reflection-ultra.png` | **Novo (Sprint 18.9)** — preparado, nenhum asset ainda |
+| Ambient | `ambient-{raridade}.png` | `ambient-legendary.png` | **Novo (Sprint 18.9)** — preparado, nenhum asset ainda |
+| Partícula | `particle-{raridade}.png` | `particle-world_cup_hero.png` | **Novo (Sprint 18.9)** — preparado, nenhum asset ainda |
 | Kit | `kit-{nacionalidade}-{raridade}.png` | `kit-BR-legendary.png` | Preparado, nenhum asset ainda (fallback: camisa SVG procedural) |
-| Pattern | `pattern-{nacionalidade}.png` | `pattern-AR.png` | **Novo (Sprint 19)** — ponto de integração preparado, nenhum asset ainda |
-| Pose | `pose-{playerId}.png` | `pose-pelé.png` | **Novo (Sprint 19)** — ponto de integração preparado, nenhum asset ainda |
+| Pattern | `pattern-{nacionalidade}.png` | `pattern-AR.png` | Preparado, nenhum asset ainda |
+| Pose | `pose-{playerId}.png` | `pose-pelé.png` | Preparado, nenhum asset ainda |
 | Player Art | `{playerId}.png` | `pelé.png` | Preparado, nenhum asset ainda |
+| Scene | `scene-{playerId}.webp` | `scene-pelé.webp` | **Novo (Sprint 21)** — ponto de integração preparado, nenhum asset ainda |
 | Shine | `shine-{raridade}.png` | `shine-ultra.png` | Preparado, nenhum asset ainda (fallback: reflexo de vidro reagindo ao mouse) |
 
 As 6 raridades do jogo (não criar nenhuma outra): `common`, `rare`,
@@ -72,6 +78,19 @@ posição que Player Art (por cima da camisa). Produza **um ou outro**, não
 os dois pro mesmo jogador — se ambos existirem, Player Art tem prioridade
 (é a camada anterior na composição).
 
+### O que é Scene, exatamente (Sprint 21)
+
+Um cenário cinematográfico completo por trás da camisa/arte/pose —
+estádio, ambiente, iluminação — pra o centro da carta deixar de ser só
+"camisa contra fundo genérico". Fica **atrás** de Kit/Pattern/Player Art/
+Pose (é a camada anterior na composição, `CardSceneLayer` renderiza antes
+do bloco da camisa) e **atrás** de Reflection/Frame — funciona como pano
+de fundo, não como um elemento que compete visualmente com o jogador.
+Sem asset (hoje, nenhum ainda existe), a camada não renderiza nada — o
+centro da carta continua exatamente como sempre foi. Formato WEBP
+(paisagem/ambiente, sem necessidade de transparência — mesma lógica de
+Background).
+
 ## Prioridade recomendada de produção
 
 1. ~~**Frames**~~ e ~~**Backgrounds**~~ — já entregues (12/12).
@@ -83,14 +102,19 @@ os dois pro mesmo jogador — se ambos existirem, Player Art tem prioridade
    Holanda, Croácia, Bélgica, Uruguai, Coreia do Sul, Japão).
 4. **Player-art ou Pose** — 574 jogadores no catálogo. Priorize quem já
    tem cartas `legendary`/`ultra`/`world_cup_hero`.
-5. **Patterns** — opcional, refinamento visual por cima dos Kits.
-6. **Shine** — opcional, o fallback (reflexo de vidro) já é premium.
+5. **Reflection/Ambient/Partícula** (Sprint 18.9) — opcional, refina o
+   comportamento de luz já presente via CSS.
+6. **Scene** (Sprint 21) — opcional, maior impacto visual por arquivo dos
+   itens "opcionais" — transforma o centro da carta inteiro. Priorize
+   `legendary`/`ultra`/`world_cup_hero` primeiro.
+7. **Patterns** — opcional, refinamento visual por cima dos Kits.
+8. **Shine** — opcional, o fallback (reflexo de vidro) já é premium.
 
 ## Especificação técnica
 
 - **Formato**: PNG (com alpha) pra tudo que precisa de transparência
   (frame, effects, glow, kit, pattern, pose, shine). WEBP é aceito e
-  recomendado pra **backgrounds** (opacos, sem necessidade de
+  recomendado pra **backgrounds** e **scenes** (opacos, sem necessidade de
   transparência — WEBP a qualidade 95 fica bem menor que PNG pro mesmo
   resultado visual). JPG/SVG também são aceitos pelo pipeline mas sem
   checagem completa de resolução/alpha em `/dev/card-assets`.
@@ -102,8 +126,9 @@ os dois pro mesmo jogador — se ambos existirem, Player Art tem prioridade
 - **Resolução mínima recomendada**: 512px de largura. Os 12 assets já
   integrados vieram em 1143×1600 — mais que suficiente.
 - **Transparência**: frame, effects, glow, kit, pattern, pose e shine
-  **precisam** de canal alpha. Background é o único que deve ser opaco
-  de propósito (é a camada mais ao fundo).
+  **precisam** de canal alpha. Background e Scene são opacos de propósito
+  (ambos ficam por trás de tudo — Scene especificamente por trás da
+  camisa/arte/pose, não precisa deixar nada transparecer).
 
 ## Metadados por asset (sidecar JSON)
 
@@ -118,7 +143,9 @@ nome do arquivo, na mesma pasta:
   "offsetY": -3,
   "rotation": 0,
   "blendMode": "normal",
-  "intensity": 1
+  "intensity": 1,
+  "blur": 0,
+  "animationSpeed": 1
 }
 ```
 
@@ -129,8 +156,10 @@ Todos os campos são opcionais — omita o que não precisa ajustar.
 | `scale` | zoom da imagem (1 = tamanho original) | `1` |
 | `offsetX` / `offsetY` | desloca em pixels (positivo = direita/baixo) | `0` |
 | `rotation` | rotação em graus | `0` |
-| `blendMode` | modo de mesclagem CSS (`normal`, `multiply`, `screen`, `overlay`, `soft-light`, `hard-light`, `color-dodge`, `color-burn`, `lighten`, `darken`) | `normal` |
-| `intensity` | opacidade do asset (0 a 1) | `1` |
+| `blendMode` | modo de mesclagem CSS (`normal`, `multiply`, `screen`, `overlay`, `soft-light`, `hard-light`, `color-dodge`, `color-burn`, `lighten`, `darken`, `plus-lighter`) | `normal` |
+| `intensity` (= "opacidade") | opacidade do asset (0 a 1) — é o mesmo conceito, um só campo, desde a Sprint 18.6 | `1` |
+| `blur` (Sprint 18.9) | desfoque em px aplicado ao asset | `0` |
+| `animationSpeed` (Sprint 18.9) | multiplicador de velocidade pra camadas que animam (Reflection, Partículas) — <1 mais rápido, >1 mais lento | `1` |
 
 Na prática (Sprint 18.8): os 12 assets já integrados **não precisaram**
 de nenhum ajuste de metadata — os padrões funcionaram bem. Use o sidecar

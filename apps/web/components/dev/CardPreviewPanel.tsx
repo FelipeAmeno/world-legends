@@ -28,6 +28,7 @@ import {
   resolveKit,
   resolvePlayerArt,
   resolveRarityEffect,
+  resolveScene,
   resolveShine,
 } from '@/lib/card-asset-loader';
 import { getFlagEmoji } from '@/lib/collection-data';
@@ -42,6 +43,7 @@ const ALL_LAYERS: Array<{ id: CardLayerName; label: string }> = [
   { id: 'ambientLight', label: 'Ambient Light' },
   { id: 'rarityEffect', label: 'Efeito de raridade' },
   { id: 'frame', label: 'Frame' },
+  { id: 'scene', label: 'Scene' },
   { id: 'reflection', label: 'Reflection' },
   { id: 'glow', label: 'Glow' },
   { id: 'kit', label: 'Kit (camisa)' },
@@ -132,6 +134,7 @@ export function CardPreviewPanel({ rarityCodes, nationalities, players }: Props)
     { label: 'Glow', hasAsset: resolveGlow(rarityCode) !== null },
     { label: 'Camisa (kit)', hasAsset: resolveKit(nationality, rarityCode) !== null },
     { label: 'Arte do jogador', hasAsset: resolvePlayerArt(playerId) !== null },
+    { label: 'Scene', hasAsset: resolveScene(playerId) !== null },
     { label: 'Shine', hasAsset: resolveShine(rarityCode) !== null },
   ];
 
