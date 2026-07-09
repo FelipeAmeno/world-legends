@@ -1682,3 +1682,33 @@ textarea {
     padding-bottom: 1.25rem;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SPRINT 22 — PACK EXPERIENCE 2.0
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* usePackTilt (components/packs/hooks/usePackTilt.ts) escreve --pack-rx/--pack-ry
+   direto no elemento via style.setProperty (zero re-render) — esta classe só lê
+   as variáveis. Fica num wrapper separado do motion.button do pack (que já
+   controla seu próprio `transform` via Framer Motion para o float/charge) —
+   os dois transforms compõem porque um está no pai, o outro no filho. */
+.pack-tilt-wrapper {
+  transform: rotateX(var(--pack-ry, 0deg)) rotateY(var(--pack-rx, 0deg));
+  transition: transform 0.15s ease-out;
+}
+
+/* VolumetricLight (components/packs/VolumetricLight.tsx) — rotação contínua do
+   feixe de raios gerado via repeating-conic-gradient. */
+@keyframes volumetricSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.volumetric-spin {
+  animation-name: volumetricSpin;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}

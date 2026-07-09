@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useRef } from 'react';
+import { SmokeLayer } from './SmokeLayer';
 
 type Props = {
   packColor: string;
@@ -115,6 +116,9 @@ export function ExplosionOverlay({ packColor, packGlow, onComplete }: Props) {
     <div className="fixed inset-0 z-[100] pointer-events-none flex items-center justify-center">
       {/* Canvas particles */}
       <BurstCanvas glowColor={packGlow} />
+
+      {/* Smoke (Sprint 22, item 4) */}
+      <SmokeLayer />
 
       {/* Flash branco */}
       <motion.div

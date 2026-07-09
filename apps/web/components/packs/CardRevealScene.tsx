@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ConfettiCanvas } from './ConfettiCanvas';
 import { GoatReveal } from './GoatReveal';
+import { LightBirth } from './LightBirth';
 import { RevealedCard } from './RevealedCard';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -355,6 +356,15 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
 
             {/* The actual card (RevealedCard handles its own flip animation) */}
             <RevealedCard drawn={card} flipped={flipped} onFlip={doFlip} onHighRarity={() => {}} />
+
+            {/* "Carta nasce da luz" (Sprint 22, item 10) — núcleo de luz por
+                cima da carta no instante do flip, que recua e desvanece pra
+                revelar a carta "nascendo" de dentro dele. */}
+            {phase === 'revealed' && flipped && (
+              <div className="absolute inset-0 pointer-events-none">
+                <LightBirth key={currentIdx} color={back.border} />
+              </div>
+            )}
 
             {/* Tap hint */}
             <AnimatePresence>

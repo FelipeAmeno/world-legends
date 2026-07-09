@@ -3,7 +3,11 @@
 import type { PackDefinitionUI } from '@/lib/pack-logic';
 import { motion, useMotionValue, useSpring } from 'framer-motion';
 import { PackArt } from './PackArt';
+import { PackContactShadow } from './PackContactShadow';
 import type { Phase } from './PackExperience';
+import { VolumetricLight } from './VolumetricLight';
+import { usePackTilt } from './hooks/usePackTilt';
+import { PACK_TILT_PERSPECTIVE_PX } from './pack-cinematic-tokens';
 
 type Props = {
   pack: PackDefinitionUI;
@@ -73,6 +77,7 @@ const ORBIT = Array.from({ length: 12 }, (_, i) => ({
 
 export function PackFloatScene({ pack, phase, onTap, onBack }: Props) {
   const vis = PACK_VISUALS[pack.id] ?? PACK_VISUALS.classic!;
+  const packTiltRef = usePackTilt<HTMLDivElement>();
 
   const isCharging = phase === 'CHARGE';
 
@@ -116,6 +121,9 @@ export function PackFloatScene({ pack, phase, onTap, onBack }: Props) {
         className="relative flex items-center justify-center"
         style={{ width: 240, height: 300 }}
       >
+        {/* Luz volumétrica (Sprint 22) — atrás de tudo */}
+        <VolumetricLight color={pack.glowColor} active={isCharging} />
+
         {/* Aura de fundo */}
         <motion.div
           className="absolute rounded-full blur-3xl"
@@ -174,121 +182,136 @@ export function PackFloatScene({ pack, phase, onTap, onBack }: Props) {
           </div>
         )}
 
-        {/* O pack em si */}
-        <motion.button
-          onClick={onTap}
-          className="relative z-10 cursor-pointer"
-          style={{ transformStyle: 'preserve-3d' }}
-          /* Flutuação idle */
-          animate={
-            isCharging
-              ? {
-                  // Vibração / charge
-                  x: [0, -10, 10, -8, 8, -5, 5, -3, 3, 0],
-                  rotateZ: [0, -5, 5, -4, 4, -2, 2, 0],
-                  scale: [1, 1.06, 1.12, 1.1, 1.18, 1.14, 1.22],
-                }
-              : {
-                  y: [0, -14, 0],
-                  rotateZ: [-1, 1.5, -1],
-                  rotateY: [0, 10, 0, -10, 0],
-                }
-          }
-          transition={
-            isCharging
-              ? { duration: 1.3, ease: 'easeInOut' }
-              : {
-                  duration: 4,
-                  repeat: Number.POSITIVE_INFINITY,
-                  ease: 'easeInOut',
-                  repeatType: 'mirror',
-                }
-          }
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.96 }}
+        {/* Tilt 3D real reagindo ao ponteiro (Sprint 22) — wrapper separado do
+            motion.button abaixo porque o Framer Motion já escreve `transform`
+            inline nele pra flutuação/charge; a rotação do ponteiro entra via
+            CSS custom properties num ancestral, os dois transforms compõem
+            naturalmente (perspective aqui embaixo, rotateX/Y lidos de
+            --pack-rx/--pack-ry escritos por usePackTilt). */}
+        <div
+          ref={packTiltRef}
+          className="pack-tilt-wrapper"
+          style={{ perspective: PACK_TILT_PERSPECTIVE_PX }}
         >
-          {/* Corpo do pack */}
-          <div
-            className="w-44 h-60 rounded-3xl relative overflow-hidden"
-            style={{
-              background: vis.bg,
-              border: `2px solid ${pack.borderColor}`,
-              boxShadow: `0 0 40px ${pack.glowColor}, inset 0 0 60px ${pack.glowColor.replace(/[\d.]+\)$/, '0.15)')}`,
-            }}
+          {/* O pack em si */}
+          <motion.button
+            onClick={onTap}
+            className="relative z-10 cursor-pointer"
+            style={{ transformStyle: 'preserve-3d' }}
+            /* Flutuação idle */
+            animate={
+              isCharging
+                ? {
+                    // Vibração / charge
+                    x: [0, -10, 10, -8, 8, -5, 5, -3, 3, 0],
+                    rotateZ: [0, -5, 5, -4, 4, -2, 2, 0],
+                    scale: [1, 1.06, 1.12, 1.1, 1.18, 1.14, 1.22],
+                  }
+                : {
+                    y: [0, -14, 0],
+                    rotateZ: [-1, 1.5, -1],
+                    rotateY: [0, 10, 0, -10, 0],
+                  }
+            }
+            transition={
+              isCharging
+                ? { duration: 1.3, ease: 'easeInOut' }
+                : {
+                    duration: 4,
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: 'easeInOut',
+                    repeatType: 'mirror',
+                  }
+            }
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
           >
-            {/* Linhas decorativas */}
+            {/* Corpo do pack */}
             <div
-              className="absolute inset-x-6 top-5 h-px opacity-20"
+              className="w-44 h-60 rounded-3xl relative overflow-hidden"
               style={{
-                background: `linear-gradient(90deg, transparent, ${pack.borderColor}, transparent)`,
+                background: vis.bg,
+                border: `2px solid ${pack.borderColor}`,
+                boxShadow: `0 0 40px ${pack.glowColor}, inset 0 0 60px ${pack.glowColor.replace(/[\d.]+\)$/, '0.15)')}`,
               }}
-            />
-            <div
-              className="absolute inset-x-6 bottom-5 h-px opacity-20"
-              style={{
-                background: `linear-gradient(90deg, transparent, ${pack.borderColor}, transparent)`,
-              }}
-            />
+            >
+              {/* Linhas decorativas */}
+              <div
+                className="absolute inset-x-6 top-5 h-px opacity-20"
+                style={{
+                  background: `linear-gradient(90deg, transparent, ${pack.borderColor}, transparent)`,
+                }}
+              />
+              <div
+                className="absolute inset-x-6 bottom-5 h-px opacity-20"
+                style={{
+                  background: `linear-gradient(90deg, transparent, ${pack.borderColor}, transparent)`,
+                }}
+              />
 
-            {/* Radial interno */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background: `radial-gradient(ellipse at 50% 30%, ${vis.shine}, transparent 70%)`,
-              }}
-            />
-
-            {/* Shimmer sweep */}
-            <motion.div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background:
-                  'linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.09) 50%, transparent 70%)',
-                backgroundSize: '200% 100%',
-              }}
-              animate={{ backgroundPositionX: ['-100%', '200%'] }}
-              transition={{ duration: 2.5, repeat: Number.POSITIVE_INFINITY, ease: 'linear' }}
-            />
-
-            {/* Arte central */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <motion.div
-                className="mb-2"
-                style={{ filter: `drop-shadow(0 0 20px ${pack.glowColor})` }}
-                animate={{ scale: isCharging ? [1, 1.2, 1] : [1, 1.06, 1] }}
-                transition={{ duration: isCharging ? 0.35 : 2, repeat: Number.POSITIVE_INFINITY }}
-              >
-                <PackArt
-                  packId={pack.id}
-                  borderColor={pack.borderColor}
-                  glowColor={pack.glowColor}
-                  size={104}
-                />
-              </motion.div>
-              <p
-                className="font-display text-xl tracking-[0.25em] opacity-80"
-                style={{ color: pack.borderColor.replace(/[\d.]+\)$/, '1)') }}
-              >
-                {vis.label}
-              </p>
-              <p className="text-white/30 text-[9px] mt-0.5 tracking-widest uppercase">
-                World Legends
-              </p>
-            </div>
-
-            {/* Charge glow overlay */}
-            {isCharging && (
-              <motion.div
+              {/* Radial interno */}
+              <div
                 className="absolute inset-0"
                 style={{
-                  background: `radial-gradient(circle, ${pack.glowColor}, transparent 70%)`,
+                  background: `radial-gradient(ellipse at 50% 30%, ${vis.shine}, transparent 70%)`,
                 }}
-                animate={{ opacity: [0.2, 0.7, 0.2] }}
-                transition={{ duration: 0.4, repeat: Number.POSITIVE_INFINITY }}
               />
-            )}
-          </div>
-        </motion.button>
+
+              {/* Shimmer sweep */}
+              <motion.div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    'linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.09) 50%, transparent 70%)',
+                  backgroundSize: '200% 100%',
+                }}
+                animate={{ backgroundPositionX: ['-100%', '200%'] }}
+                transition={{ duration: 2.5, repeat: Number.POSITIVE_INFINITY, ease: 'linear' }}
+              />
+
+              {/* Arte central */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <motion.div
+                  className="mb-2"
+                  style={{ filter: `drop-shadow(0 0 20px ${pack.glowColor})` }}
+                  animate={{ scale: isCharging ? [1, 1.2, 1] : [1, 1.06, 1] }}
+                  transition={{ duration: isCharging ? 0.35 : 2, repeat: Number.POSITIVE_INFINITY }}
+                >
+                  <PackArt
+                    packId={pack.id}
+                    borderColor={pack.borderColor}
+                    glowColor={pack.glowColor}
+                    size={104}
+                  />
+                </motion.div>
+                <p
+                  className="font-display text-xl tracking-[0.25em] opacity-80"
+                  style={{ color: pack.borderColor.replace(/[\d.]+\)$/, '1)') }}
+                >
+                  {vis.label}
+                </p>
+                <p className="text-white/30 text-[9px] mt-0.5 tracking-widest uppercase">
+                  World Legends
+                </p>
+              </div>
+
+              {/* Charge glow overlay */}
+              {isCharging && (
+                <motion.div
+                  className="absolute inset-0"
+                  style={{
+                    background: `radial-gradient(circle, ${pack.glowColor}, transparent 70%)`,
+                  }}
+                  animate={{ opacity: [0.2, 0.7, 0.2] }}
+                  transition={{ duration: 0.4, repeat: Number.POSITIVE_INFINITY }}
+                />
+              )}
+            </div>
+          </motion.button>
+        </div>
+
+        {/* Sombra de contato (Sprint 22, item 9 — "sombras reais") */}
+        <PackContactShadow active={isCharging} />
       </div>
 
       {/* Instrução / charge text */}
