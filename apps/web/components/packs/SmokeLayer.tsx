@@ -36,8 +36,8 @@ export function SmokeLayer() {
           key={`smoke-${p.x.toFixed(1)}-${p.delay.toFixed(2)}`}
           className="absolute rounded-full"
           style={{
-            width: p.size,
-            height: p.size,
+            width: `${p.size}px`,
+            height: `${p.size}px`,
             background: 'radial-gradient(circle, rgba(255,255,255,0.55), rgba(255,255,255,0) 70%)',
             filter: 'blur(12px)',
             x: p.x,

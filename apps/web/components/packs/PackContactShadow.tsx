@@ -48,9 +48,9 @@ export function PackContactShadow({ active }: Props) {
     <motion.div
       className="absolute rounded-full"
       style={{
-        bottom: 8,
-        width: CONTACT_SHADOW_WIDTH_PX,
-        height: CONTACT_SHADOW_HEIGHT_PX,
+        bottom: '8px',
+        width: `${CONTACT_SHADOW_WIDTH_PX}px`,
+        height: `${CONTACT_SHADOW_HEIGHT_PX}px`,
         background: 'radial-gradient(ellipse, rgba(0,0,0,0.9), transparent 72%)',
         filter: `blur(${CONTACT_SHADOW_BLUR_PX}px)`,
         opacity: CONTACT_SHADOW_OPACITY,

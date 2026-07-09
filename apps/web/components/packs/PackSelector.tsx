@@ -2,6 +2,7 @@
 
 import { COMING_SOON_DEFS, type ComingSoonPack, type PackDefinitionUI } from '@/lib/pack-logic';
 import { motion } from 'framer-motion';
+import { FeaturedPackCard } from './FeaturedPackCard';
 import { PackArt } from './PackArt';
 
 type Props = {
@@ -10,7 +11,16 @@ type Props = {
   onOpen: (p: PackDefinitionUI) => void;
 };
 
+// ─── Pack em destaque (Sprint 25 — AAA Pack Store) ─────────────────────────────
+// Clash Royale / Marvel Snap sempre têm um item hero com muito impacto visual
+// no topo da loja — aqui é sempre o pack de maior valor (GOAT), o que também
+// reforça a percepção de "topo da progressão" pros jogadores.
+const FEATURED_PACK_ID = 'goat';
+
 export function PackSelector({ packs, balance, onOpen }: Props) {
+  const featured = packs.find((p) => p.id === FEATURED_PACK_ID);
+  const rest = packs.filter((p) => p.id !== FEATURED_PACK_ID);
+
   return (
     <div>
       {/* ── Header ─────────────────────────────────────────────────────── */}
@@ -25,15 +35,25 @@ export function PackSelector({ packs, balance, onOpen }: Props) {
         </div>
       </div>
 
+      {/* ── Pack em destaque ───────────────────────────────────────────── */}
+      {featured && (
+        <FeaturedPackCard
+          pack={featured}
+          canAfford={balance >= featured.price}
+          onClick={() => onOpen(featured)}
+        />
+      )}
+
       {/* ── Packs disponíveis ──────────────────────────────────────────── */}
-      <p className="text-[10px] uppercase tracking-[0.3em] text-white/30 mb-3">Disponíveis</p>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
-        {packs.map((pack) => (
+      <p className="text-[10px] uppercase tracking-[0.3em] text-white/30 mb-3">Mais Packs</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+        {rest.map((pack) => (
           <PackCard
             key={pack.id}
             pack={pack}
             canAfford={balance >= pack.price}
             onClick={() => onOpen(pack)}
+            compact
           />
         ))}
       </div>
@@ -62,10 +82,12 @@ function PackCard({
   pack,
   canAfford,
   onClick,
+  compact = false,
 }: {
   pack: PackDefinitionUI;
   canAfford: boolean;
   onClick: () => void;
+  compact?: boolean;
 }) {
   const isExpensive = pack.id === 'goat' || pack.id === 'legend' || pack.id === 'hero';
 
@@ -86,7 +108,10 @@ function PackCard({
     >
       {/* Art */}
       <div
-        className="relative h-48 flex flex-col items-center justify-center overflow-hidden"
+        className={[
+          'relative flex flex-col items-center justify-center overflow-hidden',
+          compact ? 'h-32' : 'h-48',
+        ].join(' ')}
         style={{ background: `linear-gradient(135deg, ${pack.gradientFrom}, ${pack.gradientTo})` }}
       >
         {/* Base glow */}
@@ -141,28 +166,35 @@ function PackCard({
             packId={pack.id}
             borderColor={pack.borderColor}
             glowColor={pack.glowColor}
-            size={112}
+            size={compact ? 72 : 112}
           />
         </div>
 
-        <p className="relative z-10 font-display text-2xl tracking-wider text-parchment">
+        <p
+          className={[
+            'relative z-10 font-display tracking-wider text-parchment',
+            compact ? 'text-base' : 'text-2xl',
+          ].join(' ')}
+        >
           {(pack.name.split(' ')[0] ?? pack.name).toUpperCase()}
         </p>
 
-        {/* Guarantee badge */}
-        <div
-          className="absolute top-3 right-3 text-[9px] font-bold px-2 py-1 rounded-full"
-          style={{
-            background: pack.glowColor.replace(/[\d.]+\)$/, '0.2)'),
-            border: `1px solid ${pack.borderColor}`,
-            color: '#fff',
-          }}
-        >
-          {pack.guarantee}
-        </div>
+        {/* Guarantee badge — só na versão grande, sem espaço no compact */}
+        {!compact && (
+          <div
+            className="absolute top-3 right-3 text-[9px] font-bold px-2 py-1 rounded-full"
+            style={{
+              background: pack.glowColor.replace(/[\d.]+\)$/, '0.2)'),
+              border: `1px solid ${pack.borderColor}`,
+              color: '#fff',
+            }}
+          >
+            {pack.guarantee}
+          </div>
+        )}
 
-        {/* "TAP TO OPEN" hint on hover */}
-        {canAfford && (
+        {/* "TAP TO OPEN" hint on hover — só na versão grande */}
+        {!compact && canAfford && (
           <motion.div
             className="absolute bottom-3 left-0 right-0 flex justify-center pointer-events-none"
             initial={{ opacity: 0 }}
@@ -183,15 +215,30 @@ function PackCard({
       </div>
 
       {/* Info */}
-      <div className="p-4 bg-surface border-t" style={{ borderColor: `${pack.borderColor}40` }}>
+      <div
+        className={compact ? 'p-2.5 bg-surface border-t' : 'p-4 bg-surface border-t'}
+        style={{ borderColor: `${pack.borderColor}40` }}
+      >
         <div className="flex items-center justify-between mb-1">
-          <p className="text-parchment font-bold text-sm">{pack.name}</p>
-          <p className="font-display text-lg gold-text">{pack.price.toLocaleString('pt-BR')}c</p>
+          <p
+            className={
+              compact ? 'text-parchment font-bold text-xs' : 'text-parchment font-bold text-sm'
+            }
+          >
+            {pack.name}
+          </p>
+          <p
+            className={
+              compact ? 'font-display text-xs gold-text' : 'font-display text-lg gold-text'
+            }
+          >
+            {pack.price.toLocaleString('pt-BR')}c
+          </p>
         </div>
-        <p className="text-muted text-[10px] mb-2">{pack.tagline}</p>
+        {!compact && <p className="text-muted text-[10px] mb-2">{pack.tagline}</p>}
         <div className="flex items-center gap-3 text-[9px] text-muted">
           <span>📦 {pack.cardCount} cartas</span>
-          <span>✨ {pack.guarantee}</span>
+          {!compact && <span>✨ {pack.guarantee}</span>}
         </div>
       </div>
     </motion.button>
