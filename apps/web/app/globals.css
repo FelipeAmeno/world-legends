@@ -1665,3 +1665,20 @@ textarea {
 .stagger-6 {
   animation-delay: 0.30s;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SPRINT 20.5 — FOUNDATION STABILIZATION
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* AppShell (components/nav/AppShell.tsx): <main> é compartilhado entre mobile e
+   desktop (só uma árvore de {children} montada, ver comentário no componente) —
+   o padding inferior extra só é necessário no mobile, pra não ficar por baixo do
+   PremiumBottomNav fixo; no desktop (lg+) esse nav não existe. */
+.app-shell-main {
+  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+}
+@media (min-width: 1024px) {
+  .app-shell-main {
+    padding-bottom: 1.25rem;
+  }
+}

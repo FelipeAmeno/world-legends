@@ -255,7 +255,19 @@ export const COPA_HERO_PACK: Pack = Object.freeze({
 /**
  * 5 cartas. Slot 0 = garantido Rare-ou-melhor (pesos levemente elevados).
  * Projetado para jogadores novos, preço acessível (75c).
- * Sem WCH — foco nas raridades básicas.
+ * Teto duro em Elite — nunca Legendary/Ultra/WCH, em NENHUM slot (nem no
+ * garantido). Requisito explícito (Sprint 20.5, item 5): "Starter Pack
+ * nunca entrega Legendary ou superior".
+ *
+ * Bug corrigido na Sprint 20.5: `guaranteedMinRarity: 'rare'` é um PISO
+ * (`rollRarityWithGuarantee` só rejeita resultados ABAIXO de 'rare'), não
+ * um teto — um resultado 'legendary' satisfaz a garantia normalmente e
+ * seria aceito. Os pesos do slot garantido tinham `legendary: 4, ultra: 1`
+ * (e os 4 slots livres tinham `legendary: 1` cada), então o comentário "Sem
+ * WCH — foco nas raridades básicas" já era verdade só pra WCH, não pra
+ * Legendary/Ultra — o simulador de 100k packs (Sprint 20.5) confirmou
+ * Legendary saindo do Starter em ambos os tipos de slot. Zerado explicit-
+ * amente em todos os slots agora, não só confiado na garantia de piso.
  */
 export const STARTER_PACK: Pack = Object.freeze({
   id: packId('starter'),
@@ -268,14 +280,14 @@ export const STARTER_PACK: Pack = Object.freeze({
         common: 30,
         rare: 45,
         elite: 20,
-        legendary: 4,
-        ultra: 1,
+        legendary: 0,
+        ultra: 0,
         world_cup_hero: 0,
       }),
-      freeSlot({ common: 65, rare: 28, elite: 6, legendary: 1, ultra: 0, world_cup_hero: 0 }),
-      freeSlot({ common: 65, rare: 28, elite: 6, legendary: 1, ultra: 0, world_cup_hero: 0 }),
-      freeSlot({ common: 65, rare: 28, elite: 6, legendary: 1, ultra: 0, world_cup_hero: 0 }),
-      freeSlot({ common: 65, rare: 28, elite: 6, legendary: 1, ultra: 0, world_cup_hero: 0 }),
+      freeSlot({ common: 65, rare: 28, elite: 6, legendary: 0, ultra: 0, world_cup_hero: 0 }),
+      freeSlot({ common: 65, rare: 28, elite: 6, legendary: 0, ultra: 0, world_cup_hero: 0 }),
+      freeSlot({ common: 65, rare: 28, elite: 6, legendary: 0, ultra: 0, world_cup_hero: 0 }),
+      freeSlot({ common: 65, rare: 28, elite: 6, legendary: 0, ultra: 0, world_cup_hero: 0 }),
     ],
   }),
 });

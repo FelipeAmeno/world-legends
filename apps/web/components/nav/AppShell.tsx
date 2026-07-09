@@ -31,31 +31,35 @@ export function AppShell({ children, headerSummary }: Props) {
   }
 
   return (
-    <>
-      {/* Mobile */}
-      <div className="lg:hidden flex flex-col h-screen overflow-hidden">
-        <MobileHeader balance={headerSummary?.balance} />
-        <FlowProgress />
-        <main
-          className="flex-1 overflow-y-auto px-4 py-4"
-          style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}
-        >
-          <PageTransition key={pathname}>{children}</PageTransition>
-        </main>
-        <PremiumBottomNav />
+    <div className="flex h-screen overflow-hidden">
+      {/* Sidebar — só desktop, escondido via CSS (não desmontado, sem custo de conteúdo) */}
+      <div className="hidden lg:block">
+        <Sidebar />
       </div>
 
-      {/* Desktop */}
-      <div className="hidden lg:flex h-screen overflow-hidden">
-        <Sidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="lg:hidden">
+          <MobileHeader balance={headerSummary?.balance} />
+        </div>
+        <div className="hidden lg:block">
           <GameTopBar summary={headerSummary} />
-          <FlowProgress />
-          <main className="flex-1 overflow-y-auto px-6 py-5">
-            <PageTransition key={pathname}>{children}</PageTransition>
-          </main>
+        </div>
+
+        <FlowProgress />
+
+        {/* {children} renderiza UMA vez só — antes disso, mobile e desktop tinham
+            duas <main> separadas cada uma com sua própria <PageTransition>{children}</PageTransition>,
+            então toda a árvore da página (cards, timers, listeners) ficava montada
+            em dobro o tempo todo, só uma cópia escondida via CSS (lg:hidden /
+            hidden lg:flex) — nunca desmontada. Corrigido na Sprint 20.5. */}
+        <main className="flex-1 overflow-y-auto px-4 py-4 lg:px-6 lg:py-5 app-shell-main">
+          <PageTransition key={pathname}>{children}</PageTransition>
+        </main>
+
+        <div className="lg:hidden">
+          <PremiumBottomNav />
         </div>
       </div>
-    </>
+    </div>
   );
 }
