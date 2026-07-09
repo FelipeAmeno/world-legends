@@ -1,6 +1,7 @@
 'use client';
 
 import { PlayerCard } from '@/components/cards/PlayerCard';
+import { CompareModal } from '@/components/collection/CompareModal';
 import { toggleFavoriteCardAction } from '@/lib/actions';
 import type { CollectionCard } from '@/lib/collection-data';
 import {
@@ -15,6 +16,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { CardSpotlightPresence } from './CardSpotlightModal';
 
 // ─── Glow / bg por raridade ───────────────────────────────────────────────────
 
@@ -82,6 +84,18 @@ const FAV_KEY = 'wl:collection:favorites';
 const DREAM_KEY = 'wl:dream-team';
 const DREAM_MAX = 11;
 
+// Sprint 23 — helpers puros (fora do componente, não contam pra complexidade dele)
+function toggleIdInSet(set: Set<string>, id: string, max: number): Set<string> {
+  const next = new Set(set);
+  if (next.has(id)) next.delete(id);
+  else if (next.size < max) next.add(id);
+  return next;
+}
+
+function matchesCountryFilter(nationality: string, filter: string): boolean {
+  return filter === 'all' || nationality === filter;
+}
+
 function loadSet(key: string): Set<string> {
   if (typeof window === 'undefined') return new Set();
   try {
@@ -126,6 +140,12 @@ export function HallOfLegendsExperience({
   const [rarityFilter, setRarityFilter] = useState<RarityCode | 'all'>('all');
   const [posFilter, setPosFilter] = useState<PosFilter>('all');
   const [openCountry, setOpenCountry] = useState<string | null>(null);
+  // Sprint 23 — Museum Collection: filtro por país, modo comparar, spotlight
+  const [countryFilter, setCountryFilter] = useState<string>('all');
+  const [compareMode, setCompareMode] = useState(false);
+  const [comparingIds, setComparingIds] = useState<Set<string>>(new Set());
+  const [compareModalOpen, setCompareModalOpen] = useState(false);
+  const [spotlightCard, setSpotlightCard] = useState<CollectionCard | null>(null);
 
   // Favorites (initialised from server prop) + Dream Team (client-only)
   const [favorites, setFavorites] = useState<Set<string>>(() => new Set(initialFavoriteIds));
@@ -163,6 +183,18 @@ export function HallOfLegendsExperience({
     (card: CollectionCard) => router.push(`/collection/${card.cardId}`),
     [router],
   );
+
+  // Sprint 23 — modo comparar (máx. 4 cartas, mesma convenção do comparador orfão em components/collection/)
+  const toggleCompareMode = useCallback(() => {
+    setCompareMode((prev) => !prev);
+    setComparingIds(new Set());
+  }, []);
+
+  const toggleComparing = useCallback((cardId: string) => {
+    setComparingIds((prev) => toggleIdInSet(prev, cardId, 4));
+  }, []);
+
+  const handleSpotlight = useCallback((card: CollectionCard) => setSpotlightCard(card), []);
 
   // Data
   const hallData = useMemo(
@@ -479,6 +511,7 @@ export function HallOfLegendsExperience({
   // Grupos filtrados para o álbum
   const filteredGroups = useMemo(() => {
     return hallData.countryGroups
+      .filter((group) => matchesCountryFilter(group.nationality, countryFilter))
       .map((group) => {
         let slots = group.slots;
 
@@ -505,7 +538,13 @@ export function HallOfLegendsExperience({
         return { ...group, slots };
       })
       .filter((g) => g.slots.length > 0);
-  }, [hallData, showMissing, rarityFilter, posFilter, favorites, deferredSearch]);
+  }, [hallData, showMissing, rarityFilter, posFilter, favorites, deferredSearch, countryFilter]);
+
+  // Sprint 23 — cartas selecionadas pro comparador
+  const comparingCards = useMemo(
+    () => catalogCards.filter((c) => comparingIds.has(c.cardId)),
+    [catalogCards, comparingIds],
+  );
 
   const toggleCountry = useCallback(
     (nat: string) => setOpenCountry((prev) => (prev === nat ? null : nat)),
@@ -607,7 +646,34 @@ export function HallOfLegendsExperience({
                 count={missingCount}
                 onPress={() => setShowMissing((p) => !p)}
               />
+              {/* Sprint 23 — Modo Comparar (nome diferente do botão da barra
+                  flutuante de propósito — um entra no modo de seleção, o
+                  outro abre a comparação de verdade; testado ao vivo e
+                  confirmado que nomes iguais causavam ambiguidade real). */}
+              <PosFilterPill
+                label="⚖️ Selecionar"
+                color="#f59e0b"
+                isActive={compareMode}
+                count={comparingIds.size}
+                onPress={toggleCompareMode}
+              />
             </div>
+          </div>
+
+          {/* Sprint 23 — Filtro por país */}
+          <div className="px-4 pt-2 shrink-0">
+            <select
+              value={countryFilter}
+              onChange={(e) => setCountryFilter(e.target.value)}
+              className="w-full rounded-xl border border-border bg-surface/60 px-3 py-2 text-xs text-parchment outline-none focus:border-gold/40 transition-colors"
+            >
+              <option value="all">🌍 Todos os países</option>
+              {hallData.countryGroups.map((g) => (
+                <option key={g.nationality} value={g.nationality}>
+                  {g.flag} {g.name} ({g.ownedCount}/{g.totalCount})
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Busca */}
@@ -730,6 +796,10 @@ export function HallOfLegendsExperience({
                       onToggleFavorite={toggleFavorite}
                       onToggleDreamTeam={toggleDreamTeam}
                       onSelectCard={handleSelectCard}
+                      compareMode={compareMode}
+                      comparingIds={comparingIds}
+                      onToggleCompare={toggleComparing}
+                      onSpotlight={handleSpotlight}
                     />
                   ))
                 )}
@@ -771,7 +841,94 @@ export function HallOfLegendsExperience({
           dreamTeamIds={dreamTeamIds}
         />
       )}
+
+      {/* Sprint 23 — barra flutuante do Modo Comparar */}
+      <CompareBar
+        visible={compareMode && comparingIds.size > 0}
+        count={comparingIds.size}
+        onCompare={() => setCompareModalOpen(true)}
+        onCancel={toggleCompareMode}
+      />
+
+      {/* Sprint 23 — modal de comparação (componente já existente, agora conectado à tela real) */}
+      <CompareModalPresence
+        open={compareModalOpen}
+        cards={comparingCards}
+        onClose={() => {
+          setCompareModalOpen(false);
+          setCompareMode(false);
+          setComparingIds(new Set());
+        }}
+      />
+
+      {/* Sprint 23 — Modo Spotlight (toque longo num card) */}
+      <CardSpotlightPresence card={spotlightCard} onClose={() => setSpotlightCard(null)} />
     </div>
+  );
+}
+
+// ─── Compare Bar (Sprint 23) ────────────────────────────────────────────────────
+// Extraída como componente próprio pra manter a complexidade do componente
+// principal dentro do limite do lint (mesmo padrão de PackContactShadow, Sprint 22).
+
+function CompareBar({
+  visible,
+  count,
+  onCompare,
+  onCancel,
+}: {
+  visible: boolean;
+  count: number;
+  onCompare: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          className="fixed inset-x-0 bottom-20 z-50 flex justify-center px-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+        >
+          <div className="flex items-center gap-3 bg-midnight border border-amber-500/40 rounded-full px-4 py-2 shadow-[0_0_24px_rgba(245,158,11,0.25)]">
+            <span className="text-white/70 text-xs">{count}/4 selecionadas</span>
+            <button
+              type="button"
+              disabled={count < 2}
+              onClick={onCompare}
+              className="px-3 py-1.5 rounded-full text-obsidian text-xs font-bold disabled:opacity-40 transition-opacity"
+              style={{ background: 'linear-gradient(135deg, #f59e0b, #fbbf24)' }}
+            >
+              ⚖️ Comparar
+            </button>
+            <button
+              type="button"
+              onClick={onCancel}
+              className="text-white/40 hover:text-white text-xs"
+            >
+              Cancelar
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function CompareModalPresence({
+  open,
+  cards,
+  onClose,
+}: {
+  open: boolean;
+  cards: CollectionCard[];
+  onClose: () => void;
+}) {
+  return (
+    <AnimatePresence>
+      {open && cards.length >= 2 && <CompareModal cards={cards} onClose={onClose} />}
+    </AnimatePresence>
   );
 }
 
@@ -1044,6 +1201,10 @@ function CountrySection({
   onToggleFavorite,
   onToggleDreamTeam,
   onSelectCard,
+  compareMode,
+  comparingIds,
+  onToggleCompare,
+  onSpotlight,
 }: {
   group: CountryGroup;
   index: number;
@@ -1053,6 +1214,10 @@ function CountrySection({
   favorites: Set<string>;
   dreamTeamIds: Set<string>;
   onToggleFavorite: (cardId: string) => void;
+  compareMode: boolean;
+  comparingIds: Set<string>;
+  onToggleCompare: (cardId: string) => void;
+  onSpotlight: (card: CollectionCard) => void;
   onToggleDreamTeam: (cardId: string) => void;
   onSelectCard: (card: CollectionCard) => void;
 }) {
@@ -1162,6 +1327,10 @@ function CountrySection({
                     onToggleFavorite={() => onToggleFavorite(slot.card.cardId)}
                     onToggleDreamTeam={() => onToggleDreamTeam(slot.card.cardId)}
                     onSelect={() => onSelectCard(slot.card)}
+                    compareMode={compareMode}
+                    isComparing={comparingIds.has(slot.card.cardId)}
+                    onToggleCompare={() => onToggleCompare(slot.card.cardId)}
+                    onSpotlight={() => onSpotlight(slot.card)}
                   />
                 ))}
               </div>
@@ -1183,6 +1352,10 @@ function AlbumSlot({
   onToggleFavorite,
   onToggleDreamTeam,
   onSelect,
+  compareMode = false,
+  isComparing = false,
+  onToggleCompare,
+  onSpotlight,
 }: {
   slot: AlbumSlotData;
   index: number;
@@ -1191,11 +1364,43 @@ function AlbumSlot({
   onToggleFavorite: () => void;
   onToggleDreamTeam: () => void;
   onSelect: () => void;
+  compareMode?: boolean;
+  isComparing?: boolean;
+  onToggleCompare?: () => void;
+  onSpotlight?: () => void;
 }) {
   const { card, owned } = slot;
   const glow = RARITY_GLOW[card.rarityCode] ?? 'rgba(255,255,255,0.2)';
   const bg = RARITY_BG[card.rarityCode] ?? RARITY_BG.common!;
   const meta = RARITY_META[card.rarityCode];
+
+  // Sprint 23 — toque longo abre o Spotlight; toque curto segue o comportamento
+  // normal (seleciona pra comparar, se o modo estiver ativo, ou navega).
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFired = useRef(false);
+
+  const handlePointerDown = () => {
+    if (!onSpotlight) return;
+    longPressFired.current = false;
+    longPressTimer.current = setTimeout(() => {
+      longPressFired.current = true;
+      onSpotlight();
+    }, 450);
+  };
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+  const handleClick = () => {
+    if (longPressFired.current) {
+      longPressFired.current = false;
+      return;
+    }
+    if (compareMode && onToggleCompare) onToggleCompare();
+    else onSelect();
+  };
 
   if (owned) {
     return (
@@ -1205,10 +1410,31 @@ function AlbumSlot({
         transition={{ delay: Math.min(index * 0.025, 0.5), duration: 0.2 }}
         whileTap={{ scale: 0.92 }}
         className="relative cursor-pointer rounded-[10px] overflow-hidden"
-        style={{ boxShadow: `0 0 12px ${glow}45` }}
-        onClick={onSelect}
+        style={{
+          boxShadow: isComparing
+            ? '0 0 0 2px #f59e0b, 0 0 14px rgba(245,158,11,0.6)'
+            : `0 0 12px ${glow}45`,
+        }}
+        onClick={handleClick}
+        onPointerDown={handlePointerDown}
+        onPointerUp={cancelLongPress}
+        onPointerLeave={cancelLongPress}
       >
         <PlayerCard card={card} size="sm" glow />
+
+        {/* Sprint 23 — marca de seleção do Modo Comparar */}
+        {compareMode && (
+          <div
+            className="absolute left-1 top-1 w-4 h-4 rounded-full border flex items-center justify-center z-20 text-[8px]"
+            style={{
+              background: isComparing ? '#f59e0b' : 'rgba(0,0,0,0.55)',
+              borderColor: isComparing ? '#f59e0b' : 'rgba(255,255,255,0.3)',
+              color: isComparing ? '#1a1206' : 'transparent',
+            }}
+          >
+            ✓
+          </div>
+        )}
 
         {/* Action buttons — meio da borda direita, longe do OVR e do nome (ambos maiores agora) */}
         <div className="absolute right-0.5 top-1/2 -translate-y-1/2 flex flex-col gap-0.5 z-20">
