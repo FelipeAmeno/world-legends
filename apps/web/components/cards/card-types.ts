@@ -57,20 +57,22 @@ export type CardVisualCtx = {
   debugOverride?: CardDebugOverride | undefined;
 };
 
-/** Nomes usados pelo modo Visual Debug pra ligar/desligar cada camada individualmente. */
+/**
+ * Nomes usados pelo modo Visual Debug pra ligar/desligar cada camada
+ * individualmente — espelha exatamente as 9 camadas da composição real
+ * (Sprint 24). `kit`/`playerArt`/`pose`/`pattern` foram absorvidos por
+ * `scene` (ver CardSceneLayer.tsx) — não existem mais como camadas
+ * independentes.
+ */
 export type CardLayerName =
   | 'background'
   | 'material'
   | 'ambientLight'
   | 'rarityEffect'
+  | 'particles'
   | 'scene'
   | 'frame'
-  | 'glow'
-  | 'kit'
-  | 'playerArt'
-  | 'pose'
-  | 'pattern'
-  | 'particles'
   | 'reflection'
+  | 'shine'
   | 'hud'
-  | 'shine';
+  | 'glow';

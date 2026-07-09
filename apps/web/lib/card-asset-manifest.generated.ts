@@ -5,7 +5,7 @@
  * editar à mão. Reflete o que existe em public/assets/cards/ no momento em
  * que `pnpm dev` ou `pnpm build` rodou por último (predev/prebuild).
  *
- * Total de assets encontrados: 12
+ * Total de assets encontrados: 15
  */
 
 export const CARD_ASSET_MANIFEST = {
@@ -66,6 +66,19 @@ export const CARD_ASSET_MANIFEST = {
   patterns: {},
   'player-art': {},
   poses: {},
-  scenes: {},
+  scenes: {
+    'scene-cristiano-ronaldo': {
+      src: '/assets/cards/scenes/scene-cristiano-ronaldo.webp',
+      meta: {},
+    },
+    'scene-lionel-messi': {
+      src: '/assets/cards/scenes/scene-lionel-messi.webp',
+      meta: {},
+    },
+    'scene-pelé': {
+      src: '/assets/cards/scenes/scene-pelé.webp',
+      meta: {},
+    },
+  },
   shine: {},
 } as const;

@@ -662,7 +662,7 @@ body {
   mix-blend-mode: overlay;
   opacity: 0;
   transition: opacity 0.35s ease;
-  z-index: 13;
+  z-index: 8;
 }
 .card-tilt-root.card-tilt-active .card-shine-glass {
   opacity: 1;
@@ -756,7 +756,7 @@ body {
   pointer-events: none;
   overflow: hidden;
   border-radius: inherit;
-  z-index: 9;
+  z-index: 4;
 }
 .card-particle {
   position: absolute;
@@ -863,7 +863,7 @@ body {
   border-radius: inherit;
   pointer-events: none;
   overflow: hidden;
-  z-index: 4;
+  z-index: 7;
   background: linear-gradient(
     100deg,
     transparent 30%,

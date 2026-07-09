@@ -20,7 +20,7 @@ export function CardShineLayer({ ctx }: { ctx: CardVisualCtx }) {
       asset={resolveShine(ctx.rarityCode)}
       alt=""
       className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-      style={{ zIndex: 13 }}
+      style={{ zIndex: 8 }}
       fallback={<div className="card-shine-glass" />}
     />
   );

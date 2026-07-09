@@ -22,7 +22,7 @@ export function CardRarityEffectLayer({ ctx }: { ctx: CardVisualCtx }) {
       asset={resolveRarityEffect(rarityCode)}
       alt=""
       className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-      style={{ zIndex: 6 }}
+      style={{ zIndex: 3 }}
       fallback={
         <>
           {/* Reflexo de vidro — diagonal, mais forte em raridades altas */}
@@ -31,7 +31,7 @@ export function CardRarityEffectLayer({ ctx }: { ctx: CardVisualCtx }) {
               position: 'absolute',
               inset: 0,
               pointerEvents: 'none',
-              zIndex: 6,
+              zIndex: 3,
               background:
                 'linear-gradient(115deg, rgba(255,255,255,0.16) 0%, transparent 22%, transparent 78%, rgba(255,255,255,0.05) 100%)',
               opacity: isElitePlus ? 1 : 0.5,
@@ -45,7 +45,7 @@ export function CardRarityEffectLayer({ ctx }: { ctx: CardVisualCtx }) {
                 position: 'absolute',
                 inset: 0,
                 pointerEvents: 'none',
-                zIndex: 7,
+                zIndex: 3,
                 background:
                   'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.22) 50%, transparent 60%)',
                 backgroundSize: '250% 100%',

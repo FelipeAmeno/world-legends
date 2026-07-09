@@ -35,7 +35,7 @@ export function CardParticleLayer({ ctx }: { ctx: CardVisualCtx }) {
       asset={asset}
       alt=""
       className="absolute inset-0 w-full h-full pointer-events-none"
-      style={{}}
+      style={{ zIndex: 4 }}
       fallback={
         <CardParticles
           cardId={ctx.card.cardId}

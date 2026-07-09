@@ -79,10 +79,14 @@ tocar em CSS.
   historicamente frágil entre navegadores).
 - **Respiração**: `scale(1 → 1.01 → 1)`, 5.5s, só legendary+ — dá
   presença sem ser hipnótico.
-- **Z-order das camadas** (de trás pra frente): Background → Material →
-  Ambient Light → Efeito de raridade → Frame → Reflection → Glow → Kit →
-  Pattern → Player Art → Pose → Partículas → HUD → Shine. Ver
-  `components/cards/PlayerCard.tsx` pra ordem exata de composição.
+- **Z-order das camadas** (Sprint 24 — Card Composition Refactor, de trás
+  pra frente): Background → Ambient (Material + Ambient Light + Efeito de
+  raridade) → Partículas → Scene → Frame → Reflection → Shine → HUD →
+  Glow. `Scene` é uma cadeia de fallback única (scene real > player art >
+  pose > camisa) — não são mais camadas separadas competindo pelo mesmo
+  espaço (era o resquício de "carta antiga" eliminado nesta sprint). Ver
+  `components/cards/PlayerCard.tsx` pra ordem exata de composição e
+  `components/cards/layers/CardSceneLayer.tsx` pra cadeia de fallback.
 
 ## 5. Glass
 

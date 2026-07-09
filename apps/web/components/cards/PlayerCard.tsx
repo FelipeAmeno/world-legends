@@ -2,15 +2,31 @@
 
 /**
  * components/cards/PlayerCard.tsx — Sprint 18.5 (Card Rendering Engine) +
- * Sprint 18.7 (Premium Card Engine — tilt/parallax/glass/breathing/metallic)
+ * Sprint 18.7 (Premium Card Engine — tilt/parallax/glass/breathing/metallic) +
+ * Sprint 24 (Card Composition Refactor)
  *
  * Motor de renderização em camadas. A API pública ({ card, size, glow }) é
  * idêntica à de antes da Sprint 18.5 — todo call site existente (Coleção,
  * Pack Opening, Squad Builder, Perfil, Hall of Legends, Match) continua
- * funcionando sem nenhuma mudança. Nenhuma arte existe ainda: cada camada
- * asset-capable cai no visual procedural (CSS/SVG) de sempre via onError,
- * então o resultado visual hoje é idêntico ao de antes das Sprints 18.5/18.7
- * quando o mouse não se move — ver SPRINT_18_7_REPORT.md.
+ * funcionando sem nenhuma mudança.
+ *
+ * Sprint 24 — "carta antiga" eliminada de vez: antes desta sprint, o centro
+ * da carta era renderizado por CINCO camadas irmãs competindo pelo mesmo
+ * espaço (Scene + Kit + Pattern + Player Art + Pose), com a camisa vivendo
+ * numa `<div>` própria com posicionamento/escala manual — um resquício
+ * literal do design pré-Sprint-18.5. Agora é uma composição de 9 camadas
+ * limpas, cada uma dona de UM espaço z-index bem definido:
+ *
+ *   1. Background   4. Scene        7. Shine
+ *   2. Ambient      5. Frame        8. HUD (+ Atributos)
+ *   3. Particles    6. Reflection   9. Glow
+ *
+ * "Ambient" agrupa Material + Ambient Light + Efeito de raridade (mesma
+ * camada conceitual: atmosfera por trás da cena). Scene agora é a ÚNICA
+ * camada do centro — ela mesma decide, internamente, entre asset real de
+ * Scene, Player Art, Pose, ou o fallback de camisa (ver CardSceneLayer.tsx)
+ * — nunca mais de uma competindo ao mesmo tempo. Nome, OVR, Posição e
+ * Atributos continuam 100% React (nunca fazem parte de nenhuma arte).
  */
 
 import { getKitColors } from '@/lib/kit-data';
@@ -34,14 +50,10 @@ import { CardBackgroundLayer } from './layers/CardBackgroundLayer';
 import { CardFrameLayer } from './layers/CardFrameLayer';
 import { CardGlowLayer } from './layers/CardGlowLayer';
 import { CardHudLayer } from './layers/CardHudLayer';
-import { CardKitLayer } from './layers/CardKitLayer';
 import { CardMaterialLayer } from './layers/CardMaterialLayer';
 import { CardNameLayer } from './layers/CardNameLayer';
 import { CardOvrLayer } from './layers/CardOvrLayer';
 import { CardParticleLayer } from './layers/CardParticleLayer';
-import { CardPatternLayer } from './layers/CardPatternLayer';
-import { CardPlayerArtLayer } from './layers/CardPlayerArtLayer';
-import { CardPoseLayer } from './layers/CardPoseLayer';
 import { CardPositionLayer } from './layers/CardPositionLayer';
 import { CardRarityEffectLayer } from './layers/CardRarityEffectLayer';
 import { CardReflectionLayer } from './layers/CardReflectionLayer';
@@ -55,7 +67,7 @@ type Props = {
   card: PlayerCardData;
   size?: CardSize;
   glow?: boolean;
-  /** Layer 11 (opcional, off por padrão) — nenhum call site existente precisa passar isso. */
+  /** Opcional, off por padrão — nenhum call site existente precisa passar isso. */
   attributes?: CardAttributes;
   /** Modo Visual Debug (Sprint 19) — só usado por /dev/card-assets, nenhum call site existente precisa passar isso. */
   hiddenLayers?: ReadonlySet<CardLayerName>;
@@ -140,58 +152,31 @@ function PlayerCardImpl({
           overflow: 'hidden',
         }}
       >
-        {/* Layer 1 */}
+        {/* Layer 1 — Background */}
         <CardBackgroundLayer ctx={ctx} />
-        {/* Material (Sprint 19) — bezel físico da raridade, por cima do fundo ambiente */}
+
+        {/* Layer 2 — Ambient (Material + Ambient Light + Efeito de raridade) */}
         <CardMaterialLayer ctx={ctx} />
-        {/* Ambient Light (Sprint 19) — luz suave constante, intensidade por material */}
         <CardAmbientLightLayer ctx={ctx} />
-        {/* Layer 2 */}
         <CardRarityEffectLayer ctx={ctx} />
-        {/* Layer 3 — aditiva; a moldura real é a classe CSS no container acima */}
-        <CardFrameLayer ctx={ctx} />
-        {/* Scene (Sprint 21) — cenário cinematográfico por trás da camisa/arte; sem asset, não renderiza nada */}
-        <CardSceneLayer ctx={ctx} />
-        {/* Reflection (Sprint 19) — feixe de luz fixo, intensidade/nitidez por material */}
-        <CardReflectionLayer ctx={ctx} />
 
-        {/* Layer 4 (camisa) + Layer 5 (arte do jogador) + Layer 6 (glow), agrupadas
-            no bloco central pois compartilham posicionamento/escala. */}
-        <div
-          style={{
-            position: 'absolute',
-            top: dim.card.height * 0.06,
-            left: 0,
-            right: 0,
-            bottom: dim.card.height * 0.19,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'flex-start',
-            overflow: 'visible',
-          }}
-        >
-          <CardGlowLayer ctx={ctx} />
-          <div
-            style={{
-              position: 'relative',
-              transform: `scale(${dim.jerseyScale}) translate(calc(var(--px, 0) * 7px), calc(var(--py, 0) * 7px))`,
-              transformOrigin: 'top center',
-              filter: `drop-shadow(0 6px 14px rgba(0,0,0,0.6)) drop-shadow(0 0 18px ${accent}50)`,
-            }}
-          >
-            <CardKitLayer ctx={ctx} />
-            {/* Pattern (Sprint 19) — textura reutilizável por cima do Kit, ponto de integração */}
-            <CardPatternLayer ctx={ctx} />
-          </div>
-        </div>
-        <CardPlayerArtLayer ctx={ctx} />
-        {/* Pose (Sprint 19) — alternativa a Player Art, ponto de integração */}
-        <CardPoseLayer ctx={ctx} />
-
-        {/* Partículas (item 6, Sprint 18.7) — asset-capable desde a Sprint 18.9; a própria camada decide se renderiza (só legendary+) */}
+        {/* Layer 3 — Particles (só legendary+; a própria camada decide) */}
         <CardParticleLayer ctx={ctx} />
 
-        {/* Layer 7 (HUD/plates) recebe as Layers 8/9/10 (texto puro) como slots */}
+        {/* Layer 4 — Scene (única camada do centro: scene real > player art >
+            pose > camisa, nunca mais de uma ao mesmo tempo — ver CardSceneLayer.tsx) */}
+        <CardSceneLayer ctx={ctx} />
+
+        {/* Layer 5 — Frame (moldura, por cima da Scene como um frame físico) */}
+        <CardFrameLayer ctx={ctx} />
+
+        {/* Layer 6 — Reflection */}
+        <CardReflectionLayer ctx={ctx} />
+
+        {/* Layer 7 — Shine/glass reagindo ao mouse */}
+        <CardShineLayer ctx={ctx} />
+
+        {/* Layer 8 — HUD (100% React: OVR, posição, ribbon de raridade, nome) */}
         <CardHudLayer
           ctx={ctx}
           ovrSlot={<CardOvrLayer ctx={ctx} />}
@@ -217,12 +202,11 @@ function PlayerCardImpl({
           }
           nameSlot={<CardNameLayer ctx={ctx} />}
         />
-
-        {/* Layer 11 — opcional, off por padrão */}
+        {/* Atributos (100% React) — opcional, off por padrão, mesmo grupo do HUD */}
         {attributes && <CardAttributesLayer ctx={ctx} attributes={attributes} />}
 
-        {/* Shine/glass reagindo ao mouse (itens 3 + 8) — sempre por cima de tudo */}
-        <CardShineLayer ctx={ctx} />
+        {/* Layer 9 — Glow (fonte de luz final, por cima de tudo) */}
+        <CardGlowLayer ctx={ctx} />
       </div>
     </div>
   );

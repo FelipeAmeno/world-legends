@@ -23,7 +23,7 @@ export function CardFrameLayer({ ctx }: { ctx: CardVisualCtx }) {
       asset={resolveFrame(ctx.rarityCode)}
       alt=""
       className="absolute inset-0 w-full h-full pointer-events-none card-parallax-frame"
-      style={{ zIndex: 11 }}
+      style={{ zIndex: 6 }}
       fallback={null}
       eager
     />

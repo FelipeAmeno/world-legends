@@ -27,6 +27,7 @@ import {
   resolveGlow,
   resolveKit,
   resolvePlayerArt,
+  resolvePose,
   resolveRarityEffect,
   resolveScene,
   resolveShine,
@@ -36,23 +37,27 @@ import { exportCardScreenshot } from '@/lib/dev/card-screenshot';
 import type { RarityCode } from '@world-legends/types';
 import { useMemo, useRef, useState } from 'react';
 
-/** Ordem real de composição (de trás pra frente) — ver PlayerCard.tsx. Fonte única pros toggles e pra referência de Layer Order. */
+/**
+ * Ordem real de composição (Sprint 24 — Card Composition Refactor), de
+ * trás pra frente — espelha exatamente as 9 camadas de `PlayerCard.tsx`.
+ * "Ambient" agrupa Material + Ambient Light + Efeito de raridade (mesma
+ * camada conceitual). `kit`/`pattern`/`playerArt`/`pose` não existem mais
+ * como camadas independentes — foram absorvidas por `scene` (ver
+ * CardSceneLayer.tsx: scene real > player art > pose > camisa, cadeia de
+ * fallback única).
+ */
 const ALL_LAYERS: Array<{ id: CardLayerName; label: string }> = [
-  { id: 'background', label: 'Background' },
-  { id: 'material', label: 'Material' },
-  { id: 'ambientLight', label: 'Ambient Light' },
-  { id: 'rarityEffect', label: 'Efeito de raridade' },
-  { id: 'frame', label: 'Frame' },
-  { id: 'scene', label: 'Scene' },
-  { id: 'reflection', label: 'Reflection' },
-  { id: 'glow', label: 'Glow' },
-  { id: 'kit', label: 'Kit (camisa)' },
-  { id: 'pattern', label: 'Pattern' },
-  { id: 'playerArt', label: 'Player Art' },
-  { id: 'pose', label: 'Pose' },
-  { id: 'particles', label: 'Partículas' },
-  { id: 'hud', label: 'HUD' },
-  { id: 'shine', label: 'Shine' },
+  { id: 'background', label: '1. Background' },
+  { id: 'material', label: '2. Ambient — Material' },
+  { id: 'ambientLight', label: '2. Ambient — Luz' },
+  { id: 'rarityEffect', label: '2. Ambient — Efeito de raridade' },
+  { id: 'particles', label: '3. Partículas' },
+  { id: 'scene', label: '4. Scene' },
+  { id: 'frame', label: '5. Frame' },
+  { id: 'reflection', label: '6. Reflection' },
+  { id: 'shine', label: '7. Shine' },
+  { id: 'hud', label: '8. HUD' },
+  { id: 'glow', label: '9. Glow' },
 ];
 
 type Props = {
@@ -69,6 +74,24 @@ const RARITY_LABEL: Record<RarityCode, string> = {
   ultra: 'Ultra (GOAT)',
   world_cup_hero: 'World Cup Hero',
 };
+
+/**
+ * Sprint 24 — Scene é uma cadeia de fallback única (scene real > player art
+ * > pose > camisa), mesma ordem de prioridade de CardSceneLayer.tsx. Helper
+ * de módulo (fora do componente) pra não contar pra complexidade dele —
+ * mesmo padrão já usado nas Sprints 22/23.
+ */
+function resolveActiveSceneSource(
+  playerId: string,
+  nationality: string,
+  rarityCode: RarityCode,
+): string {
+  if (resolveScene(playerId)) return 'scene real';
+  if (resolvePlayerArt(playerId)) return 'player art';
+  if (resolvePose(playerId)) return 'pose';
+  if (resolveKit(nationality, rarityCode)) return 'camisa (asset real)';
+  return 'camisa (fallback SVG)';
+}
 
 export function CardPreviewPanel({ rarityCodes, nationalities, players }: Props) {
   const [rarityCode, setRarityCode] = useState<RarityCode>(rarityCodes[0] ?? 'common');
@@ -127,14 +150,17 @@ export function CardPreviewPanel({ rarityCodes, nationalities, players }: Props)
     [playerId, player, nationality, rarityCode],
   );
 
+  const sceneSource = resolveActiveSceneSource(playerId, nationality, rarityCode);
+
   const layerStatus: Array<{ label: string; hasAsset: boolean }> = [
     { label: 'Frame', hasAsset: resolveFrame(rarityCode) !== null },
     { label: 'Background', hasAsset: resolveBackground(rarityCode) !== null },
     { label: 'Efeito de raridade', hasAsset: resolveRarityEffect(rarityCode) !== null },
     { label: 'Glow', hasAsset: resolveGlow(rarityCode) !== null },
-    { label: 'Camisa (kit)', hasAsset: resolveKit(nationality, rarityCode) !== null },
-    { label: 'Arte do jogador', hasAsset: resolvePlayerArt(playerId) !== null },
-    { label: 'Scene', hasAsset: resolveScene(playerId) !== null },
+    {
+      label: `Scene (fonte ativa: ${sceneSource})`,
+      hasAsset: sceneSource !== 'camisa (fallback SVG)',
+    },
     { label: 'Shine', hasAsset: resolveShine(rarityCode) !== null },
   ];
 
@@ -345,9 +371,9 @@ export function CardPreviewPanel({ rarityCodes, nationalities, players }: Props)
               Layer order — z-order real de composição (de trás pra frente)
             </p>
             <ol className="flex flex-wrap gap-1.5 text-[11px] text-white/50">
-              {ALL_LAYERS.map((l, i) => (
+              {ALL_LAYERS.map((l) => (
                 <li key={l.id} className="px-2 py-0.5 rounded bg-white/5 border border-white/10">
-                  {i + 1}. {l.label}
+                  {l.label}
                 </li>
               ))}
             </ol>
