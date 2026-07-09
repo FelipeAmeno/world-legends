@@ -1,6 +1,6 @@
 'use client';
 
-import type { MatchExperienceData, RichEvent } from '@/lib/match-experience';
+import type { RichEvent } from '@/lib/match-experience';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CommentaryBox } from './CommentaryBox';
@@ -9,26 +9,50 @@ import { MomentumBar } from './MomentumBar';
 import { ScoreDisplay } from './ScoreDisplay';
 
 type Props = {
-  data: MatchExperienceData;
+  /** Sprint 26: eventos SÓ deste segmento (1º ou 2º tempo) — não a partida inteira. */
+  rich: RichEvent[];
+  homeName: string;
+  awayName: string;
+  /** Minuto em que este segmento começa a "tocar" (0 no 1º tempo, 46 no 2º). */
+  startMinute: number;
+  /** Teto do relógio pra este segmento (46 no 1º tempo, 95 no 2º/final). */
+  endMinuteCap: number;
+  initialHomeScore: number;
+  initialAwayScore: number;
   paused: boolean; // true durante o HT
   onHalfTime: () => void;
   onFullTime: () => void;
 };
 
-const TICK_MS = 120; // ms por minuto simulado (90min → ~11s)
+/**
+ * Sprint 26 (Gameplay Foundation), item 6 — "não terminar tudo em 15
+ * segundos": antes eram 120ms/minuto (90min → ~11s, a partida INTEIRA).
+ * Agora cada TEMPO (45min simulados) leva ~25s de replay ao vivo — mais
+ * o intervalo interativo (duração do usuário) entre eles — bem mais
+ * perto do ritmo de uma partida mobile de verdade sem virar maçante.
+ */
+const TICK_MS = 550;
 const GOAL_PAUSE = 2500; // pausa em ms após um gol
 
-export function LiveMatchView({ data, paused, onHalfTime, onFullTime }: Props) {
-  const { rich, momentum, display, opponent } = data;
-
-  const [liveMinute, setLiveMinute] = useState(0);
+export function LiveMatchView({
+  rich,
+  homeName,
+  awayName,
+  startMinute,
+  endMinuteCap,
+  initialHomeScore,
+  initialAwayScore,
+  paused,
+  onHalfTime,
+  onFullTime,
+}: Props) {
+  const [liveMinute, setLiveMinute] = useState(startMinute);
   const [visibleEvents, setVisibleEvents] = useState<RichEvent[]>([]);
-  const [homeScore, setHomeScore] = useState(0);
-  const [awayScore, setAwayScore] = useState(0);
+  const [homeScore, setHomeScore] = useState(initialHomeScore);
+  const [awayScore, setAwayScore] = useState(initialAwayScore);
   const [latestEvent, setLatestEvent] = useState<RichEvent | null>(null);
   const [momentumHome, setMomentumHome] = useState(50);
   const [isGoalAnim, setIsGoalAnim] = useState(false);
-  const [halftimeSeen, setHalftimeSeen] = useState(false);
 
   const pausedRef = useRef(paused);
   useEffect(() => {
@@ -75,7 +99,6 @@ export function LiveMatchView({ data, paused, onHalfTime, onFullTime }: Props) {
           const hasHT = eventsAtMinute.some((e) => e.kind === 'half_time');
           if (hasHT && !ht) {
             ht = true;
-            setHalftimeSeen(true);
             setTimeout(onHalfTime, 800);
           }
 
@@ -87,16 +110,13 @@ export function LiveMatchView({ data, paused, onHalfTime, onFullTime }: Props) {
           }
         }
 
-        return next > 95 ? 95 : next;
+        return next > endMinuteCap ? endMinuteCap : next;
       });
     };
 
     const interval = setInterval(tick, TICK_MS);
     return () => clearInterval(interval);
-  }, [rich, onHalfTime, onFullTime]);
-
-  // Momentum do minuto atual
-  const currentMom = momentum.find((m) => m.minute >= liveMinute)?.home ?? momentumHome;
+  }, [rich, onHalfTime, onFullTime, endMinuteCap]);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
@@ -106,8 +126,8 @@ export function LiveMatchView({ data, paused, onHalfTime, onFullTime }: Props) {
           homeScore={homeScore}
           awayScore={awayScore}
           minute={liveMinute}
-          homeName="🇧🇷 Seleção BR"
-          awayName={`${opponent.flag} ${opponent.name}`}
+          homeName={homeName}
+          awayName={awayName}
           isGoalAnim={isGoalAnim}
           winner={null} // ainda em jogo
         />
@@ -115,7 +135,7 @@ export function LiveMatchView({ data, paused, onHalfTime, onFullTime }: Props) {
 
       {/* Momentum bar */}
       <div className="shrink-0 px-4 py-2">
-        <MomentumBar home={momentumHome} homeName="BR" awayName={opponent.flag} />
+        <MomentumBar home={momentumHome} homeName={homeName} awayName={awayName} />
       </div>
 
       {/* Commentary (último evento em destaque) */}

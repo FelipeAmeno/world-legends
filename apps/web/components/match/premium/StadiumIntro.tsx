@@ -1,19 +1,18 @@
 'use client';
 
-import type { MatchExperienceData } from '@/lib/match-experience';
+import type { MatchOpponent } from '@/lib/match-data';
 import { SPRING } from '@/lib/motion-tokens';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
 type Props = {
-  data: MatchExperienceData;
+  opponent: MatchOpponent;
   onComplete: () => void;
 };
 
 type IntroPhase = 'dark' | 'lights' | 'teams' | 'ready';
 
-export function StadiumIntro({ data, onComplete }: Props) {
-  const { opponent } = data;
+export function StadiumIntro({ opponent, onComplete }: Props) {
   const [phase, setPhase] = useState<IntroPhase>('dark');
 
   useEffect(() => {

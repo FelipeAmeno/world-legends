@@ -1,13 +1,14 @@
 'use client';
 
-import { computeWinProbability, getUserLineup } from '@/lib/match-data';
-import type { MatchExperienceData } from '@/lib/match-experience';
+import { type LineupPlayer, type MatchOpponent, computeWinProbability } from '@/lib/match-data';
 import { EASE, SPRING } from '@/lib/motion-tokens';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
 type Props = {
-  data: MatchExperienceData;
+  opponent: MatchOpponent;
+  userLineup: LineupPlayer[];
+  userOvr: number;
   onKickoff: () => void;
   onBack: () => void;
 };
@@ -123,10 +124,7 @@ function CountdownDigit({ count }: { count: number }) {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function PreMatchScreen({ data, onKickoff, onBack }: Props) {
-  const { opponent } = data;
-  const userLineup = getUserLineup();
-  const userOvr = data.display.userOvr || 80;
+export function PreMatchScreen({ opponent, userLineup, userOvr, onKickoff, onBack }: Props) {
   const prob = computeWinProbability(userOvr, opponent.avgOvr);
   const [countdown, setCountdown] = useState(8);
 

@@ -7,66 +7,70 @@ import {
   setAchievementValueInternal,
 } from '@/lib/actions/missions';
 import { crash } from '@/lib/crash/sentry';
-import { MATCH_OPPONENTS, runMatch } from '@/lib/match-data';
+import {
+  MATCH_OPPONENTS,
+  type MatchDifficulty,
+  type MatchDisplay,
+  type MatchOpponent,
+} from '@/lib/match-data';
+import {
+  applyHalftimeSubstitution,
+  applyHalftimeTactic,
+  applyLegendaryAiHalftimeReaction,
+  buildAiTeamSnapshot,
+  buildHalftimeDisplay,
+  buildUserTeamSnapshot,
+  finishMatchSimulation,
+  startMatchSimulation,
+} from '@/lib/match-session';
 import { getAuthenticatedUserId, getServiceDb } from '@/lib/server/db';
-import { getUserActiveSquad, getUserCollection } from '@/lib/server/game-data';
+import { type SavedSquad, getUserActiveSquad, getUserCollection } from '@/lib/server/game-data';
 import { SupabaseMatchRepository, SupabaseProfileRepository } from '@world-legends/db';
-import type { PlayMatchResult } from './match.types';
+import type { MatchProgressState, TacticalIntensity } from '@world-legends/engine';
+import type { HalftimeActionResult, PlayMatchResult, StartMatchResult } from './match.types';
 
 /**
- * Simula uma partida com o squad ativo do usuário, persiste e credita recompensas.
+ * Sprint 26 (Gameplay Foundation) — o fluxo síncrono de ponta a ponta
+ * virou 4 ações menores pra sustentar o intervalo jogável real:
  *
- * Garantias:
- *   - Se o usuário não tiver squad salvo, usa a escalação padrão.
- *   - Rewards são creditados mesmo se a persistência da partida falhar.
- *   - Não cria rows órfãs: usa o squad do usuário como away_squad_id
- *     (FK de auto-referência — válido e sem custo de storage extra).
+ *   startMatchAction()       → valida squad, roda o 1º tempo, PAUSA.
+ *   applySubstitutionAction() → troca titular↔reserva no estado pausado.
+ *   applyTacticAction()       → muda mentalidade no estado pausado.
+ *   continueMatchAction()     → roda o resto, credita/persiste/atualiza
+ *                                missões — só agora, depois da decisão
+ *                                do usuário (antes rodava tudo de uma vez
+ *                                em `playMatchAction`, que não existe mais).
+ *
+ * `applySubstitutionAction`/`applyTacticAction` são puras (não tocam
+ * Supabase) — o estado inteiro da simulação viaja no round-trip
+ * client↔server (ver `MatchProgressState`, 100% serializável).
  */
-export async function playMatchAction(opponentId: string): Promise<PlayMatchResult> {
-  const userId = await getAuthenticatedUserId();
-  if (!userId) return { ok: false, error: 'Não autenticado.' };
 
-  const opponent = MATCH_OPPONENTS.find((o) => o.id === opponentId) ?? MATCH_OPPONENTS[0]!;
-  const seed = Date.now();
+function resolveOpponent(opponentId: string): MatchOpponent {
+  // biome-ignore lint/style/noNonNullAssertion: MATCH_OPPONENTS is a non-empty static array
+  return MATCH_OPPONENTS.find((o) => o.id === opponentId) ?? MATCH_OPPONENTS[0]!;
+}
 
-  const [activeSquad, userCards] = await Promise.all([
-    getUserActiveSquad(userId),
-    getUserCollection(userId),
-  ]);
+// ─── Finalização compartilhada (recompensas + persistência + missões) ────────
 
-  // Construir escalação real a partir do squad salvo no banco.
-  // Usamos playerId como identificador na simulação (compatível com a
-  // lógica interna de runMatch que busca cartas por playerId).
-  let lineup: Array<{ slotId: string; cardId: string }> | undefined;
-  if (activeSquad && activeSquad.slots.length > 0) {
-    const cardByUserCardId = new Map(
-      userCards.filter((c) => c.userCardId).map((c) => [c.userCardId!, c]),
-    );
-    const starters = activeSquad.slots
-      .filter((s) => s.isStarter)
-      .map((s) => {
-        const card = cardByUserCardId.get(s.userCardId);
-        return card ? { slotId: s.slotId, cardId: card.playerId } : null;
-      })
-      .filter((x): x is { slotId: string; cardId: string } => x !== null);
-    if (starters.length > 0) lineup = starters;
-  }
-
-  // Simulação pura — determinística por seed
-  const display = runMatch(opponent, seed, lineup);
-
+async function finalizeMatch(input: {
+  userId: string;
+  display: MatchDisplay;
+  opponent: MatchOpponent;
+  activeSquad: SavedSquad | null;
+  seed: number;
+  playedCardIds: string[];
+}): Promise<PlayMatchResult> {
+  const { userId, display, opponent, activeSquad, seed, playedCardIds } = input;
   const db = getServiceDb();
   let matchId = '';
   let newBalance = 0;
 
   try {
-    // Creditar recompensas independentemente da persistência da partida
     const profileRepo = new SupabaseProfileRepository(db);
     const creditResult = await profileRepo.creditSoftCurrency(userId, display.rewards.credits);
     if (creditResult.ok) newBalance = creditResult.value;
 
-    // Registrar partida — apenas se o usuário tiver squad ativo.
-    // away_squad_id = home_squad_id por auto-referência (sem criar rows órfãs).
     if (activeSquad?.id) {
       const matchRepo = new SupabaseMatchRepository(db);
       const matchRow = await matchRepo.create({
@@ -101,12 +105,8 @@ export async function playMatchAction(opponentId: string): Promise<PlayMatchResu
     // Persistência falhou — resultado da simulação ainda é válido
   }
 
-  // Atualizar progresso de missões de forma assíncrona (não bloqueia a resposta)
   const homeGoals = display.homeScore;
   const outcome = display.winner;
-
-  // Card IDs that played the match (for mastery XP)
-  const playedCardIds = lineup ? lineup.map((s) => s.cardId) : [];
 
   void (async () => {
     try {
@@ -123,23 +123,153 @@ export async function playMatchAction(opponentId: string): Promise<PlayMatchResu
         await incrementMissionProgressInternal(userId, 'draws', 1);
       }
 
-      // Award mastery XP to all cards that played
       const xpSources: import('@world-legends/card-mastery').XpGainSource[] = ['match_played'];
       if (outcome === 'home') xpSources.push('match_win');
       if (homeGoals > 0) xpSources.push('goal');
       await awardMatchXpInternal(userId, playedCardIds, xpSources);
 
-      // Check and unlock Xbox-style achievements
       await checkAndUnlockAchievementsInternal(userId);
     } catch (e) {
       crash.captureError(e, {
         context: 'match_post_game_background',
         userId,
-        extras: { opponentId, outcome, homeGoals },
+        extras: { opponentId: opponent.id, outcome, homeGoals },
         level: 'warning',
       });
     }
   })();
 
   return { ok: true, display, opponent, matchId, newBalance };
+}
+
+// ─── 1. Iniciar partida — valida squad, roda 1º tempo, pausa ─────────────────
+
+export async function startMatchAction(
+  opponentId: string,
+  difficulty: MatchDifficulty,
+): Promise<StartMatchResult> {
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return { ok: false, code: 'AUTH', error: 'Não autenticado.' };
+
+  const opponent = resolveOpponent(opponentId);
+  const [activeSquad, userCards] = await Promise.all([
+    getUserActiveSquad(userId),
+    getUserCollection(userId),
+  ]);
+
+  // Prioridade 0 (Sprint 26): sem squad válido, bloqueia — nunca cai
+  // pra um XI fixo hardcoded.
+  const teamResult = buildUserTeamSnapshot(activeSquad, userCards);
+  if (!teamResult.ok) {
+    return {
+      ok: false,
+      code: teamResult.code,
+      error: teamResult.errors[0] ?? 'Squad inválido.',
+      errors: teamResult.errors,
+    };
+  }
+
+  const ai = buildAiTeamSnapshot(opponent);
+  const seed = Date.now();
+
+  const outcome = startMatchSimulation({
+    home: teamResult.snapshot,
+    away: ai.snapshot,
+    seed,
+    difficulty,
+    opponent,
+    userCards,
+    aiCardIds: ai.aiCardIds,
+  });
+
+  if (outcome.kind === 'walkover') {
+    const playedCardIds = teamResult.lineup
+      .map((p) => p.userCardId)
+      .filter((id): id is string => Boolean(id));
+    const result = await finalizeMatch({
+      userId,
+      display: outcome.display,
+      opponent,
+      activeSquad,
+      seed,
+      playedCardIds,
+    });
+    return { ok: true, kind: 'finished', result };
+  }
+
+  const halftime = buildHalftimeDisplay(outcome.state, opponent, userCards, ai.aiCardIds);
+  return { ok: true, kind: 'halftime', state: outcome.state, halftime, opponent };
+}
+
+// ─── 2. Substituição no intervalo (pura) ─────────────────────────────────────
+
+export async function applySubstitutionAction(
+  state: MatchProgressState,
+  opponentId: string,
+  outgoingUserCardId: string,
+  incomingUserCardId: string,
+): Promise<HalftimeActionResult> {
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return { ok: false, error: 'Não autenticado.' };
+
+  const sub = applyHalftimeSubstitution(state, outgoingUserCardId, incomingUserCardId);
+  if (!sub.ok) return { ok: false, error: sub.error };
+
+  const opponent = resolveOpponent(opponentId);
+  const userCards = await getUserCollection(userId);
+  const ai = buildAiTeamSnapshot(opponent);
+  const halftime = buildHalftimeDisplay(sub.state, opponent, userCards, ai.aiCardIds);
+  return { ok: true, state: sub.state, halftime };
+}
+
+// ─── 3. Trocar tática no intervalo (pura) ────────────────────────────────────
+
+export async function applyTacticAction(
+  state: MatchProgressState,
+  opponentId: string,
+  intensity: TacticalIntensity,
+): Promise<HalftimeActionResult> {
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return { ok: false, error: 'Não autenticado.' };
+
+  const next = applyHalftimeTactic(state, intensity);
+  const opponent = resolveOpponent(opponentId);
+  const userCards = await getUserCollection(userId);
+  const ai = buildAiTeamSnapshot(opponent);
+  const halftime = buildHalftimeDisplay(next, opponent, userCards, ai.aiCardIds);
+  return { ok: true, state: next, halftime };
+}
+
+// ─── 4. Continuar — roda o resto, credita/persiste/atualiza missões ─────────
+
+export async function continueMatchAction(
+  state: MatchProgressState,
+  opponentId: string,
+  difficulty: MatchDifficulty,
+): Promise<PlayMatchResult> {
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return { ok: false, error: 'Não autenticado.' };
+
+  const opponent = resolveOpponent(opponentId);
+  const [activeSquad, userCards] = await Promise.all([
+    getUserActiveSquad(userId),
+    getUserCollection(userId),
+  ]);
+  const ai = buildAiTeamSnapshot(opponent);
+
+  // Lendário: a IA reage no intervalo (tática + 1 substituição) — aplicado
+  // aqui, exatamente antes de rodar o resto da partida.
+  const reactedState = applyLegendaryAiHalftimeReaction(state, difficulty);
+  const display = finishMatchSimulation(reactedState, opponent, userCards, ai.aiCardIds);
+
+  const playedCardIds = reactedState.home.fieldPlayers.map((fp) => fp.player.userCardId);
+
+  return finalizeMatch({
+    userId,
+    display,
+    opponent,
+    activeSquad,
+    seed: Number(reactedState.seed.value) || Date.now(),
+    playedCardIds,
+  });
 }

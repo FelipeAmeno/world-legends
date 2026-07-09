@@ -12,8 +12,13 @@ export { openPackAction } from './packs';
 export type { SaveSquadInput, SaveSquadResult, SquadSlotInput } from './squad.types';
 export { saveSquad } from './squad';
 
-export type { PlayMatchResult } from './match.types';
-export { playMatchAction } from './match';
+export type { HalftimeActionResult, PlayMatchResult, StartMatchResult } from './match.types';
+export {
+  applySubstitutionAction,
+  applyTacticAction,
+  continueMatchAction,
+  startMatchAction,
+} from './match';
 
 export type { MissionsData, ClaimMissionResult, MissionView, MissionDef } from './missions.types';
 export { getMissionsAction, claimMissionRewardAction } from './missions';

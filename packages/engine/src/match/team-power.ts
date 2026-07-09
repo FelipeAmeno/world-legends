@@ -51,7 +51,19 @@ const SECTOR_BY_POSITION: Readonly<Record<Position, Sector>> = {
   ST: 'attack',
 };
 
-/** doc 09 §14 — colunas "Modificador ataque/meio/defesa" da tabela de táticas (a coluna de fadiga já está em `fatigue.ts`, T008). */
+/**
+ * doc 09 §14 — colunas "Modificador ataque/meio/defesa" da tabela de
+ * táticas (a coluna de fadiga já está em `fatigue.ts`, T008).
+ *
+ * `pressao_alta`/`contra_ataque` (Sprint 26, decisão própria — sem
+ * tabela documentada, mesmo padrão das demais linhas): pressão alta
+ * ataca o meio-campo do adversário para recuperar a bola rápido —
+ * ganho real em meio e ataque (transição), defesa um pouco mais aberta
+ * (linha alta = espaço nas costas); contra-ataque é o oposto de
+ * ultra_ofensivo com a MESMA filosofia "poucos, mas letais": defesa
+ * sólida (absorve pressão), ataque afiado nas raras posses, meio-campo
+ * sacrificado (não tenta controlar o jogo).
+ */
 const TACTICAL_SECTOR_MODIFIER: Readonly<
   Record<TacticalIntensity, Readonly<{ attack: number; midfield: number; defense: number }>>
 > = {
@@ -60,6 +72,8 @@ const TACTICAL_SECTOR_MODIFIER: Readonly<
   equilibrado: { attack: 1.0, midfield: 1.0, defense: 1.0 },
   ofensivo: { attack: 1.15, midfield: 0.95, defense: 0.85 },
   ultra_ofensivo: { attack: 1.3, midfield: 0.85, defense: 0.65 },
+  pressao_alta: { attack: 1.1, midfield: 1.15, defense: 0.9 },
+  contra_ataque: { attack: 1.1, midfield: 0.8, defense: 1.1 },
 };
 
 /** doc 09 §9. */

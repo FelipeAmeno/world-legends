@@ -14,6 +14,7 @@ import {
 } from '../events/events';
 import type { MatchEvent, TeamSide } from '../events/types';
 import { applyFatigueToAttribute, calculateIntraMatchFatigue } from '../fatigue/fatigue';
+import type { TacticalIntensity } from '../fatigue/types';
 import {
   INJURY_CHANCE_FOUL_VICTIM,
   applyIronManRiskReduction,
@@ -32,10 +33,19 @@ import {
  * A explicação completa da arquitetura, decisões de síntese e o que
  * ficou fora desta primeira versão está na resposta de texto desta
  * tarefa — aqui, só os comentários pontuais de cada decisão.
+ *
+ * Sprint 26 (Gameplay Foundation) — refatorado para expor um ponto de
+ * pausa no intervalo (`simulateFirstHalf`/`simulateRestOfMatch`) sem
+ * mudar NADA do comportamento de `simulateMatch`: é literalmente a
+ * mesma sequência de operações, só reorganizada em `createRuntime`
+ * (construção do estado) + `runMinuteRange` (o loop, hoje chamado duas
+ * vezes — 1-45 e 46-90/120 — em vez de uma vez só 1-90/120). Os testes
+ * de regressão/determinismo (`match.regression.test.ts`,
+ * `match.determinism.test.ts`) validam que isso continua byte-idêntico.
  */
 import { calculateOverall } from '../overall/overall';
 import type { Position } from '../position';
-import type { RNGInstance, WeightedItem } from '../rng/rng';
+import { type RNGInstance, type WeightedItem, restoreRNG } from '../rng/rng';
 import { getRefereeCardMultiplier, resolveFoulCardOutcome, rollRefereeProfile } from './cards';
 import { calculateGoalProbability, selectAssister, selectShooter } from './goal';
 import { simulatePenaltyShootout } from './shootout';
@@ -55,9 +65,16 @@ import {
   calculateTeamPower,
 } from './team-power';
 import type {
+  FirstHalfOutcome,
   MatchContext,
   MatchPlayer,
+  MatchProgressState,
   MatchResult,
+  MatchRngStreams,
+  RefereeProfile,
+  SerializedFieldPlayer,
+  SerializedRngState,
+  SerializedSideState,
   SideStats,
   StartingSlot,
   TeamSnapshot,
@@ -208,55 +225,151 @@ function weightedSideChoice(homePower: number, awayPower: number, rng: RNGInstan
   return rng.nextFloat() < homePower / total ? 'home' : 'away';
 }
 
-/**
- * Função principal. Lança erro só em entradas estruturalmente
- * inválidas (ex: sem goleiro) — nunca em "resultado esportivo
- * indesejado" (gol, lesão, etc., que são resultados válidos do sorteio).
- */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: match simulation orchestrates all event types and requires complex state tracking
-export function simulateMatch(input: {
-  home: TeamSnapshot;
-  away: TeamSnapshot;
-  context: MatchContext;
-  seed: Seed;
-}): MatchResult {
-  const streams = initializeMatchRngStreams(input.seed);
-  const isNeutralVenue = input.context.isNeutralVenue ?? false;
+const MAKESHIFT_GOALKEEPER_QUALITY = 20;
 
-  const weather = rollWeather(streams.weather);
-  const refereeProfile = rollRefereeProfile(streams.events);
+// ─── Serialização (Sprint 26) ──────────────────────────────────────────────────
 
-  const events: MatchEvent[] = [createKickoffEvent('Bola rolando!')];
-  const stats: { home: SideStats; away: SideStats } = {
-    home: emptySideStats(),
-    away: emptySideStats(),
+function serializeFieldPlayer(fp: FieldPlayerState): SerializedFieldPlayer {
+  return {
+    slotId: fp.slotId,
+    formationPosition: fp.formationPosition,
+    player: fp.player,
+    enteredAtMinute: fp.enteredAtMinute,
+    hasYellowCard: fp.hasYellowCard,
+    foulsThisMatch: fp.foulsThisMatch,
   };
+}
 
-  const runtimes: Record<TeamSide, SideRuntime> = {
-    home: {
-      side: 'home',
-      snapshot: input.home,
-      fieldPlayers: buildInitialFieldPlayers(input.home),
-      benchRemaining: [...input.home.bench],
-      substitutionsUsed: 0,
-      substitutionWindowsUsed: 0,
-      morale: isNeutralVenue ? 0 : HOME_ADVANTAGE_MORALE_BONUS,
-    },
-    away: {
-      side: 'away',
-      snapshot: input.away,
-      fieldPlayers: buildInitialFieldPlayers(input.away),
-      benchRemaining: [...input.away.bench],
-      substitutionsUsed: 0,
-      substitutionWindowsUsed: 0,
-      morale: 0,
-    },
+function serializeSide(runtime: SideRuntime): SerializedSideState {
+  return {
+    fieldPlayers: runtime.fieldPlayers.map(serializeFieldPlayer),
+    benchRemaining: runtime.benchRemaining,
+    substitutionsUsed: runtime.substitutionsUsed,
+    substitutionWindowsUsed: runtime.substitutionWindowsUsed,
+    morale: runtime.morale,
+    adjacentPairs: runtime.snapshot.adjacentPairs,
+    tacticalIntensity: runtime.snapshot.tacticalIntensity,
+    isHomeTeam: runtime.snapshot.isHomeTeam,
   };
+}
 
-  let homeScore = 0;
-  let awayScore = 0;
-  let eventMinutesCounted = 0;
-  let eventMinutesFavoringHome = 0;
+function deserializeSide(side: TeamSide, serialized: SerializedSideState): SideRuntime {
+  const fieldPlayers: FieldPlayerState[] = serialized.fieldPlayers.map((fp) => ({
+    slotId: fp.slotId,
+    formationPosition: fp.formationPosition,
+    player: fp.player,
+    enteredAtMinute: fp.enteredAtMinute,
+    hasYellowCard: fp.hasYellowCard,
+    foulsThisMatch: fp.foulsThisMatch,
+  }));
+  const snapshot: TeamSnapshot = {
+    starters: toStartingSlots(fieldPlayers),
+    bench: serialized.benchRemaining,
+    adjacentPairs: serialized.adjacentPairs,
+    tacticalIntensity: serialized.tacticalIntensity,
+    isHomeTeam: serialized.isHomeTeam,
+  };
+  return {
+    side,
+    snapshot,
+    fieldPlayers,
+    benchRemaining: [...serialized.benchRemaining],
+    substitutionsUsed: serialized.substitutionsUsed,
+    substitutionWindowsUsed: serialized.substitutionWindowsUsed,
+    morale: serialized.morale,
+  };
+}
+
+// ─── createRuntime — o motor de simulação em si ───────────────────────────────
+//
+// Toda a lógica que antes vivia direto dentro de `simulateMatch` agora
+// mora aqui, INALTERADA — só passou a ser parametrizável por um estado
+// inicial "fresco" (kickoff) ou "restaurado" (retomando do intervalo).
+
+type RuntimeInit =
+  | Readonly<{
+      kind: 'fresh';
+      home: TeamSnapshot;
+      away: TeamSnapshot;
+      context: MatchContext;
+      seed: Seed;
+    }>
+  | Readonly<{ kind: 'resume'; state: MatchProgressState }>;
+
+function createRuntime(init: RuntimeInit) {
+  let seed: Seed;
+  let context: MatchContext;
+  let streams: MatchRngStreams;
+  let weather: Weather;
+  let refereeProfile: RefereeProfile;
+  const events: MatchEvent[] = [];
+  let stats: { home: SideStats; away: SideStats };
+  let runtimes: Record<TeamSide, SideRuntime>;
+  let homeScore: number;
+  let awayScore: number;
+  let eventMinutesCounted: number;
+  let eventMinutesFavoringHome: number;
+
+  if (init.kind === 'fresh') {
+    seed = init.seed;
+    context = init.context;
+    streams = initializeMatchRngStreams(seed);
+    weather = rollWeather(streams.weather);
+    refereeProfile = rollRefereeProfile(streams.events);
+    events.push(createKickoffEvent('Bola rolando!'));
+    stats = { home: emptySideStats(), away: emptySideStats() };
+    const isNeutralVenueInit = context.isNeutralVenue ?? false;
+    runtimes = {
+      home: {
+        side: 'home',
+        snapshot: init.home,
+        fieldPlayers: buildInitialFieldPlayers(init.home),
+        benchRemaining: [...init.home.bench],
+        substitutionsUsed: 0,
+        substitutionWindowsUsed: 0,
+        morale: isNeutralVenueInit ? 0 : HOME_ADVANTAGE_MORALE_BONUS,
+      },
+      away: {
+        side: 'away',
+        snapshot: init.away,
+        fieldPlayers: buildInitialFieldPlayers(init.away),
+        benchRemaining: [...init.away.bench],
+        substitutionsUsed: 0,
+        substitutionWindowsUsed: 0,
+        morale: 0,
+      },
+    };
+    homeScore = 0;
+    awayScore = 0;
+    eventMinutesCounted = 0;
+    eventMinutesFavoringHome = 0;
+  } else {
+    const s = init.state;
+    seed = s.seed;
+    context = s.context;
+    streams = {
+      events: restoreRNG(s.rngState.events),
+      weather: restoreRNG(s.rngState.weather),
+      cards: restoreRNG(s.rngState.cards),
+      injuries: restoreRNG(s.rngState.injuries),
+      narrative: restoreRNG(s.rngState.narrative),
+      penaltyTiebreak: restoreRNG(s.rngState.penaltyTiebreak),
+    };
+    weather = s.weather;
+    refereeProfile = s.refereeProfile;
+    events.push(...s.events);
+    stats = { home: s.stats.home, away: s.stats.away };
+    runtimes = {
+      home: deserializeSide('home', s.home),
+      away: deserializeSide('away', s.away),
+    };
+    homeScore = s.homeScore;
+    awayScore = s.awayScore;
+    eventMinutesCounted = s.eventMinutesCounted;
+    eventMinutesFavoringHome = s.eventMinutesFavoringHome;
+  }
+
+  const isNeutralVenue = context.isNeutralVenue ?? false;
 
   function opposite(side: TeamSide): TeamSide {
     return side === 'home' ? 'away' : 'home';
@@ -285,7 +398,7 @@ export function simulateMatch(input: {
       runtime.snapshot.tacticalIntensity,
       weather,
     );
-    return calculateTeamPower({
+    const base = calculateTeamPower({
       starters: toStartingSlots(runtime.fieldPlayers),
       tacticalIntensity: runtime.snapshot.tacticalIntensity,
       chemistry,
@@ -295,6 +408,13 @@ export function simulateMatch(input: {
       isNeutralVenue,
       averageFatiguePoints: averageFatigue,
     });
+    // Sprint 26: dificuldade de IA — ajuste percentual de comportamento,
+    // independente do OVR base do time (ver AiDifficultyModifier).
+    if (side === 'away' && context.awayAiDifficulty) {
+      const modifier = 1 + context.awayAiDifficulty.powerModifierPercent / 100;
+      return Math.min(99, Math.max(1, base * modifier));
+    }
+    return base;
   }
 
   function sectorStrengthOf(side: TeamSide, sector: 'attack' | 'defense', minute: number): number {
@@ -316,17 +436,6 @@ export function simulateMatch(input: {
     }, 0);
     return total / inSector.length;
   }
-
-  /**
-   * doc 09 §13 é explícito: vermelho NUNCA gera substituição. Isso
-   * significa que um goleiro expulso deixa o time sem ninguém
-   * formalmente na meta — cenário real (jogador de linha improvisa de
-   * goleiro), mas sem NENHUMA fórmula documentada para isso. Decisão
-   * própria, claramente sinalizada: nesse caso uso uma "qualidade de
-   * goleiro de circunstância" fixa e baixa, em vez de travar a
-   * simulação ou inventar uma fórmula de conversão jogador-em-goleiro.
-   */
-  const MAKESHIFT_GOALKEEPER_QUALITY = 20;
 
   function findGoalkeeperDefenseAttributes(side: TeamSide): {
     gk_reflexes: number;
@@ -642,64 +751,21 @@ export function simulateMatch(input: {
     return 'continue';
   }
 
-  for (let minute = 1; minute <= 90; minute += 1) {
-    if (minute === 46) {
-      const result = createHalfTimeEvent(46, 'Fim do primeiro tempo.');
-      events.push(result);
+  function runMinuteRange(fromMinute: number, toMinute: number): 'walkover' | 'completed' {
+    for (let minute = fromMinute; minute <= toMinute; minute += 1) {
+      if (runMinute(minute) === 'walkover') return 'walkover';
     }
-    if (runMinute(minute) === 'walkover') {
-      return buildWalkoverResult(
-        fieldCount('home') < 7 ? 'home' : 'away',
-        // biome-ignore lint/style/noNonNullAssertion: events is non-empty (at least minute-1 pushed)
-        events[events.length - 1]!.minute,
-        Math.min(fieldCount('home'), fieldCount('away')),
-      );
-    }
+    return 'completed';
   }
 
-  events.push(createFullTimeEvent(90, 'Fim de jogo (90 minutos).'));
-
-  let penaltyShootout: MatchResult['penaltyShootout'];
-  if (homeScore === awayScore && input.context.requiresWinner) {
-    for (let minute = 91; minute <= 120; minute += 1) {
-      if (runMinute(minute) === 'walkover') {
-        return buildWalkoverResult(
-          fieldCount('home') < 7 ? 'home' : 'away',
-          // biome-ignore lint/style/noNonNullAssertion: events is non-empty (at least minute-1 pushed)
-          events[events.length - 1]!.minute,
-          Math.min(fieldCount('home'), fieldCount('away')),
-        );
-      }
-    }
-    events.push(createFullTimeEvent(120, 'Fim da prorrogação.'));
-
-    if (homeScore === awayScore) {
-      const shootout = simulatePenaltyShootout({
-        home: { starters: toStartingSlots(runtimes.home.fieldPlayers) },
-        away: { starters: toStartingSlots(runtimes.away.fieldPlayers) },
-        eventsRng: streams.events,
-        penaltyTiebreakRng: streams.penaltyTiebreak,
-      });
-      penaltyShootout = {
-        homeScore: shootout.homeScore,
-        awayScore: shootout.awayScore,
-        totalRounds: shootout.totalRounds,
-        resolvedBySeedTiebreak: shootout.resolvedBySeedTiebreak,
-      };
-    }
+  function walkoverAffectedSide(): TeamSide {
+    return fieldCount('home') < MINIMUM_PLAYERS_ON_FIELD ? 'home' : 'away';
   }
 
-  if (eventMinutesCounted > 0) {
-    const homePossession = (eventMinutesFavoringHome / eventMinutesCounted) * 100;
-    stats.home = { ...stats.home, possessionPercent: homePossession };
-    stats.away = { ...stats.away, possessionPercent: 100 - homePossession };
-  }
-
-  function buildWalkoverResult(
-    affectedSide: TeamSide,
-    minute: number,
-    remainingPlayers: number,
-  ): MatchResult {
+  function buildWalkoverResult(): MatchResult {
+    const affectedSide = walkoverAffectedSide();
+    // biome-ignore lint/style/noNonNullAssertion: events is non-empty (at least kickoff pushed)
+    const lastEvent = events[events.length - 1]!;
     return {
       homeScore,
       awayScore,
@@ -708,22 +774,283 @@ export function simulateMatch(input: {
       mvpUserCardId: calculateMvp(events),
       weather,
       refereeProfile,
-      walkover: { affectedTeamSide: affectedSide, minute, remainingPlayers },
-      seed: input.seed,
+      walkover: {
+        affectedTeamSide: affectedSide,
+        minute: lastEvent.minute,
+        remainingPlayers: Math.min(fieldCount('home'), fieldCount('away')),
+      },
+      seed,
       engineVersion: ENGINE_VERSION,
     };
   }
 
+  function finalizePossession(): void {
+    if (eventMinutesCounted > 0) {
+      const homePossession = (eventMinutesFavoringHome / eventMinutesCounted) * 100;
+      stats.home = { ...stats.home, possessionPercent: homePossession };
+      stats.away = { ...stats.away, possessionPercent: 100 - homePossession };
+    }
+  }
+
+  /** Roda 91→120 (prorrogação, se aplicável) + pênaltis, e monta o `MatchResult` final. */
+  function finalizeFullTime(): MatchResult {
+    events.push(createFullTimeEvent(90, 'Fim de jogo (90 minutos).'));
+
+    let penaltyShootout: MatchResult['penaltyShootout'];
+    if (homeScore === awayScore && context.requiresWinner) {
+      if (runMinuteRange(91, 120) === 'walkover') {
+        return buildWalkoverResult();
+      }
+      events.push(createFullTimeEvent(120, 'Fim da prorrogação.'));
+
+      if (homeScore === awayScore) {
+        const shootout = simulatePenaltyShootout({
+          home: { starters: toStartingSlots(runtimes.home.fieldPlayers) },
+          away: { starters: toStartingSlots(runtimes.away.fieldPlayers) },
+          eventsRng: streams.events,
+          penaltyTiebreakRng: streams.penaltyTiebreak,
+        });
+        penaltyShootout = {
+          homeScore: shootout.homeScore,
+          awayScore: shootout.awayScore,
+          totalRounds: shootout.totalRounds,
+          resolvedBySeedTiebreak: shootout.resolvedBySeedTiebreak,
+        };
+      }
+    }
+
+    finalizePossession();
+
+    return {
+      homeScore,
+      awayScore,
+      events,
+      stats,
+      mvpUserCardId: calculateMvp(events),
+      weather,
+      refereeProfile,
+      ...(penaltyShootout !== undefined ? { penaltyShootout } : {}),
+      seed,
+      engineVersion: ENGINE_VERSION,
+    };
+  }
+
+  function snapshot(nextMinute: number): MatchProgressState {
+    const rngState: SerializedRngState = {
+      events: streams.events.getState(),
+      weather: streams.weather.getState(),
+      cards: streams.cards.getState(),
+      injuries: streams.injuries.getState(),
+      narrative: streams.narrative.getState(),
+      penaltyTiebreak: streams.penaltyTiebreak.getState(),
+    };
+    return {
+      nextMinute,
+      homeScore,
+      awayScore,
+      stats,
+      events,
+      weather,
+      refereeProfile,
+      eventMinutesCounted,
+      eventMinutesFavoringHome,
+      home: serializeSide(runtimes.home),
+      away: serializeSide(runtimes.away),
+      rngState,
+      seed,
+      context,
+      engineVersion: ENGINE_VERSION,
+    };
+  }
+
+  /**
+   * Substituição MANUAL/tática (Sprint 26) — o usuário escolhe o reserva
+   * que entra (diferente de `tryForcedSubstitution`, que escolhe
+   * automaticamente por lesão/fadiga). Compartilha o MESMO limite de 5
+   * (`MAX_SUBSTITUTIONS`) e a mesma contagem — regra real de futebol:
+   * substituições táticas e forçadas saem do mesmo total.
+   */
+  function applyManualSubstitution(
+    side: TeamSide,
+    outgoingUserCardId: string,
+    incomingUserCardId: string,
+    minute: number,
+  ): { ok: true } | { ok: false; error: string } {
+    const runtime = runtimes[side];
+    if (runtime.substitutionsUsed >= MAX_SUBSTITUTIONS) {
+      return { ok: false, error: 'Limite de 5 substituições já atingido.' };
+    }
+    const outgoing = runtime.fieldPlayers.find((fp) => fp.player.userCardId === outgoingUserCardId);
+    if (outgoing === undefined) {
+      return { ok: false, error: 'Jogador titular não encontrado em campo.' };
+    }
+    const replacement = runtime.benchRemaining.find((p) => p.userCardId === incomingUserCardId);
+    if (replacement === undefined) {
+      return { ok: false, error: 'Reserva não encontrado no banco.' };
+    }
+
+    runtime.fieldPlayers = runtime.fieldPlayers.map((fp) =>
+      fp.player.userCardId === outgoingUserCardId
+        ? {
+            slotId: fp.slotId,
+            formationPosition: fp.formationPosition,
+            player: replacement,
+            enteredAtMinute: minute,
+            hasYellowCard: false,
+            foulsThisMatch: 0,
+          }
+        : fp,
+    );
+    runtime.benchRemaining = runtime.benchRemaining.filter(
+      (p) => p.userCardId !== replacement.userCardId,
+    );
+    runtime.substitutionsUsed += 1;
+
+    const result = createSubstitutionEvent({
+      minute,
+      teamSide: side,
+      playerOutUserCardId: outgoingUserCardId,
+      playerInUserCardId: replacement.userCardId,
+      reason: 'tactical',
+      description: `${minute}' Substituição tática.`,
+    });
+    if (result.ok) events.push(result.value);
+    return { ok: true };
+  }
+
+  /** Troca a mentalidade tática de um lado a partir de agora — Sprint 26. */
+  function setTacticalIntensity(side: TeamSide, intensity: TacticalIntensity): void {
+    runtimes[side].snapshot = { ...runtimes[side].snapshot, tacticalIntensity: intensity };
+  }
+
   return {
-    homeScore,
-    awayScore,
-    events,
-    stats,
-    mvpUserCardId: calculateMvp(events),
-    weather,
-    refereeProfile,
-    ...(penaltyShootout !== undefined ? { penaltyShootout } : {}),
-    seed: input.seed,
-    engineVersion: ENGINE_VERSION,
+    runMinuteRange,
+    buildWalkoverResult,
+    finalizeFullTime,
+    snapshot,
+    applyManualSubstitution,
+    setTacticalIntensity,
+    pushHalfTimeEvent(minute: number): void {
+      events.push(createHalfTimeEvent(minute, 'Fim do primeiro tempo.'));
+    },
+    getBenchRemaining(side: TeamSide): readonly MatchPlayer[] {
+      return runtimes[side].benchRemaining;
+    },
+    getFieldPlayers(side: TeamSide): readonly FieldPlayerState[] {
+      return runtimes[side].fieldPlayers;
+    },
+    getSubstitutionsUsed(side: TeamSide): number {
+      return runtimes[side].substitutionsUsed;
+    },
+    getScore(): { home: number; away: number } {
+      return { home: homeScore, away: awayScore };
+    },
+    getStats(): { home: SideStats; away: SideStats } {
+      return stats;
+    },
   };
+}
+
+// ─── API pública ────────────────────────────────────────────────────────────
+
+/**
+ * Função principal. Lança erro só em entradas estruturalmente
+ * inválidas (ex: sem goleiro) — nunca em "resultado esportivo
+ * indesejado" (gol, lesão, etc., que são resultados válidos do sorteio).
+ */
+export function simulateMatch(input: {
+  home: TeamSnapshot;
+  away: TeamSnapshot;
+  context: MatchContext;
+  seed: Seed;
+}): MatchResult {
+  const runtime = createRuntime({
+    kind: 'fresh',
+    home: input.home,
+    away: input.away,
+    context: input.context,
+    seed: input.seed,
+  });
+  if (runtime.runMinuteRange(1, 45) === 'walkover') return runtime.buildWalkoverResult();
+  runtime.pushHalfTimeEvent(46);
+  if (runtime.runMinuteRange(46, 90) === 'walkover') return runtime.buildWalkoverResult();
+  return runtime.finalizeFullTime();
+}
+
+/**
+ * Simula só o primeiro tempo (1-45) — Sprint 26 (Gameplay Foundation).
+ * Se W.O. for declarado antes do intervalo, já retorna o `MatchResult`
+ * final (`kind: 'walkover'`); caso contrário retorna um
+ * `MatchProgressState` 100% serializável, pronto para (a) exibir no
+ * intervalo (placar parcial, estatísticas, banco disponível) e (b)
+ * viajar por um round-trip stateless até `simulateRestOfMatch`.
+ */
+export function simulateFirstHalf(input: {
+  home: TeamSnapshot;
+  away: TeamSnapshot;
+  context: MatchContext;
+  seed: Seed;
+}): FirstHalfOutcome {
+  const runtime = createRuntime({
+    kind: 'fresh',
+    home: input.home,
+    away: input.away,
+    context: input.context,
+    seed: input.seed,
+  });
+  if (runtime.runMinuteRange(1, 45) === 'walkover') {
+    return { kind: 'walkover', result: runtime.buildWalkoverResult() };
+  }
+  runtime.pushHalfTimeEvent(46);
+  return { kind: 'halftime', state: runtime.snapshot(46) };
+}
+
+/**
+ * Retoma de um `MatchProgressState` (produzido por `simulateFirstHalf`,
+ * opcionalmente já alterado por `applyManualSubstitution`/
+ * `applyTacticalIntensity`) e simula até o fim — segundo tempo,
+ * prorrogação e pênaltis se necessário. Sprint 26.
+ */
+export function simulateRestOfMatch(state: MatchProgressState): MatchResult {
+  const runtime = createRuntime({ kind: 'resume', state });
+  if (runtime.runMinuteRange(state.nextMinute, 90) === 'walkover') {
+    return runtime.buildWalkoverResult();
+  }
+  return runtime.finalizeFullTime();
+}
+
+/**
+ * Aplica uma substituição tática decidida pelo usuário/IA no intervalo,
+ * retornando um NOVO `MatchProgressState` (a função é pura — não muta
+ * `state`). Sprint 26.
+ */
+export function applyManualSubstitution(
+  state: MatchProgressState,
+  side: TeamSide,
+  outgoingUserCardId: string,
+  incomingUserCardId: string,
+): { ok: true; state: MatchProgressState } | { ok: false; error: string } {
+  const runtime = createRuntime({ kind: 'resume', state });
+  const result = runtime.applyManualSubstitution(
+    side,
+    outgoingUserCardId,
+    incomingUserCardId,
+    state.nextMinute,
+  );
+  if (!result.ok) return result;
+  return { ok: true, state: runtime.snapshot(state.nextMinute) };
+}
+
+/**
+ * Aplica uma nova mentalidade tática a um lado a partir do próximo
+ * minuto, retornando um NOVO `MatchProgressState` (pura). Sprint 26.
+ */
+export function applyTacticalIntensity(
+  state: MatchProgressState,
+  side: TeamSide,
+  intensity: TacticalIntensity,
+): MatchProgressState {
+  const runtime = createRuntime({ kind: 'resume', state });
+  runtime.setTacticalIntensity(side, intensity);
+  return runtime.snapshot(state.nextMinute);
 }

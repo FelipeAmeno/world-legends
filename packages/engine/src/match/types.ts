@@ -57,10 +57,30 @@ export type TeamSnapshot = Readonly<{
   isHomeTeam: boolean;
 }>;
 
+/**
+ * Modificador de dificuldade da IA (Sprint 26 — Gameplay Foundation).
+ * Diferente do `avgOvr` do oponente (que já define a FORÇA base), isto
+ * afeta COMPORTAMENTO: aplicado como um ajuste percentual direto sobre o
+ * Team Power do lado marcado como controlado por IA a cada minuto —
+ * "Fácil" comete mais erros (força efetiva reduzida = mais bolas
+ * perdidas/finalizações desperdiçadas), "Difícil" pressiona melhor
+ * (força efetiva aumentada, sobretudo pesa mais quando a IA está
+ * defendendo). "Lendário" usa o mesmo `powerModifierPercent` de
+ * "Difícil" MAS além disso reage no intervalo (troca de tática +
+ * substituição) — essa parte não vive aqui no engine, é orquestrada por
+ * quem chama `applyTacticalIntensity`/`applyManualSubstitution` entre
+ * as duas metades (ver `apps/web/lib/match-session.ts`).
+ */
+export type AiDifficultyModifier = Readonly<{
+  powerModifierPercent: number;
+}>;
+
 /** doc 09 §19/§9 — contexto que não vem de nenhum dos dois times especificamente. */
 export type MatchContext = Readonly<{
   /** doc 09 §19: liga/pontos corridos aceita empate; mata-mata/final exige vencedor. */
   requiresWinner: boolean;
+  /** Sprint 26: quando presente, aplicado ao Team Power do lado 'away'. */
+  awayAiDifficulty?: AiDifficultyModifier;
   /** doc 09 §9: zera o bônus de mando para os dois lados quando true (final em campo neutro). */
   isNeutralVenue?: boolean;
 }>;
@@ -123,3 +143,78 @@ export type MatchRngStreams = Readonly<{
   narrative: import('../rng/rng').RNGInstance;
   penaltyTiebreak: import('../rng/rng').RNGInstance;
 }>;
+
+// ─── Sprint 26 (Gameplay Foundation) — intervalo jogável ──────────────────────
+//
+// `simulateMatch` roda as duas metades numa chamada síncrona só, sem
+// nenhum ponto de pausa — correto para o caso "sem interação do
+// usuário", mas insuficiente para um intervalo onde o jogador decide
+// substituições/tática ANTES do segundo tempo rodar. Como o servidor
+// (Next.js server actions) é stateless entre chamadas, a "pausa" precisa
+// viajar até o cliente e voltar — daí `MatchProgressState` ser 100% dado
+// plano serializável (inclusive o estado bruto dos streams de RNG via
+// `RNGInstance.getState()`/`restoreRNG()`), nunca uma referência viva a
+// closures. `simulateFirstHalf` produz esse estado; `simulateRestOfMatch`
+// o consome e continua o MESMO stream de onde parou — nenhum sorteio é
+// pulado, repetido ou re-embaralhado pela pausa em si.
+
+/** Espelha `FieldPlayerState` de `match.ts`, mas 100% serializável (sem função). */
+export type SerializedFieldPlayer = Readonly<{
+  slotId: string;
+  formationPosition: Position;
+  player: MatchPlayer;
+  enteredAtMinute: number;
+  hasYellowCard: boolean;
+  foulsThisMatch: number;
+}>;
+
+/** Estado runtime de um lado (casa ou fora) num ponto de pausa da simulação. */
+export type SerializedSideState = Readonly<{
+  fieldPlayers: readonly SerializedFieldPlayer[];
+  benchRemaining: readonly MatchPlayer[];
+  substitutionsUsed: number;
+  substitutionWindowsUsed: number;
+  morale: number;
+  adjacentPairs: readonly { slotIdA: string; slotIdB: string }[];
+  /** Tática ATUAL — pode já ter sido alterada em relação à do TeamSnapshot original. */
+  tacticalIntensity: TacticalIntensity;
+  isHomeTeam: boolean;
+}>;
+
+/** Estado bruto dos 6 streams de RNG — o suficiente para `restoreRNG()` cada um. */
+export type SerializedRngState = Readonly<{
+  events: number;
+  weather: number;
+  cards: number;
+  injuries: number;
+  narrative: number;
+  penaltyTiebreak: number;
+}>;
+
+/**
+ * Snapshot completo e serializável de uma simulação em andamento — hoje
+ * só produzido no intervalo (minuto 45→46), mas o formato não assume
+ * nenhum minuto específico.
+ */
+export type MatchProgressState = Readonly<{
+  nextMinute: number;
+  homeScore: number;
+  awayScore: number;
+  stats: MatchStats;
+  events: readonly MatchEvent[];
+  weather: Weather;
+  refereeProfile: RefereeProfile;
+  eventMinutesCounted: number;
+  eventMinutesFavoringHome: number;
+  home: SerializedSideState;
+  away: SerializedSideState;
+  rngState: SerializedRngState;
+  seed: Seed;
+  context: MatchContext;
+  engineVersion: string;
+}>;
+
+/** Resultado de `simulateFirstHalf` — ou a partida já acabou (W.O.), ou chegou ao intervalo. */
+export type FirstHalfOutcome =
+  | Readonly<{ kind: 'walkover'; result: MatchResult }>
+  | Readonly<{ kind: 'halftime'; state: MatchProgressState }>;

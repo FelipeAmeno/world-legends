@@ -19,12 +19,22 @@ import type { TacticalIntensity } from './types';
  * Os outros modificadores da mesma tabela (ataque/meio/defesa) NÃO
  * pertencem a este módulo.
  */
+/**
+ * `pressao_alta`/`contra_ataque` (Sprint 26): decisão própria, mesmo
+ * espírito das constantes ao redor — pressão alta exige corrida
+ * constante sem a bola (custo de fadiga MAIOR que qualquer intensidade
+ * já existente, inclusive ultra_ofensivo); contra-ataque é reativo/
+ * compacto, poupando pernas até o momento da transição (custo menor
+ * que o equilibrado, mas não tão econômico quanto o ultra_defensivo).
+ */
 const TACTICAL_FATIGUE_COST_MULTIPLIER: Readonly<Record<TacticalIntensity, number>> = {
   ultra_defensivo: 0.85,
   defensivo: 0.95,
   equilibrado: 1.0,
   ofensivo: 1.1,
   ultra_ofensivo: 1.25,
+  contra_ataque: 0.9,
+  pressao_alta: 1.3,
 };
 
 /**

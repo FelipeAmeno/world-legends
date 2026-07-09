@@ -26,6 +26,7 @@ function buildAlwaysScoreRng(): RNGInstance {
     shuffle: <T>(items: readonly T[]) => [...items],
     choice: <T>(items: readonly T[]) => items[0]!,
     weightedChoice: <T>(items: readonly WeightedItem<T>[]) => items[0]!.value,
+    getState: () => 0,
   };
   return self;
 }

@@ -44,6 +44,16 @@ export type RNGInstance = Readonly<{
   choice: <T>(items: readonly T[]) => T;
   /** Escolhe um elemento da lista com distribuição proporcional ao peso de cada item. */
   weightedChoice: <T>(items: readonly WeightedItem<T>[]) => T;
+  /**
+   * Estado interno bruto (uint32) NESTE ponto do stream — Sprint 26
+   * (Gameplay Foundation). Existe só para permitir serializar uma
+   * simulação em andamento (ex: intervalo de uma partida) através de um
+   * round-trip stateless (server action → cliente → server action),
+   * reconstruindo o mesmo stream exato via `restoreRNG` sem repetir
+   * nenhum sorteio já consumido. Não expõe o Seed original nem quebra o
+   * encapsulamento documentado acima — é só o ponteiro de progresso.
+   */
+  getState: () => number;
 }>;
 
 /**
@@ -52,7 +62,25 @@ export type RNGInstance = Readonly<{
  * resultados em qualquer máquina, em qualquer execução.
  */
 export function RNG(seed: Seed): RNGInstance {
-  let state = toUint32(seed);
+  return createFromState(toUint32(seed), seed);
+}
+
+/**
+ * Reconstrói uma instância de RNG a partir de um estado bruto capturado
+ * via `getState()` — Sprint 26 (Gameplay Foundation). Continua o MESMO
+ * stream exatamente de onde parou (nenhum sorteio pulado ou repetido),
+ * diferente de `RNG(seed).derive(label)`, que sempre reinicia a partir
+ * do Seed original. `derive()` não é suportado numa instância restaurada
+ * (não há Seed original disponível) — nenhum consumidor atual do engine
+ * precisa derivar sub-streams no meio de uma partida, só os 6 streams
+ * nomeados de nível superior (`initializeMatchRngStreams`).
+ */
+export function restoreRNG(state: number): RNGInstance {
+  return createFromState(state >>> 0);
+}
+
+function createFromState(initialState: number, seed?: Seed): RNGInstance {
+  let state = initialState;
 
   function nextFloat(): number {
     // Passo do mulberry32: avança `state` e deriva um float em [0, 1)
@@ -76,6 +104,9 @@ export function RNG(seed: Seed): RNGInstance {
     // sempre a partir do Seed original, nunca do estado numérico atual
     // (docs/09-match-engine-master.md, §21: streams nomeados precisam
     // ser reproduzíveis isoladamente, sem depender de ordem de consumo).
+    if (seed === undefined) {
+      throw new Error('derive() não é suportado numa instância restaurada via restoreRNG().');
+    }
     return RNG(deriveStream(seed, streamLabel));
   }
 
@@ -133,5 +164,9 @@ export function RNG(seed: Seed): RNGInstance {
     return items[items.length - 1]!.value;
   }
 
-  return Object.freeze({ nextFloat, nextInt, derive, shuffle, choice, weightedChoice });
+  function getState(): number {
+    return state;
+  }
+
+  return Object.freeze({ nextFloat, nextInt, derive, shuffle, choice, weightedChoice, getState });
 }

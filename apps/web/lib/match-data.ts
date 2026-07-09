@@ -12,7 +12,7 @@
  * Zero lógica de UI aqui — apenas domínio + transformação.
  */
 
-import type { MatchEvent } from '@world-legends/engine';
+import type { MatchEvent, TacticalIntensity } from '@world-legends/engine';
 import { simulateSquadMatch } from '@world-legends/match-simulator';
 import type { SquadMatchOutput } from '@world-legends/match-simulator';
 import { addPlayer, createSquad } from '@world-legends/squad';
@@ -141,6 +141,60 @@ export type MatchDisplay = {
   };
   homeName: string;
   awayName: string;
+  /**
+   * Sprint 26 (Gameplay Foundation) — lineup/banco REAIS do squad salvo
+   * pelo usuário, populados pelo fluxo novo (`lib/match-session.ts`).
+   * Opcionais porque o fluxo antigo/demo (`runMatch` com
+   * `DEFAULT_LINEUP_433`, usado só por ferramentas internas) não os
+   * preenche — nesse caso a UI cai no `getUserLineup()` de sempre.
+   */
+  userLineup?: LineupPlayer[];
+  userBench?: LineupPlayer[];
+};
+
+// ─── Dificuldade da IA (Sprint 26 — Gameplay Foundation) ─────────────────────
+//
+// Diferente do `difficulty` estático por oponente (`MatchOpponent.difficulty`,
+// só um selo visual hoje), isto é uma escolha do usuário que afeta
+// COMPORTAMENTO da IA a cada minuto via `AiDifficultyModifier` do engine —
+// não é só reduzir/aumentar o OVR do time adversário.
+
+export type MatchDifficulty = 'easy' | 'normal' | 'hard' | 'legendary';
+
+export type DifficultyDef = {
+  label: string;
+  description: string;
+  /** Repassado direto pra `MatchContext.awayAiDifficulty.powerModifierPercent` do engine. */
+  powerModifierPercent: number;
+  /** Lendário: IA reage no intervalo (troca tática + faz 1 substituição). */
+  reactsAtHalftime: boolean;
+};
+
+export const DIFFICULTY_DEFS: Record<MatchDifficulty, DifficultyDef> = {
+  easy: {
+    label: 'Fácil',
+    description: 'A IA comete mais erros — chutes e marcação menos precisos.',
+    powerModifierPercent: -10,
+    reactsAtHalftime: false,
+  },
+  normal: {
+    label: 'Normal',
+    description: 'Comportamento equilibrado, sem ajustes.',
+    powerModifierPercent: 0,
+    reactsAtHalftime: false,
+  },
+  hard: {
+    label: 'Difícil',
+    description: 'A IA pressiona melhor e erra menos.',
+    powerModifierPercent: 8,
+    reactsAtHalftime: false,
+  },
+  legendary: {
+    label: 'Lendário',
+    description: 'A IA pressiona melhor E reage no intervalo — muda de tática e faz substituições.',
+    powerModifierPercent: 8,
+    reactsAtHalftime: true,
+  },
 };
 
 // ─── Probability helpers ──────────────────────────────────────────────────────
@@ -314,10 +368,12 @@ export function runMatch(
   const { result, winner, homeChemistry, awayChemistry } = output;
 
   // ── Transformar eventos ───────────────────────────────────────────────────────
+  const nameByPlayerId = new Map(allCards.map((c) => [c.playerId, c.displayName]));
+  const aiIdSet = new Set(aiSlots.map((s) => `ai-${s.slotId}`));
   const events = transformEvents(
     result.events,
-    allCards,
-    aiSlots.map((s) => `ai-${s.slotId}`),
+    (id) => nameByPlayerId.get(id),
+    (id) => !aiIdSet.has(id),
   );
 
   // ── MVP ───────────────────────────────────────────────────────────────────────
@@ -370,13 +426,21 @@ const EVENT_ICONS: Record<string, string> = {
   walkover: '⚠️',
 };
 
-function transformEvents(
+/**
+ * Sprint 26 — antes recebia `cards`/`aiCardIds` fixos e montava um Map
+ * keyed por `playerId` internamente (só funcionava porque o fluxo demo
+ * usa `playerId` como se fosse `userCardId`). Agora recebe resolvers —
+ * `resolveName`/`isHomeCardId` — pra funcionar tanto com esse fluxo
+ * demo quanto com o fluxo real (`lib/match-session.ts`, keyed por
+ * `userCardId` de verdade). Comportamento idêntico para os chamadores
+ * existentes, que só passam a fazer explicitamente o que antes era
+ * implícito no Map.
+ */
+export function transformEvents(
   events: readonly MatchEvent[],
-  cards: CollectionCard[],
-  aiCardIds: string[],
+  resolveName: (userCardId: string) => string | undefined,
+  isHomeCardId: (userCardId: string) => boolean,
 ): EventDisplay[] {
-  const cardMap = new Map(cards.map((c) => [c.playerId, c.displayName]));
-
   return (
     events.map((ev) => {
       const base = {
@@ -395,8 +459,8 @@ function transformEvents(
         case 'full_time':
           return { ...base, text: '🏁 Apito final', highlight: true };
         case 'goal': {
-          const name = cardMap.get(ev.scorerUserCardId) ?? ev.scorerUserCardId.slice(0, 8);
-          const isHome = !aiCardIds.includes(ev.scorerUserCardId);
+          const name = resolveName(ev.scorerUserCardId) ?? ev.scorerUserCardId.slice(0, 8);
+          const isHome = isHomeCardId(ev.scorerUserCardId);
           const side = isHome ? 'home' : 'away';
           const own = ev.isOwnGoal ? ' (GOL CONTRA)' : '';
           return {
@@ -407,8 +471,8 @@ function transformEvents(
           };
         }
         case 'card': {
-          const name = cardMap.get(ev.playerUserCardId) ?? ev.playerUserCardId.slice(0, 8);
-          const isHome = !aiCardIds.includes(ev.playerUserCardId);
+          const name = resolveName(ev.playerUserCardId) ?? ev.playerUserCardId.slice(0, 8);
+          const isHome = isHomeCardId(ev.playerUserCardId);
           const color = ev.cardType === 'yellow' ? '🟨' : '🟥';
           return {
             ...base,
@@ -417,8 +481,8 @@ function transformEvents(
           };
         }
         case 'injury': {
-          const name = cardMap.get(ev.playerUserCardId) ?? ev.playerUserCardId.slice(0, 8);
-          const isHome = !aiCardIds.includes(ev.playerUserCardId);
+          const name = resolveName(ev.playerUserCardId) ?? ev.playerUserCardId.slice(0, 8);
+          const isHome = isHomeCardId(ev.playerUserCardId);
           return {
             ...base,
             side: isHome ? 'home' : 'away',
@@ -426,9 +490,9 @@ function transformEvents(
           };
         }
         case 'substitution': {
-          const out = cardMap.get(ev.playerOutUserCardId) ?? ev.playerOutUserCardId.slice(0, 8);
-          const inn = cardMap.get(ev.playerInUserCardId) ?? ev.playerInUserCardId.slice(0, 8);
-          const isHome = !aiCardIds.includes(ev.playerOutUserCardId);
+          const out = resolveName(ev.playerOutUserCardId) ?? ev.playerOutUserCardId.slice(0, 8);
+          const inn = resolveName(ev.playerInUserCardId) ?? ev.playerInUserCardId.slice(0, 8);
+          const isHome = isHomeCardId(ev.playerOutUserCardId);
           return { ...base, side: isHome ? 'home' : 'away', text: `🔄 Sub: ${inn} ↔ ${out}` };
         }
         default:
@@ -440,7 +504,7 @@ function transformEvents(
 
 // ─── Recompensas ──────────────────────────────────────────────────────────────
 
-function computeRewards(
+export function computeRewards(
   winner: 'home' | 'away' | 'draw',
   homeGoals: number,
   stats: any,
@@ -476,7 +540,7 @@ function computeRewards(
 
 // ─── Labels ───────────────────────────────────────────────────────────────────
 
-const WEATHER_LABELS: Record<string, string> = {
+export const WEATHER_LABELS: Record<string, string> = {
   ensolarado: '☀️ Ensolarado',
   chuva: '🌧️ Chuva',
   calor_extremo: '🌡️ Calor extremo',
@@ -484,7 +548,7 @@ const WEATHER_LABELS: Record<string, string> = {
   vento_forte: '💨 Vento forte',
 };
 
-const REFEREE_LABELS: Record<string, string> = {
+export const REFEREE_LABELS: Record<string, string> = {
   permissivo: '🟢 Árbitro permissivo',
   normal: '⚖️ Árbitro normal',
   rigoroso: '🔴 Árbitro rigoroso',
@@ -492,7 +556,7 @@ const REFEREE_LABELS: Record<string, string> = {
 
 // ─── Fallback ─────────────────────────────────────────────────────────────────
 
-const EMPTY_DISPLAY: MatchDisplay = {
+export const EMPTY_DISPLAY: MatchDisplay = {
   homeScore: 0,
   awayScore: 0,
   winner: 'draw',
@@ -523,7 +587,37 @@ export type LineupPlayer = {
   ovr: number;
   flag: string;
   rarity?: string;
+  /** Sprint 26: identifica o jogador real pro fluxo de substituição no intervalo. */
+  userCardId?: string;
 };
+
+// ─── Táticas/mentalidades (Sprint 26 — Gameplay Foundation) ──────────────────
+//
+// As 5 mentalidades que o usuário escolhe no intervalo (`Alterar Tática`) —
+// mapeiam 1:1 pras `TacticalIntensity` do engine que já tinham efeito real
+// (fadiga + modificador de setor ataque/meio/defesa). `ultra_defensivo`/
+// `ultra_ofensivo` continuam existindo no engine só como extremos
+// alcançados automaticamente via química baixa/alta — não aparecem aqui.
+
+export const TACTIC_DEFS: ReadonlyArray<{
+  value: TacticalIntensity;
+  label: string;
+  description: string;
+}> = [
+  { value: 'defensivo', label: 'Defensivo', description: 'Prioriza a marcação, cede a posse.' },
+  { value: 'equilibrado', label: 'Equilibrado', description: 'Sem favorecer nenhum setor.' },
+  { value: 'ofensivo', label: 'Ofensivo', description: 'Empurra linhas, arrisca mais na frente.' },
+  {
+    value: 'pressao_alta',
+    label: 'Pressão Alta',
+    description: 'Marca no campo de ataque — cansa mais rápido.',
+  },
+  {
+    value: 'contra_ataque',
+    label: 'Contra-Ataque',
+    description: 'Se fecha atrás e busca transições rápidas.',
+  },
+];
 
 export function getUserLineup(): LineupPlayer[] {
   const cards = getCollection();
