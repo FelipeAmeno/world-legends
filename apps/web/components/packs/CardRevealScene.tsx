@@ -102,21 +102,47 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
   const [rarityFlood, setRarityFlood] = useState<string | null>(null);
   const [goatActive, setGoatActive] = useState(false);
 
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Sprint 33 — eram um único `timerRef` compartilhado entre 3 timers
+  // diferentes (entrando→virado-pra-baixo, virado-pra-baixo→flip
+  // automático, revelado→avançar pro próximo). Bug real, confirmado ao
+  // vivo abrindo pacotes sem tocar: `doFlip()` agenda o timer de
+  // "avançar pro próximo card" em `timerRef.current`, mas a MUDANÇA DE
+  // FASE que `doFlip()` acabou de disparar (`facedown`→`revealed`) faz o
+  // `useEffect` de facedown→auto-flip (que já tinha cumprido seu papel)
+  // rodar seu cleanup (`clearTimer()`) *depois*, cancelando o timer que
+  // `doFlip()` ACABOU de agendar — os dois liam/escreviam a MESMA
+  // referência sem saber qual timer era de quem. Efeito: a 1ª carta
+  // revela normalmente, mas o pacote trava nela pra sempre (só avança se
+  // o usuário tocar manualmente, que chama `goNext()` direto). Ver
+  // SPRINT_33_AUDIT.md. Fix: um ref por PROPÓSITO, nunca compartilhado.
+  const phaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const card = sortedCards[currentIdx];
   const totalCards = sortedCards.length;
 
-  const clearTimer = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
+  const clearPhaseTimer = useCallback(() => {
+    if (phaseTimerRef.current) {
+      clearTimeout(phaseTimerRef.current);
+      phaseTimerRef.current = null;
     }
   }, []);
 
+  const clearAdvanceTimer = useCallback(() => {
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current);
+      advanceTimerRef.current = null;
+    }
+  }, []);
+
+  const clearTimer = useCallback(() => {
+    clearPhaseTimer();
+    clearAdvanceTimer();
+  }, [clearPhaseTimer, clearAdvanceTimer]);
+
   // ── Advance to next card ──────────────────────────────────────────────────
   const goNext = useCallback(() => {
-    clearTimer();
+    clearAdvanceTimer();
     if (currentIdx >= totalCards - 1) {
       setTimeout(onAllFlipped, 500);
       return;
@@ -124,12 +150,12 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
     setCurrentIdx((i) => i + 1);
     setPhase('entering');
     setFlipped(false);
-  }, [currentIdx, totalCards, onAllFlipped, clearTimer]);
+  }, [currentIdx, totalCards, onAllFlipped, clearAdvanceTimer]);
 
   // ── Trigger flip ─────────────────────────────────────────────────────────
   const doFlip = useCallback(() => {
     if (!card || flipped) return;
-    clearTimer();
+    clearPhaseTimer();
 
     if (card.effect === 'world_cup_hero') {
       setGoatActive(true);
@@ -157,8 +183,8 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
 
     // Auto-advance after flip animation + admire time
     const advanceAfter = FLIP_ANIM_MS[card.effect] + ADMIRE_DELAY[card.effect];
-    timerRef.current = setTimeout(goNext, advanceAfter);
-  }, [card, flipped, onShake, goNext, clearTimer]);
+    advanceTimerRef.current = setTimeout(goNext, advanceAfter);
+  }, [card, flipped, onShake, goNext, clearPhaseTimer]);
 
   // ── GoatReveal complete ───────────────────────────────────────────────────
   const handleGoatDone = useCallback(() => {
@@ -167,24 +193,24 @@ export function CardRevealScene({ cards, pack, onAllFlipped, onShake }: Props) {
     setPhase('revealed');
     setConfettiRarity('world_cup_hero');
     setTimeout(() => setConfettiRarity(null), 3000);
-    timerRef.current = setTimeout(goNext, 2500);
+    advanceTimerRef.current = setTimeout(goNext, 2500);
   }, [goNext]);
 
   // ── entering → facedown (400ms enter animation) ──────────────────────────
   useEffect(() => {
     if (phase !== 'entering') return;
-    timerRef.current = setTimeout(() => {
+    phaseTimerRef.current = setTimeout(() => {
       setPhase('facedown');
     }, 400);
-    return clearTimer;
-  }, [phase, currentIdx, clearTimer]);
+    return clearPhaseTimer;
+  }, [phase, currentIdx, clearPhaseTimer]);
 
   // ── facedown → auto-flip ─────────────────────────────────────────────────
   useEffect(() => {
     if (phase !== 'facedown' || !card) return;
-    timerRef.current = setTimeout(doFlip, FACEDOWN_DELAY[card.effect]);
-    return clearTimer;
-  }, [phase, card, doFlip, clearTimer]);
+    phaseTimerRef.current = setTimeout(doFlip, FACEDOWN_DELAY[card.effect]);
+    return clearPhaseTimer;
+  }, [phase, card, doFlip, clearPhaseTimer]);
 
   // ── Cleanup on unmount ────────────────────────────────────────────────────
   useEffect(
