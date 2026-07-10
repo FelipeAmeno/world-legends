@@ -26,12 +26,14 @@ export type ProceduralParticles = Readonly<{
   particles: readonly ProceduralParticle[];
 }>;
 
+// Sprint 33: piso levantado pra Common/Rare (mesma razão do
+// BackgroundGenerator/LightingGenerator).
 const RARITY_PARTICLE_COUNT: Record<RarityCode, number> = {
-  common: 4,
-  rare: 6,
-  elite: 8,
-  legendary: 10,
-  ultra: 13,
+  common: 7,
+  rare: 9,
+  elite: 10,
+  legendary: 12,
+  ultra: 14,
   world_cup_hero: 16,
 };
 

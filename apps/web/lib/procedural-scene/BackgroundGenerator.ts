@@ -25,13 +25,16 @@ export type ProceduralBackground = Readonly<{
   stadiumName: string;
 }>;
 
+// Sprint 33: piso levantado pra Common/Rare — em cartas pequenas (Pack
+// Reveal, ~116x156) elas ficavam apagadas perto do frame escuro; a
+// referência mostra presença visual forte em toda raridade.
 const RARITY_BRIGHTNESS_BOOST: Record<RarityCode, number> = {
-  common: 0,
-  rare: 0.05,
-  elite: 0.1,
-  legendary: 0.18,
-  ultra: 0.24,
-  world_cup_hero: 0.3,
+  common: 0.08,
+  rare: 0.13,
+  elite: 0.16,
+  legendary: 0.2,
+  ultra: 0.26,
+  world_cup_hero: 0.32,
 };
 
 export function generateBackground(

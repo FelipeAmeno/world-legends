@@ -41,6 +41,7 @@ import {
   RARITY_GLOW_CLASS,
   RARITY_ICON,
   RIBBON_FONT,
+  SIZE_TO_MODE,
   SIZES,
 } from './card-tokens';
 import type { CardDebugOverride, CardLayerName, CardVisualCtx, PlayerCardData } from './card-types';
@@ -106,6 +107,7 @@ function PlayerCardImpl({
   const ctx: CardVisualCtx = {
     card,
     size,
+    mode: SIZE_TO_MODE[size],
     glow: Boolean(glow),
     kit,
     accent,
@@ -201,9 +203,10 @@ function PlayerCardImpl({
             )
           }
           nameSlot={<CardNameLayer ctx={ctx} />}
+          attributesSlot={
+            attributes ? <CardAttributesLayer ctx={ctx} attributes={attributes} /> : undefined
+          }
         />
-        {/* Atributos (100% React) — opcional, off por padrão, mesmo grupo do HUD */}
-        {attributes && <CardAttributesLayer ctx={ctx} attributes={attributes} />}
 
         {/* Layer 9 — Glow (fonte de luz final, por cima de tudo) */}
         <CardGlowLayer ctx={ctx} />

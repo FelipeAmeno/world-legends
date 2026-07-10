@@ -16,11 +16,27 @@ type Props = {
   positionSlot: React.ReactNode;
   ribbonSlot: React.ReactNode | null;
   nameSlot: React.ReactNode;
+  /** Sprint 33 — linha de atributos, renderizada dentro do mesmo rodapé,
+   * logo abaixo do nome (bate com a referência: stat row sob o nome). */
+  attributesSlot?: React.ReactNode;
 };
 
-export function CardHudLayer({ ctx, ovrSlot, positionSlot, ribbonSlot, nameSlot }: Props) {
-  const { dim, accent } = ctx;
+export function CardHudLayer({
+  ctx,
+  ovrSlot,
+  positionSlot,
+  ribbonSlot,
+  nameSlot,
+  attributesSlot,
+}: Props) {
+  const { dim, accent, mode } = ctx;
   if (ctx.hiddenLayers?.has('hud')) return null;
+
+  // Sprint 33 — a barra de destaque sob OVR/posição escala com o modo:
+  // mais fina/discreta em Compact (telas pequenas, menos ruído visual),
+  // mais grossa/brilhante em Showcase (Spotlight, Card Detail).
+  const accentBarHeight = mode === 'compact' ? 1.5 : mode === 'showcase' ? 2.5 : 2;
+  const accentBarGlow = mode === 'showcase' ? 9 : 6;
 
   return (
     <>
@@ -43,11 +59,11 @@ export function CardHudLayer({ ctx, ovrSlot, positionSlot, ribbonSlot, nameSlot 
           style={{
             marginTop: 2,
             width: '75%',
-            height: 2,
+            height: accentBarHeight,
             background: accent,
             opacity: 0.95,
             borderRadius: 1,
-            boxShadow: `0 0 6px ${accent}`,
+            boxShadow: `0 0 ${accentBarGlow}px ${accent}`,
           }}
         />
       </div>
@@ -90,6 +106,7 @@ export function CardHudLayer({ ctx, ovrSlot, positionSlot, ribbonSlot, nameSlot 
         }}
       >
         {nameSlot}
+        {attributesSlot}
       </div>
     </>
   );

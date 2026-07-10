@@ -30,13 +30,15 @@ const RARITY_RAY_COUNT: Record<RarityCode, number> = {
   world_cup_hero: 12,
 };
 
+// Sprint 33: piso levantado pra Common/Rare (mesma razão do
+// BackgroundGenerator — presença visual forte em toda raridade).
 const RARITY_OPACITY: Record<RarityCode, number> = {
-  common: 0.06,
-  rare: 0.09,
-  elite: 0.12,
-  legendary: 0.16,
-  ultra: 0.2,
-  world_cup_hero: 0.26,
+  common: 0.11,
+  rare: 0.14,
+  elite: 0.17,
+  legendary: 0.2,
+  ultra: 0.24,
+  world_cup_hero: 0.3,
 };
 
 export function generateLighting(rarityCode: RarityCode, rng: Rng): ProceduralLighting {

@@ -2,7 +2,11 @@
  * Layer 11 — Atributos. Camada nova e opcional (desligada por padrão — os
  * 8+ call sites existentes não pedem essa camada, então nada muda pra eles).
  * Sempre texto/barra React vinda de `card.attributes` — nunca imagem.
- * Só faz sentido em tamanhos maiores (lg), onde há espaço.
+ *
+ * Sprint 33: reposicionada de um grid 2-colunas flutuando no meio da carta
+ * pra uma tira horizontal de linha única, renderizada DENTRO do rodapé do
+ * HUD (`CardHudLayer`, logo abaixo do nome) — bate com a referência, que
+ * mostra PAC/SHO/PAS/DRI/DEF/PHY numa única linha sob o nome do jogador.
  */
 
 import type { CardVisualCtx } from '../card-types';
@@ -29,30 +33,33 @@ export function CardAttributesLayer({
   ctx,
   attributes,
 }: { ctx: CardVisualCtx; attributes: CardAttributes }) {
-  const { accent } = ctx;
+  const { accent, size } = ctx;
+  const fontSize = size === 'xs' ? 5.5 : size === 'sm' ? 6.5 : size === 'md' ? 8 : 10;
 
   return (
     <div
       style={{
-        position: 'absolute',
-        left: 6,
-        right: 6,
-        bottom: '30%',
-        zIndex: 9,
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '2px 8px',
-        background: 'rgba(0,0,0,0.55)',
-        borderRadius: 6,
-        padding: '4px 6px',
+        marginTop: 3,
+        display: 'flex',
+        justifyContent: 'center',
+        gap: size === 'xs' ? 4 : 7,
       }}
     >
       {PIP_LABELS.map(({ key, label }) => (
-        <div key={key} style={{ display: 'flex', justifyContent: 'space-between', gap: 4 }}>
-          <span style={{ fontSize: 6, color: 'rgba(255,255,255,0.5)', fontWeight: 700 }}>
+        <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <span style={{ fontSize, color: accent, fontWeight: 800, lineHeight: 1.1 }}>
+            {attributes[key]}
+          </span>
+          <span
+            style={{
+              fontSize: fontSize - 2,
+              color: 'rgba(255,255,255,0.55)',
+              fontWeight: 700,
+              letterSpacing: '0.04em',
+            }}
+          >
             {label}
           </span>
-          <span style={{ fontSize: 6, color: accent, fontWeight: 800 }}>{attributes[key]}</span>
         </div>
       ))}
     </div>

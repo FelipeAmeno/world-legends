@@ -9,6 +9,24 @@ import type { RarityCode } from '@world-legends/types';
 
 export type CardSize = 'xs' | 'sm' | 'md' | 'lg';
 
+/**
+ * Sprint 33 — três modos visuais internos (Compact/Standard/Showcase),
+ * derivados do `size` já existente. Nenhuma prop nova: `PlayerCard`
+ * continua recebendo só `size`, e resolve o modo internamente — zero
+ * mudança na API pública, todo call site existente ganha o modo certo
+ * de graça. Compact reduz densidade de chrome (telas pequenas: Squad
+ * grid, listas), Showcase adiciona mais respiro/ênfase (Spotlight,
+ * Card Detail, Hall of Legends).
+ */
+export type CardMode = 'compact' | 'standard' | 'showcase';
+
+export const SIZE_TO_MODE: Record<CardSize, CardMode> = {
+  xs: 'compact',
+  sm: 'compact',
+  md: 'standard',
+  lg: 'showcase',
+};
+
 // ─── Identidade de raridade — reconhecível sem ler texto ──────────────────────
 //
 // Cada raridade combina 4 sinais independentes (cor de borda/glow, ícone,

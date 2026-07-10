@@ -117,14 +117,16 @@ export function ProceduralSceneLayer({ ctx }: { ctx: CardVisualCtx }) {
       {/* Pose — silhueta articulada (Sprint 28, Pose Engine). Silhueta CLARA
           (não escura) de propósito: o fundo do estádio é sempre escuro
           (`getStadiumBg`), uma silhueta escura ficaria invisível em cima
-          dele — o efeito pretendido é "atleta contra-luz", não sombra. */}
+          dele — o efeito pretendido é "atleta contra-luz", não sombra.
+          Sprint 33: área aumentada de 60% pra ~88% da largura pra bater
+          com a referência (jogador ocupa quase a carta inteira). */}
       <div
         style={{
           position: 'absolute',
-          top: dim.card.height * 0.1,
+          top: dim.card.height * 0.04,
           left: 0,
           right: 0,
-          bottom: dim.card.height * 0.2,
+          bottom: dim.card.height * 0.16,
           display: 'flex',
           alignItems: 'flex-end',
           justifyContent: 'center',
@@ -132,9 +134,9 @@ export function ProceduralSceneLayer({ ctx }: { ctx: CardVisualCtx }) {
       >
         <div
           style={{
-            width: dim.card.width * 0.6,
-            height: dim.card.width * 0.6 * 1.4,
-            filter: `drop-shadow(0 6px 14px rgba(0,0,0,0.55)) drop-shadow(0 0 16px ${accent}60)`,
+            width: dim.card.width * 0.88,
+            height: dim.card.width * 0.88 * 1.4,
+            filter: `drop-shadow(0 8px 18px rgba(0,0,0,0.6)) drop-shadow(0 0 20px ${accent}70)`,
           }}
         >
           <PoseFigure

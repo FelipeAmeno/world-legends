@@ -2,7 +2,7 @@ import type { BlendMode } from '@/lib/card-asset-loader';
 import type { KitColors } from '@/lib/kit-data';
 import type { RarityCode } from '@world-legends/types';
 import type { MaterialDef } from './card-materials';
-import type { CardSize, SIZES } from './card-tokens';
+import type { CardMode, CardSize, SIZES } from './card-tokens';
 
 /**
  * Overrides ao vivo só usados pelo Dev Tool (`/dev/card-assets`) pra
@@ -37,6 +37,8 @@ export type PlayerCardData = {
 export type CardVisualCtx = {
   card: PlayerCardData;
   size: CardSize;
+  /** Sprint 33 — Compact/Standard/Showcase, derivado de `size` (`SIZE_TO_MODE`). */
+  mode: CardMode;
   glow: boolean;
   kit: KitColors;
   accent: string;
