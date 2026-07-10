@@ -41,8 +41,8 @@ import {
   RARITY_GLOW_CLASS,
   RARITY_ICON,
   RIBBON_FONT,
-  SIZE_TO_MODE,
   SIZES,
+  SIZE_TO_MODE,
 } from './card-tokens';
 import type { CardDebugOverride, CardLayerName, CardVisualCtx, PlayerCardData } from './card-types';
 import { CardAmbientLightLayer } from './layers/CardAmbientLightLayer';

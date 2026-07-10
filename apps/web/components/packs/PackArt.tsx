@@ -11,6 +11,23 @@ type Props = {
   size?: number;
 };
 
+// Sprint 33.6 — escalada de riqueza visual por tier (1 = Starter, 7 = GOAT),
+// mesmo princípio da escalada de raridade do Card Engine (mais raro = mais
+// presença visual). Cada tier soma camadas em cima do "pouch" base, nunca
+// troca a silhueta inteira — assim os 7 pacotes continuam claramente da
+// mesma família de produto, só com exclusividade crescente (mood Clash
+// Royale/Marvel Snap: baús comuns são discretos, os lendários têm luz,
+// facetas e aura própria — sem copiar o layout de nenhum dos dois).
+const PACK_TIER: Record<PackId, number> = {
+  starter: 1,
+  classic: 2,
+  national: 3,
+  elite: 4,
+  hero: 5,
+  legend: 6,
+  goat: 7,
+};
+
 // ─── Emblema por pack — silhueta simples, reconhecível sem texto ─────────────
 
 function Emblem({ packId, color }: { packId: PackId; color: string }) {
@@ -81,10 +98,57 @@ export function PackArt({ packId, borderColor, glowColor, size = 96 }: Props) {
   const w = size * 0.72;
   const h = size;
   const uid = `pack-${packId}`;
+  const tier = PACK_TIER[packId];
+  const hasFacets = tier >= 3; // national+
+  const hasRays = tier >= 5; // hero+
+  const hasAura = tier >= 7; // goat
 
   return (
     <div style={{ width: w, height: h, position: 'relative' }}>
-      <svg width={w} height={h} viewBox="0 0 72 100" style={{ overflow: 'visible' }}>
+      {/* Aura pulsante externa — só no tier máximo (GOAT), o "melhor de todos" */}
+      {hasAura && (
+        <motion.div
+          style={{
+            position: 'absolute',
+            inset: -size * 0.18,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${glowColor} 0%, transparent 70%)`,
+            pointerEvents: 'none',
+          }}
+          animate={{ opacity: [0.35, 0.7, 0.35], scale: [0.94, 1.04, 0.94] }}
+          transition={{ duration: 2.6, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
+        />
+      )}
+
+      {/* Raios de luz traseiros — hero/legend/goat, mesma técnica do VolumetricLight */}
+      {hasRays && (
+        <div
+          className="volumetric-spin"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            margin: 'auto',
+            width: w * 2.1,
+            height: w * 2.1,
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%,-50%)',
+            background: `repeating-conic-gradient(from 0deg, ${borderColor} 0deg, ${borderColor} 4deg, transparent 4deg, transparent ${360 / (tier === 7 ? 14 : 10)}deg)`,
+            WebkitMaskImage: 'radial-gradient(circle, black 0%, transparent 62%)',
+            maskImage: 'radial-gradient(circle, black 0%, transparent 62%)',
+            opacity: 0.3,
+            filter: 'blur(2px)',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+
+      <svg
+        width={w}
+        height={h}
+        viewBox="0 0 72 100"
+        style={{ overflow: 'visible', position: 'relative' }}
+      >
         <defs>
           <linearGradient id={`${uid}-body`} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="rgba(255,255,255,0.14)" />
@@ -106,9 +170,20 @@ export function PackArt({ packId, borderColor, glowColor, size = 96 }: Props) {
           d="M 14,8 Q 36,-2 58,8 L 64,30 Q 68,60 58,90 Q 36,100 14,90 Q 4,60 8,30 Z"
           fill={`url(#${uid}-body)`}
           stroke={borderColor}
-          strokeWidth="1.4"
+          strokeWidth={tier >= 6 ? 2 : 1.4}
           filter={`url(#${uid}-shadow)`}
         />
+
+        {/* Facetas internas — national+ (tier 3), reforça "material precioso"
+            crescente sem trocar a silhueta do pouch */}
+        {hasFacets && (
+          <g opacity={0.22} stroke={borderColor} strokeWidth="0.5">
+            <path d="M 18,16 L 54,16" />
+            <path d="M 14,40 L 58,40" />
+            <path d="M 16,64 L 56,64" />
+            <path d="M 20,82 L 52,82" />
+          </g>
+        )}
 
         {/* Costura lateral */}
         <path
@@ -130,6 +205,20 @@ export function PackArt({ packId, borderColor, glowColor, size = 96 }: Props) {
 
         {/* Selo metálico horizontal (topo) */}
         <rect x="10" y="24" width="52" height="7" rx="3.5" fill={`url(#${uid}-seal)`} />
+
+        {/* Anel de destaque ao redor do emblema — hero+ (tier 5), reforça
+            exclusividade crescente igual ao ribbon de raridade das cartas */}
+        {hasRays && (
+          <circle
+            cx="36"
+            cy="58"
+            r="15"
+            fill="none"
+            stroke={borderColor}
+            strokeWidth="0.8"
+            opacity="0.5"
+          />
+        )}
 
         {/* Emblema central */}
         <g transform="translate(36,58)">
