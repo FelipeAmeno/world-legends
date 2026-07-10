@@ -28,6 +28,10 @@ export type PlayerCardData = {
   overall: number;
   flagEmoji: string;
   era: string;
+  /** Sprint 34 — ID de composição v3 opcional (`lib/card-v3/resolver.ts`).
+   * `undefined` em toda carta real hoje (nenhum asset oficial ainda existe) —
+   * só as 5 cartas de validação de `/dev/card-v3-gallery` setam isso. */
+  v3CompositionId?: string;
 };
 
 /**

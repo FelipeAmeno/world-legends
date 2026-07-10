@@ -60,6 +60,7 @@ import { CardRarityEffectLayer } from './layers/CardRarityEffectLayer';
 import { CardReflectionLayer } from './layers/CardReflectionLayer';
 import { CardSceneLayer } from './layers/CardSceneLayer';
 import { CardShineLayer } from './layers/CardShineLayer';
+import { useCardInViewport } from './use-card-in-viewport';
 import { useCardTilt } from './use-card-tilt';
 
 export type { PlayerCardData };
@@ -85,6 +86,7 @@ function PlayerCardImpl({
   debugOverride,
 }: Props) {
   const tiltRef = useCardTilt<HTMLDivElement>();
+  const { ref: viewportRef, inViewport } = useCardInViewport<HTMLDivElement>();
   const kit = getKitColors(card.nationality);
   const accent = RARITY_ACCENT[card.rarityCode];
   const dim = SIZES[size];
@@ -130,9 +132,15 @@ function PlayerCardImpl({
     // Wrapper de respiração (item 4, Sprint 18.7) — separado do container de
     // tilt abaixo porque uma animação CSS de `transform` substitui o valor
     // inteiro da propriedade; misturar scale (respiração) com rotate (tilt)
-    // no mesmo elemento faria um sobrescrever o outro.
+    // no mesmo elemento faria um sobrescrever o outro. Sprint 34: também o
+    // wrapper que carrega `.card-offscreen` (via `useCardInViewport`) — as
+    // animações de TODOS os descendentes pausam juntas quando o card sai da
+    // viewport (item 9 do brief).
     <div
-      className={isLegendaryPlus ? 'card-breathe' : undefined}
+      ref={viewportRef}
+      className={[isLegendaryPlus ? 'card-breathe' : '', inViewport ? '' : 'card-offscreen']
+        .filter(Boolean)
+        .join(' ')}
       style={{ display: 'inline-block' }}
     >
       <div

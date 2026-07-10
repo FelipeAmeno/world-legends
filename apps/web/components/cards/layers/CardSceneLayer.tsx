@@ -20,6 +20,7 @@
  */
 
 import { resolvePose, resolveScene } from '@/lib/card-asset-loader';
+import { resolveCardV3 } from '@/lib/card-v3/resolver';
 import type { CardVisualCtx } from '../card-types';
 import { ImageLayer } from './ImageLayer';
 import { ProceduralSceneLayer } from './ProceduralSceneLayer';
@@ -56,6 +57,10 @@ export function CardSceneLayer({ ctx }: { ctx: CardVisualCtx }) {
     );
   }
 
-  // Fallback final: Scene procedural — nunca mais camisa/jersey.
-  return <ProceduralSceneLayer ctx={ctx} />;
+  // Fallback final: Scene procedural — nunca mais camisa/jersey. Sprint 34:
+  // se a carta tiver uma composição v3 (validação/oficial), cada canal
+  // presente nela substitui a peça procedural equivalente; sem composição
+  // (toda carta real hoje), o comportamento é idêntico ao de antes.
+  const v3 = card.v3CompositionId ? resolveCardV3(card.v3CompositionId) : null;
+  return <ProceduralSceneLayer ctx={ctx} v3={v3} />;
 }

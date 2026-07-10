@@ -19,16 +19,35 @@
  * Uso manual: node --experimental-strip-types scripts/generate-card-asset-manifest.mts
  */
 import { execFileSync } from 'node:child_process';
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const CATEGORIES = ['backgrounds', 'effects', 'frames', 'poses', 'scenes', 'shine'] as const;
 type Category = (typeof CATEGORIES)[number];
 
+// Sprint 34 (Official Art Pack Integration) — árvore paralela e mais
+// granular que `CATEGORIES` acima: em vez de um Scene/Pose único (uma
+// imagem inteira por jogador), decompõe a composição nos MESMOS canais
+// que o motor procedural já usa (Background/Light/Pattern/Player/
+// Particles/Frame, Sprint 27/28) — permite substituir só uma parte por
+// arte real (ex.: background de verdade + resto continua procedural)
+// em vez de tudo-ou-nada. Ver `CARD_V3_ASSET_SPEC.md`.
+const V3_ASSET_CATEGORIES = [
+  'backgrounds',
+  'players',
+  'patterns',
+  'lights',
+  'particles',
+  'frames',
+] as const;
+type V3AssetCategory = (typeof V3_ASSET_CATEGORIES)[number];
+
 const IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.svg']);
 
 const ASSETS_DIR = join(import.meta.dirname, '..', 'public', 'assets', 'cards');
+const V3_ASSETS_DIR = join(ASSETS_DIR, 'v3');
 const OUT_FILE = join(import.meta.dirname, '..', 'lib', 'card-asset-manifest.generated.ts');
+const V3_OUT_FILE = join(import.meta.dirname, '..', 'lib', 'card-v3', 'manifest.generated.ts');
 
 type ManifestMeta = Partial<{
   scale: number;
@@ -63,8 +82,8 @@ function readSidecarMeta(dir: string, stem: string): ManifestMeta {
   return {};
 }
 
-function scanCategory(category: Category): Record<string, ManifestEntry> {
-  const dir = join(ASSETS_DIR, category);
+function scanCategory(category: Category, baseDir = ASSETS_DIR): Record<string, ManifestEntry> {
+  const dir = join(baseDir, category);
   let files: string[] = [];
   try {
     files = readdirSync(dir);
@@ -76,12 +95,43 @@ function scanCategory(category: Category): Record<string, ManifestEntry> {
   for (const filename of files) {
     if (!IMAGE_EXT.has(extOf(filename))) continue;
     const stem = stemOf(filename);
+    const prefix = baseDir === V3_ASSETS_DIR ? '/assets/cards/v3/' : '/assets/cards/';
     entries[stem] = {
-      src: `/assets/cards/${category}/${filename}`,
+      src: `${prefix}${category}/${filename}`,
       meta: readSidecarMeta(dir, stem),
     };
   }
   return entries;
+}
+
+/**
+ * Sprint 34 — composições v3 são descritas por um JSON em
+ * `v3/metadata/<id>.json` que referencia explicitamente o asset de cada
+ * canal (backgroundId/playerId/patternId/lightId/particlesId/frameId) mais
+ * o transform compartilhado (scale/offset/rotation/opacity/blendMode/
+ * blur/intensity/parallaxDepth) — nunca por convenção de nome de arquivo
+ * (frágil), sempre por referência explícita. Ver `CARD_V3_ASSET_SPEC.md`.
+ */
+function scanV3Compositions(): Record<string, unknown> {
+  const dir = join(V3_ASSETS_DIR, 'metadata');
+  let files: string[] = [];
+  try {
+    files = readdirSync(dir);
+  } catch {
+    return {};
+  }
+
+  const compositions: Record<string, unknown> = {};
+  for (const filename of files) {
+    if (extOf(filename) !== '.json') continue;
+    const stem = stemOf(filename);
+    try {
+      compositions[stem] = JSON.parse(readFileSync(join(dir, filename), 'utf-8'));
+    } catch {
+      // JSON inválido — composição ignorada, resolver cai pro procedural
+    }
+  }
+  return compositions;
 }
 
 function main(): void {
@@ -107,10 +157,37 @@ function main(): void {
 export const CARD_ASSET_MANIFEST = ${JSON.stringify(manifest, null, 2)} as const;
 `;
 
+  const v3Assets = Object.fromEntries(
+    V3_ASSET_CATEGORIES.map((category) => [category, scanCategory(category, V3_ASSETS_DIR)]),
+  );
+  const v3Compositions = scanV3Compositions();
+  const v3TotalAssets = Object.values(v3Assets).reduce(
+    (sum, entries) => sum + Object.keys(entries as object).length,
+    0,
+  );
+
+  const v3Body = `/**
+ * lib/card-v3/manifest.generated.ts — Sprint 34 (Official Art Pack Integration)
+ *
+ * GERADO AUTOMATICAMENTE por scripts/generate-card-asset-manifest.mts — não
+ * editar à mão. Reflete o que existe em public/assets/cards/v3/ no momento
+ * em que \`pnpm dev\` ou \`pnpm build\` rodou por último (predev/prebuild).
+ *
+ * Total de assets v3 encontrados: ${v3TotalAssets}
+ * Total de composições v3 encontradas: ${Object.keys(v3Compositions).length}
+ */
+
+export const CARD_V3_ASSET_MANIFEST = ${JSON.stringify(v3Assets, null, 2)} as const;
+
+export const CARD_V3_COMPOSITIONS = ${JSON.stringify(v3Compositions, null, 2)} as const;
+`;
+
   writeFileSync(OUT_FILE, body, 'utf-8');
+  mkdirSync(join(import.meta.dirname, '..', 'lib', 'card-v3'), { recursive: true });
+  writeFileSync(V3_OUT_FILE, v3Body, 'utf-8');
 
   try {
-    execFileSync('pnpm', ['exec', 'biome', 'format', '--write', OUT_FILE], {
+    execFileSync('pnpm', ['exec', 'biome', 'format', '--write', OUT_FILE, V3_OUT_FILE], {
       cwd: join(import.meta.dirname, '..'),
       stdio: 'ignore',
     });
@@ -120,6 +197,9 @@ export const CARD_ASSET_MANIFEST = ${JSON.stringify(manifest, null, 2)} as const
   }
 
   console.log(`[card-assets] manifest gerado com ${totalAssets} asset(s) em ${OUT_FILE}`);
+  console.log(
+    `[card-assets-v3] manifest gerado com ${v3TotalAssets} asset(s) e ${Object.keys(v3Compositions).length} composição(ões) em ${V3_OUT_FILE}`,
+  );
 }
 
 main();

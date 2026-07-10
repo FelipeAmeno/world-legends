@@ -180,7 +180,9 @@ const EFFECT_MAP: Record<RarityCode, RevealEffect> = {
   world_cup_hero: 'world_cup_hero',
 };
 
-const GLOW_MAP: Record<RarityCode, string> = {
+// Sprint 34 — exportado pra `CardRevealQaHarness` (dev-only) montar
+// `DrawnCard`s sintéticos sem duplicar a paleta de cor por raridade.
+export const GLOW_MAP: Record<RarityCode, string> = {
   common: 'rgba(107,114,128,0.5)',
   rare: 'rgba(147,51,234,0.7)',
   elite: 'rgba(37,99,235,0.8)',
@@ -189,7 +191,7 @@ const GLOW_MAP: Record<RarityCode, string> = {
   world_cup_hero: 'rgba(240,244,255,1)',
 };
 
-const PARTICLE_MAP: Record<RarityCode, string> = {
+export const PARTICLE_MAP: Record<RarityCode, string> = {
   common: '#6b7280',
   rare: '#a855f7',
   elite: '#3b82f6',

@@ -12,15 +12,23 @@
  */
 
 import { resolveFrame } from '@/lib/card-asset-loader';
+import { v3ToResolvedCardAsset } from '@/lib/card-v3/adapter';
+import { resolveCardV3 } from '@/lib/card-v3/resolver';
 import type { CardVisualCtx } from '../card-types';
 import { ImageLayer } from './ImageLayer';
 
 export function CardFrameLayer({ ctx }: { ctx: CardVisualCtx }) {
   if (ctx.hiddenLayers?.has('frame')) return null;
 
+  // Sprint 34 — moldura de uma composição v3 tem prioridade sobre a moldura
+  // por raridade de sempre; sem composição (toda carta real hoje), cai no
+  // `resolveFrame` de sempre, comportamento idêntico ao de antes.
+  const v3 = ctx.card.v3CompositionId ? resolveCardV3(ctx.card.v3CompositionId) : null;
+  const asset = v3?.frame ? v3ToResolvedCardAsset(v3.frame, v3.meta) : resolveFrame(ctx.rarityCode);
+
   return (
     <ImageLayer
-      asset={resolveFrame(ctx.rarityCode)}
+      asset={asset}
       alt=""
       className="absolute inset-0 w-full h-full pointer-events-none card-parallax-frame"
       style={{ zIndex: 6 }}

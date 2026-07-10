@@ -1712,3 +1712,33 @@ textarea {
   animation-timing-function: linear;
   animation-iteration-count: infinite;
 }
+
+/* Sprint 34 — item 9 do brief: "cards fora da viewport não animam".
+   `.card-offscreen` é setada por `useCardInViewport` (IntersectionObserver)
+   no wrapper externo do PlayerCard; o seletor com `*` é necessário porque
+   `animation-play-state` não é herdado — cada elemento com sua própria
+   animação (breathe no wrapper, holo/aura em pseudo-elementos, shine,
+   partículas, volumetric-spin) precisa ser pausado individualmente. */
+.card-offscreen,
+.card-offscreen *,
+.card-offscreen *::before,
+.card-offscreen *::after {
+  animation-play-state: paused !important;
+}
+
+/* Sprint 34 (Official Art Pack Integration) — item 9 do brief:
+   "prefers-reduced-motion é respeitado". Regra global, não só cards: achata
+   toda `animation`/`transition` da árvore inteira pra praticamente instantâneo
+   quando o usuário pediu menos movimento no SO, sem remover nenhum elemento
+   nem quebrar layout (a técnica padrão da indústria — nunca `animation: none`,
+   que pode deixar estado visual "no meio" de uma transição). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -7,6 +7,13 @@
  * pra uma tira horizontal de linha única, renderizada DENTRO do rodapé do
  * HUD (`CardHudLayer`, logo abaixo do nome) — bate com a referência, que
  * mostra PAC/SHO/PAS/DRI/DEF/PHY numa única linha sob o nome do jogador.
+ *
+ * Sprint 34: goleiro usa outro conjunto de rótulos (DIV/HAN/KIC/REF/SPD/
+ * POS em vez de PAC/SHO/PAS/DRI/DEF/PHY) — os 6 SLOTS numéricos de
+ * `CardAttributes` continuam os mesmos (não existe um segundo conjunto de
+ * campos "attributes-goleiro" no modelo de dados; isso é puramente sobre
+ * como a Sprint 34 pede pra rotular os mesmos 6 valores pra um goleiro),
+ * só o texto exibido muda por posição.
  */
 
 import type { CardVisualCtx } from '../card-types';
@@ -20,20 +27,40 @@ export type CardAttributes = {
   physical: number;
 };
 
-const PIP_LABELS: Array<{ key: keyof CardAttributes; label: string }> = [
-  { key: 'pace', label: 'RIT' },
-  { key: 'finishing', label: 'FIN' },
-  { key: 'passing', label: 'PAS' },
-  { key: 'dribbling', label: 'DRI' },
-  { key: 'defending', label: 'DEF' },
-  { key: 'physical', label: 'FIS' },
+const PIP_KEYS: Array<keyof CardAttributes> = [
+  'pace',
+  'finishing',
+  'passing',
+  'dribbling',
+  'defending',
+  'physical',
 ];
+
+const LINE_LABELS: Record<keyof CardAttributes, string> = {
+  pace: 'RIT',
+  finishing: 'FIN',
+  passing: 'PAS',
+  dribbling: 'DRI',
+  defending: 'DEF',
+  physical: 'FIS',
+};
+
+const GOALKEEPER_LABELS: Record<keyof CardAttributes, string> = {
+  pace: 'DIV',
+  finishing: 'HAN',
+  passing: 'KIC',
+  dribbling: 'REF',
+  defending: 'SPD',
+  physical: 'POS',
+};
 
 export function CardAttributesLayer({
   ctx,
   attributes,
 }: { ctx: CardVisualCtx; attributes: CardAttributes }) {
-  const { accent, size } = ctx;
+  const { accent, size, card } = ctx;
+  const isGoalkeeper = card.position === 'GK';
+  const labels = isGoalkeeper ? GOALKEEPER_LABELS : LINE_LABELS;
   const fontSize = size === 'xs' ? 5.5 : size === 'sm' ? 6.5 : size === 'md' ? 8 : 10;
 
   return (
@@ -45,7 +72,7 @@ export function CardAttributesLayer({
         gap: size === 'xs' ? 4 : 7,
       }}
     >
-      {PIP_LABELS.map(({ key, label }) => (
+      {PIP_KEYS.map((key) => (
         <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <span style={{ fontSize, color: accent, fontWeight: 800, lineHeight: 1.1 }}>
             {attributes[key]}
@@ -58,7 +85,7 @@ export function CardAttributesLayer({
               letterSpacing: '0.04em',
             }}
           >
-            {label}
+            {labels[key]}
           </span>
         </div>
       ))}
