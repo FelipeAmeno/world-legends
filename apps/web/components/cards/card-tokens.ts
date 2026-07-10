@@ -81,14 +81,11 @@ export const RARITY_SHIMMER: Record<RarityCode, boolean> = {
   world_cup_hero: true,
 };
 
-export const SIZES: Record<
-  CardSize,
-  { card: { width: number; height: number }; jersey: CardSize; jerseyScale: number }
-> = {
-  xs: { card: { width: 62, height: 84 }, jersey: 'xs', jerseyScale: 1.5 },
-  sm: { card: { width: 92, height: 124 }, jersey: 'sm', jerseyScale: 1.42 },
-  md: { card: { width: 116, height: 156 }, jersey: 'md', jerseyScale: 1.36 },
-  lg: { card: { width: 148, height: 199 }, jersey: 'lg', jerseyScale: 1.32 },
+export const SIZES: Record<CardSize, { card: { width: number; height: number } }> = {
+  xs: { card: { width: 62, height: 84 } },
+  sm: { card: { width: 92, height: 124 } },
+  md: { card: { width: 116, height: 156 } },
+  lg: { card: { width: 148, height: 199 } },
 };
 
 export const OVR_FONT: Record<CardSize, number> = { xs: 14, sm: 18, md: 22, lg: 28 };

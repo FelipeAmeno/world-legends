@@ -19,8 +19,8 @@
 import { getKitColors } from '@/lib/kit-data';
 import { generateProceduralScene } from '@/lib/procedural-scene/SceneGenerator';
 import type { NationalityCode, Position } from '@world-legends/types';
-import { PoseFigure } from '../pose/PoseFigure';
 import type { CardVisualCtx } from '../card-types';
+import { PoseFigure } from '../pose/PoseFigure';
 
 const SCENE_Z = 5;
 
@@ -114,7 +114,10 @@ export function ProceduralSceneLayer({ ctx }: { ctx: CardVisualCtx }) {
         />
       ))}
 
-      {/* Pose — silhueta articulada (Sprint 28, Pose Engine) */}
+      {/* Pose — silhueta articulada (Sprint 28, Pose Engine). Silhueta CLARA
+          (não escura) de propósito: o fundo do estádio é sempre escuro
+          (`getStadiumBg`), uma silhueta escura ficaria invisível em cima
+          dele — o efeito pretendido é "atleta contra-luz", não sombra. */}
       <div
         style={{
           position: 'absolute',
@@ -130,12 +133,13 @@ export function ProceduralSceneLayer({ ctx }: { ctx: CardVisualCtx }) {
         <div
           style={{
             width: dim.card.width * 0.6,
-            filter: `drop-shadow(0 6px 14px rgba(0,0,0,0.55)) drop-shadow(0 0 16px ${accent}40)`,
+            height: dim.card.width * 0.6 * 1.4,
+            filter: `drop-shadow(0 6px 14px rgba(0,0,0,0.55)) drop-shadow(0 0 16px ${accent}60)`,
           }}
         >
           <PoseFigure
             pose={scene.pose}
-            fillColor="#12131c"
+            fillColor="#dfe1ea"
             accentColor={kit.primary}
             width="100%"
             height="100%"

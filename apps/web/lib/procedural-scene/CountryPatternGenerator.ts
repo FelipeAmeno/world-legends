@@ -24,10 +24,7 @@ export type ProceduralCountryPattern = Readonly<{
   opacity: number;
 }>;
 
-export function generateCountryPattern(
-  nationality: string,
-  rng: Rng,
-): ProceduralCountryPattern {
+export function generateCountryPattern(nationality: string, rng: Rng): ProceduralCountryPattern {
   const kit = getKitColors(nationality as NationalityCode);
   return {
     kind: kit.pattern ?? 'solid',

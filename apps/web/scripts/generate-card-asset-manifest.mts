@@ -1,11 +1,17 @@
 /**
  * scripts/generate-card-asset-manifest.mts — Sprint 18.6 (Card Rendering Engine — Pipeline)
  *
- * Varre public/assets/cards/{backgrounds,effects,frames,kits,patterns,
- * player-art,poses,scenes,shine} e gera lib/card-asset-manifest.generated.ts
- * com a lista de assets que realmente existem em disco, mais os metadados
- * de transform (scale, offset, rotation, blendMode, intensity) lidos de um
- * sidecar opcional `<nome>.json` ao lado de cada imagem.
+ * Varre public/assets/cards/{backgrounds,effects,frames,poses,scenes,
+ * shine} e gera lib/card-asset-manifest.generated.ts com a lista de
+ * assets que realmente existem em disco, mais os metadados de transform
+ * (scale, offset, rotation, blendMode, intensity) lidos de um sidecar
+ * opcional `<nome>.json` ao lado de cada imagem.
+ *
+ * `kits`/`patterns`/`player-art` — removidos na Sprint 26 (Card Engine
+ * 2.0 — Legacy Removal). As 3 pastas nunca receberam nenhum asset real
+ * (só `.gitkeep`) — o sistema que consumiria esses assets (camisa/
+ * retrato/textura da seleção) foi banido de vez em favor da Scene
+ * procedural (`lib/procedural-scene/`, Sprint 27).
  *
  * Roda automaticamente via `predev`/`prebuild` (package.json) — ninguém
  * precisa lembrar de rodar isso à mão depois de soltar uma arte nova.
@@ -16,17 +22,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const CATEGORIES = [
-  'backgrounds',
-  'effects',
-  'frames',
-  'kits',
-  'patterns',
-  'player-art',
-  'poses',
-  'scenes',
-  'shine',
-] as const;
+const CATEGORIES = ['backgrounds', 'effects', 'frames', 'poses', 'scenes', 'shine'] as const;
 type Category = (typeof CATEGORIES)[number];
 
 const IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.svg']);

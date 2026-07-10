@@ -16,8 +16,8 @@
  * também são formas limpas, não fotografia).
  */
 
-import type { PoseDef } from '@/lib/pose-engine/types';
 import { type PoseProportions, resolveRigJoints } from '@/lib/pose-engine/rig';
+import type { PoseDef } from '@/lib/pose-engine/types';
 
 type Props = {
   pose: PoseDef;

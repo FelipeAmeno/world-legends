@@ -68,9 +68,18 @@ export function createRng(seed: number): Rng {
   };
 }
 
-/** Float determinístico em [min, max). */
+/**
+ * Float determinístico em [min, max) — arredondado pra 2 casas decimais.
+ * Sem o arredondamento, a maioria dos valores desta função acaba direto
+ * em atributos JSX (`%`, `deg`, `s`) renderizados no SSR — e a
+ * serialização de um float "cru" pode divergir por 1 dígito entre o
+ * Node (SSR) e o navegador (hidratação), disparando um hydration
+ * mismatch real do React (achado testando ao vivo — ver `rig.ts`'s
+ * `round2` pro mesmo problema no Pose Engine). 2 casas decimais bastam
+ * pra qualquer cor/ângulo/posição visual.
+ */
 export function rngRange(rng: Rng, min: number, max: number): number {
-  return min + rng() * (max - min);
+  return Math.round((min + rng() * (max - min)) * 100) / 100;
 }
 
 /** Inteiro determinístico em [min, max], ambos inclusive. */

@@ -1,3 +1,4 @@
+import { RARITY_ACCENT } from '@/components/cards/card-tokens';
 /**
  * lib/procedural-scene/ParticleGenerator.ts — Sprint 27 (Procedural
  * Scene Engine)
@@ -9,7 +10,6 @@
  * mais raras "brilham mais forte".
  */
 import type { RarityCode } from '@world-legends/types';
-import { RARITY_ACCENT } from '@/components/cards/card-tokens';
 import { type Rng, rngRange } from './seed';
 
 export type ProceduralParticle = Readonly<{

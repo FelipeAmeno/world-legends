@@ -14,13 +14,7 @@ import { ALL_RARITY_CODES } from '@/lib/card-asset-loader';
 import { getCollection } from '@/lib/collection-data';
 import { getAllKitNationalities } from '@/lib/kit-data';
 
-export type ExpectedAssetKind =
-  | 'frames'
-  | 'backgrounds'
-  | 'effects-effect'
-  | 'effects-glow'
-  | 'kits'
-  | 'player-art';
+export type ExpectedAssetKind = 'frames' | 'backgrounds' | 'effects-effect' | 'effects-glow';
 
 export type ExpectedEntry = { key: string; label: string };
 
@@ -44,17 +38,6 @@ export function expectedShine(): ExpectedEntry[] {
   return ALL_RARITY_CODES.map((r) => ({ key: `shine-${r}`, label: r }));
 }
 
-export function expectedKits(): ExpectedEntry[] {
-  const nationalities = getAllKitNationalities();
-  const out: ExpectedEntry[] = [];
-  for (const nat of nationalities) {
-    for (const r of ALL_RARITY_CODES) {
-      out.push({ key: `kit-${nat}-${r}`, label: `${nat} · ${r}` });
-    }
-  }
-  return out;
-}
-
 function uniquePlayers(): ReadonlyArray<{ id: string; knownAs: string; nationality: string }> {
   const seen = new Map<string, { id: string; knownAs: string; nationality: string }>();
   for (const card of getCollection()) {
@@ -69,16 +52,8 @@ function uniquePlayers(): ReadonlyArray<{ id: string; knownAs: string; nationali
   return Array.from(seen.values());
 }
 
-export function expectedPlayerArt(): ExpectedEntry[] {
-  return uniquePlayers().map((p) => ({ key: p.id, label: p.knownAs }));
-}
-
 export function expectedPoses(): ExpectedEntry[] {
   return uniquePlayers().map((p) => ({ key: `pose-${p.id}`, label: p.knownAs }));
-}
-
-export function expectedPatterns(): ExpectedEntry[] {
-  return getAllKitNationalities().map((n) => ({ key: `pattern-${n}`, label: n }));
 }
 
 /** Scene (Sprint 21) — cenário cinematográfico por jogador, `scene-{playerId}.webp`. */

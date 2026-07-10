@@ -25,8 +25,6 @@ import {
   resolveBackground,
   resolveFrame,
   resolveGlow,
-  resolveKit,
-  resolvePlayerArt,
   resolvePose,
   resolveRarityEffect,
   resolveScene,
@@ -34,17 +32,21 @@ import {
 } from '@/lib/card-asset-loader';
 import { getFlagEmoji } from '@/lib/collection-data';
 import { exportCardScreenshot } from '@/lib/dev/card-screenshot';
-import type { RarityCode } from '@world-legends/types';
+import { candidatePoses } from '@/lib/pose-engine/poseResolver';
+import { generateProceduralScene } from '@/lib/procedural-scene/SceneGenerator';
+import type { Position, RarityCode } from '@world-legends/types';
 import { useMemo, useRef, useState } from 'react';
+import { PoseFigure } from '../cards/pose/PoseFigure';
 
 /**
  * Ordem real de composição (Sprint 24 — Card Composition Refactor), de
  * trás pra frente — espelha exatamente as 9 camadas de `PlayerCard.tsx`.
  * "Ambient" agrupa Material + Ambient Light + Efeito de raridade (mesma
- * camada conceitual). `kit`/`pattern`/`playerArt`/`pose` não existem mais
- * como camadas independentes — foram absorvidas por `scene` (ver
- * CardSceneLayer.tsx: scene real > player art > pose > camisa, cadeia de
- * fallback única).
+ * camada conceitual). `kit`/`pattern`/`playerArt` não existem mais em
+ * lugar nenhum (removidos na Sprint 26 — Card Engine 2.0); `pose` não é
+ * uma camada independente — está absorvida por `scene` (ver
+ * CardSceneLayer.tsx: scene real > pose real > Scene procedural,
+ * cadeia de fallback única que nunca mais renderiza camisa).
  */
 const ALL_LAYERS: Array<{ id: CardLayerName; label: string }> = [
   { id: 'background', label: '1. Background' },
@@ -76,21 +78,18 @@ const RARITY_LABEL: Record<RarityCode, string> = {
 };
 
 /**
- * Sprint 24 — Scene é uma cadeia de fallback única (scene real > player art
- * > pose > camisa), mesma ordem de prioridade de CardSceneLayer.tsx. Helper
- * de módulo (fora do componente) pra não contar pra complexidade dele —
- * mesmo padrão já usado nas Sprints 22/23.
+ * Sprint 26/27 — Scene é uma cadeia de fallback única (scene real > pose
+ * real > Scene procedural), mesma ordem de prioridade de
+ * CardSceneLayer.tsx. Legado (kit/player-art/camisa) removido de vez —
+ * a Scene procedural NUNCA retorna nulo, então não existe mais um
+ * "fallback SVG de camisa" no fim da cadeia. Helper de módulo (fora do
+ * componente) pra não contar pra complexidade dele — mesmo padrão já
+ * usado nas Sprints 22/23.
  */
-function resolveActiveSceneSource(
-  playerId: string,
-  nationality: string,
-  rarityCode: RarityCode,
-): string {
+function resolveActiveSceneSource(playerId: string): string {
   if (resolveScene(playerId)) return 'scene real';
-  if (resolvePlayerArt(playerId)) return 'player art';
-  if (resolvePose(playerId)) return 'pose';
-  if (resolveKit(nationality, rarityCode)) return 'camisa (asset real)';
-  return 'camisa (fallback SVG)';
+  if (resolvePose(playerId)) return 'pose (asset real)';
+  return 'scene procedural';
 }
 
 export function CardPreviewPanel({ rarityCodes, nationalities, players }: Props) {
@@ -150,7 +149,7 @@ export function CardPreviewPanel({ rarityCodes, nationalities, players }: Props)
     [playerId, player, nationality, rarityCode],
   );
 
-  const sceneSource = resolveActiveSceneSource(playerId, nationality, rarityCode);
+  const sceneSource = resolveActiveSceneSource(playerId);
 
   const layerStatus: Array<{ label: string; hasAsset: boolean }> = [
     { label: 'Frame', hasAsset: resolveFrame(rarityCode) !== null },
@@ -159,10 +158,24 @@ export function CardPreviewPanel({ rarityCodes, nationalities, players }: Props)
     { label: 'Glow', hasAsset: resolveGlow(rarityCode) !== null },
     {
       label: `Scene (fonte ativa: ${sceneSource})`,
-      hasAsset: sceneSource !== 'camisa (fallback SVG)',
+      hasAsset: sceneSource !== 'scene procedural',
     },
     { label: 'Shine', hasAsset: resolveShine(rarityCode) !== null },
   ];
+
+  // Sprint 27/28 — breakdown da Scene procedural (só é o que renderiza de
+  // fato quando `sceneSource === 'scene procedural'`, mas exibido sempre
+  // pra facilitar comparação/debug independente da fonte ativa).
+  const proceduralScene = useMemo(
+    () =>
+      generateProceduralScene({
+        playerId: playerId || 'preview',
+        nationality,
+        rarityCode,
+        position: 'ST' as Position,
+      }),
+    [playerId, nationality, rarityCode],
+  );
 
   const handleExport = async () => {
     const cardEl = cardWrapperRef.current?.firstElementChild as HTMLElement | undefined;
@@ -218,7 +231,7 @@ export function CardPreviewPanel({ rarityCodes, nationalities, players }: Props)
               </select>
             </Field>
 
-            <Field label="Seleção (kit)" htmlFor="preview-nationality">
+            <Field label="Seleção (país)" htmlFor="preview-nationality">
               <select
                 id="preview-nationality"
                 className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-sm"
@@ -265,6 +278,82 @@ export function CardPreviewPanel({ rarityCodes, nationalities, players }: Props)
                 >
                   {l.label}: {l.hasAsset ? 'asset real' : 'fallback'}
                 </span>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-white/40 text-[10px] uppercase tracking-wider mb-2">
+              Scene Procedural (Sprint 27/28) — seed {proceduralScene.seed}
+            </p>
+            <div className="grid grid-cols-2 gap-2 text-[11px]">
+              <div className="rounded-lg border border-white/10 p-2">
+                <p className="text-white/40 mb-1">Background</p>
+                <div
+                  className="h-6 rounded mb-1"
+                  style={{
+                    background: `linear-gradient(90deg, ${proceduralScene.background.gradientFrom}, ${proceduralScene.background.gradientMid}, ${proceduralScene.background.gradientTo})`,
+                  }}
+                />
+                <p className="text-white/60">{proceduralScene.background.stadiumName}</p>
+              </div>
+              <div className="rounded-lg border border-white/10 p-2">
+                <p className="text-white/40 mb-1">Lighting</p>
+                <div
+                  className="h-6 rounded mb-1"
+                  style={{ background: proceduralScene.lighting.color }}
+                />
+                <p className="text-white/60">
+                  {proceduralScene.lighting.rayCount} raios ·{' '}
+                  {proceduralScene.lighting.spinDurationS.toFixed(1)}s
+                </p>
+              </div>
+              <div className="rounded-lg border border-white/10 p-2">
+                <p className="text-white/40 mb-1">Particles</p>
+                <div
+                  className="h-6 rounded mb-1"
+                  style={{ background: proceduralScene.particles.color }}
+                />
+                <p className="text-white/60">
+                  {proceduralScene.particles.particles.length} partículas
+                </p>
+              </div>
+              <div className="rounded-lg border border-white/10 p-2">
+                <p className="text-white/40 mb-1">Country Pattern</p>
+                <div
+                  className="h-6 rounded mb-1"
+                  style={{
+                    background: `repeating-linear-gradient(${proceduralScene.countryPattern.angleDeg}deg, ${proceduralScene.countryPattern.colorA} 0 6px, ${proceduralScene.countryPattern.colorB} 6px 12px)`,
+                  }}
+                />
+                <p className="text-white/60">{proceduralScene.countryPattern.kind}</p>
+              </div>
+              <div className="rounded-lg border border-white/10 p-2 col-span-2">
+                <p className="text-white/40 mb-1">Pose (Pose Engine, Sprint 28)</p>
+                <p className="text-white/60">
+                  {proceduralScene.pose.label} · categoria: {proceduralScene.pose.category} · id:{' '}
+                  {proceduralScene.pose.id}
+                </p>
+              </div>
+            </div>
+
+            {/* Pose Preview/Debug — todas as poses candidatas pra esta posição+raridade, a ativa em destaque */}
+            <p className="text-white/40 text-[10px] uppercase tracking-wider mt-3 mb-2">
+              Pose Gallery — candidatas pra ST · {RARITY_LABEL[rarityCode]}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {candidatePoses('ST' as Position, rarityCode).map((p) => (
+                <div
+                  key={p.id}
+                  className={`w-16 rounded-lg border p-1 text-center ${
+                    p.id === proceduralScene.pose.id
+                      ? 'border-emerald-500/60 bg-emerald-500/10'
+                      : 'border-white/10'
+                  }`}
+                >
+                  <PoseFigure pose={p} width="100%" height={56} accentColor="#c9a84c" />
+                  <p className="text-[9px] text-white/50 mt-0.5 truncate">{p.label}</p>
+                </div>
               ))}
             </div>
           </div>

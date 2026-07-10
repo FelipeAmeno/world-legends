@@ -62,9 +62,6 @@ export const CARD_ASSET_MANIFEST = {
       meta: {},
     },
   },
-  kits: {},
-  patterns: {},
-  'player-art': {},
   poses: {},
   scenes: {
     'scene-cristiano-ronaldo': {

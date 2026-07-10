@@ -8,9 +8,9 @@
  * mesma carta sempre resolve a mesma pose.
  */
 import type { Position, RarityCode } from '@world-legends/types';
-import { ALL_POSES } from './poseCatalog';
 import type { Rng } from '../procedural-scene/seed';
 import { rngChoice } from '../procedural-scene/seed';
+import { ALL_POSES } from './poseCatalog';
 import type { PoseCategory, PoseDef } from './types';
 
 const RARITY_RANK: Record<RarityCode, number> = {

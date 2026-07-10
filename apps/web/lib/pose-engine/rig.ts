@@ -53,12 +53,25 @@ export const DEFAULT_PROPORTIONS: PoseProportions = {
 
 export type Point = Readonly<{ x: number; y: number }>;
 
+/**
+ * Arredonda pra 2 casas decimais — sem isso, `Math.sin`/`Math.cos`
+ * produzem floats com dezenas de casas decimais cuja serialização
+ * pra string diverge entre o SSR (Node) e a hidratação no navegador
+ * (mesmo valor, string ligeiramente diferente: `106.9129873451272` vs
+ * `106.91298734512719`), causando um hydration mismatch real no React
+ * — descoberto testando ao vivo, não hipotético. Precisão de 2 casas é
+ * mais que suficiente visualmente (o SVG tem só 100×140 de viewBox).
+ */
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 /** Ponto a `length` de distância de `origin`, na direção `angleDeg` (0° = reto pra baixo, horário). */
 function polarOffset(origin: Point, angleDeg: number, length: number): Point {
   const rad = (angleDeg * Math.PI) / 180;
   return {
-    x: origin.x + Math.sin(rad) * length,
-    y: origin.y + Math.cos(rad) * length,
+    x: round2(origin.x + Math.sin(rad) * length),
+    y: round2(origin.y + Math.cos(rad) * length),
   };
 }
 

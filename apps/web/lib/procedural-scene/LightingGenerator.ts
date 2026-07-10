@@ -1,3 +1,4 @@
+import { RARITY_ACCENT } from '@/components/cards/card-tokens';
 /**
  * lib/procedural-scene/LightingGenerator.ts — Sprint 27 (Procedural
  * Scene Engine)
@@ -10,7 +11,6 @@
  * por raridade e o ângulo/velocidade por seed.
  */
 import type { RarityCode } from '@world-legends/types';
-import { RARITY_ACCENT } from '@/components/cards/card-tokens';
 import { type Rng, rngInt, rngRange } from './seed';
 
 export type ProceduralLighting = Readonly<{

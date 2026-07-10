@@ -88,28 +88,20 @@ export function resolveGlow(rarityCode: RarityCode): ResolvedCardAsset | null {
   return resolveCardAsset('effects', `glow-${rarityCode}`);
 }
 
-export function resolveKit(nationality: string, rarityCode: RarityCode): ResolvedCardAsset | null {
-  return resolveCardAsset('kits', `kit-${nationality}-${rarityCode}`);
-}
-
-export function resolvePlayerArt(playerId: string): ResolvedCardAsset | null {
-  return resolveCardAsset('player-art', playerId);
-}
-
 /**
- * Pattern (Sprint 19) — textura reutilizável associada à seleção (listras,
- * xadrez etc.), pensada pra combinar com Kit. Convenção de chave:
- * `pattern-{nacionalidade}`.
- */
-export function resolvePattern(nationality: string): ResolvedCardAsset | null {
-  return resolveCardAsset('patterns', `pattern-${nationality}`);
-}
-
-/**
- * Pose (Sprint 19) — pose/silhueta completa do jogador, alternativa ao
- * retrato de Player Art. Ainda não existe nenhum asset; a camada cai
- * silenciosamente (fallback null), igual Player Art antes da primeira
- * entrega de arte.
+ * Pose (Sprint 19) — asset FOTOGRÁFICO opcional de corpo inteiro, se algum
+ * dia existir (prioridade 2 na cadeia de `CardSceneLayer.tsx`, logo depois
+ * de Scene). Sem asset (o caso de praticamente toda carta hoje), a camada
+ * cai silenciosamente (fallback null) e quem assume é a Scene procedural
+ * (`lib/procedural-scene/`) — que inclui sua PRÓPRIA pose, articulada e
+ * determinística (`lib/pose-engine/`), nunca uma foto real.
+ *
+ * `resolveKit`/`resolvePlayerArt`/`resolvePattern` — removidos na Sprint 26
+ * (Card Engine 2.0 — Legacy Removal). Eram os três pilares do sistema
+ * antigo de camisa/retrato/textura; nenhum dos três teve asset real
+ * entregue, e o fallback deles (a "camisa" genérica atrás do frame) foi
+ * banido de vez em favor da Scene procedural. Ver
+ * `SPRINT_26_CARD_ENGINE_2_LEGACY_REMOVAL.md` pro inventário completo.
  */
 export function resolvePose(playerId: string): ResolvedCardAsset | null {
   return resolveCardAsset('poses', `pose-${playerId}`);

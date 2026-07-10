@@ -1,11 +1,21 @@
 # World Legends — Art Pipeline
 
-**Atualizado pela Sprint 21.** Guia completo pra quem produz arte pro Card
-Engine — frame, background, kit, pattern, pose, player-art, scene, shine,
+**Atualizado pela Sprint 26 (Card Engine 2.0 — Legacy Removal) + Sprint 27
+(Procedural Scene Engine) + Sprint 28 (Pose System).** Guia completo pra
+quem produz arte pro Card Engine — frame, background, pose, scene, shine,
 effects/glow/reflection/ambient/partícula. Descreve exatamente como
 adicionar cada tipo sem tocar em código. Substitui/atualiza
 `apps/web/docs/CARD_ASSETS_GUIDE.md` (mantido como referência histórica da
 Sprint 18.5, mas este documento é o atual).
+
+**Kit/Pattern/Player Art — removidos na Sprint 26.** As 3 categorias
+existiam desde o início do Card Engine mas NUNCA receberam nenhum asset
+real (só pastas vazias com `.gitkeep`) — o sistema que elas alimentavam
+(a "camisa" genérica atrás do frame) foi banido de vez do jogo. O centro
+da carta nunca mais é uma camiseta: é sempre uma Scene (real ou
+procedural — ver Sprint 27/28 abaixo). Se você tem arte de camisa/textura
+de seleção/retrato pronta, ela **não tem mais onde entrar** neste
+pipeline — produza Scene ou Pose (asset real) no lugar.
 
 ---
 
@@ -26,17 +36,14 @@ um preview ao vivo da carta de verdade com um modo **Visual Debug** que
 liga/desliga cada camada individualmente (útil pra ver exatamente onde
 seu asset entra na composição).
 
-## As 9 categorias
+## As 6 categorias
 
 ```
 public/assets/cards/
   frames/         — moldura decorativa da carta
   backgrounds/    — fundo atrás de tudo
   effects/        — efeito de acabamento por raridade (+ glow, reflection, ambient, partículas)
-  kits/           — camisa da seleção
-  patterns/       — textura reutilizável associada à seleção (listras, xadrez)
-  poses/          — pose/silhueta completa do jogador (corpo inteiro)
-  player-art/     — retrato do jogador
+  poses/          — pose/silhueta FOTOGRÁFICA completa do jogador (opcional — ver Pose Engine abaixo)
   scenes/         — cenário cinematográfico completo por jogador (Sprint 21)
   shine/          — holo/shine especial (reservado — hoje é um efeito de vidro que reage ao mouse, 100% CSS)
 ```
@@ -50,11 +57,8 @@ public/assets/cards/
 | Reflection | `reflection-{raridade}.png` | `reflection-ultra.png` | **Novo (Sprint 18.9)** — preparado, nenhum asset ainda |
 | Ambient | `ambient-{raridade}.png` | `ambient-legendary.png` | **Novo (Sprint 18.9)** — preparado, nenhum asset ainda |
 | Partícula | `particle-{raridade}.png` | `particle-world_cup_hero.png` | **Novo (Sprint 18.9)** — preparado, nenhum asset ainda |
-| Kit | `kit-{nacionalidade}-{raridade}.png` | `kit-BR-legendary.png` | Preparado, nenhum asset ainda (fallback: camisa SVG procedural) |
-| Pattern | `pattern-{nacionalidade}.png` | `pattern-AR.png` | Preparado, nenhum asset ainda |
-| Pose | `pose-{playerId}.png` | `pose-pelé.png` | Preparado, nenhum asset ainda |
-| Player Art | `{playerId}.png` | `pelé.png` | Preparado, nenhum asset ainda |
-| Scene | `scene-{playerId}.webp` | `scene-pelé.webp` | **Novo (Sprint 21)** — ponto de integração preparado, nenhum asset ainda |
+| Pose | `pose-{playerId}.png` | `pose-pelé.png` | Opcional — sem asset, o Pose Engine (Sprint 28) gera uma pose articulada determinística |
+| Scene | `scene-{playerId}.webp` | `scene-pelé.webp` | **Sprint 21** — 3 entregues (Pelé, Messi, Cristiano Ronaldo); sem asset, a Scene Procedural (Sprint 27) assume |
 | Shine | `shine-{raridade}.png` | `shine-ultra.png` | Preparado, nenhum asset ainda (fallback: reflexo de vidro reagindo ao mouse) |
 
 As 6 raridades do jogo (não criar nenhuma outra): `common`, `rare`,
@@ -62,62 +66,59 @@ As 6 raridades do jogo (não criar nenhuma outra): `common`, `rare`,
 nacionalidade e IDs de jogador exatos estão listados em
 `/dev/card-assets` — use os seletores da página em vez de adivinhar.
 
-### O que é Pattern, exatamente
-
-Uma textura que fica **por cima do Kit** (listras verticais da
-Argentina, xadrez da Croácia etc.) — hoje o `lib/kit-data.ts` já simula
-isso via CSS/SVG (`pattern: 'stripes' | 'checker'` em `KitColors`).
-Quando existir um PNG real em `patterns/pattern-{nacionalidade}.png`, ele
-substitui a simulação CSS por cima da camisa (`mix-blend-mode: overlay`).
-
 ### O que é Pose, exatamente
 
-Uma alternativa a Player Art: em vez de um retrato (rosto/torso), uma
-pose/corpo inteiro do jogador (ex.: chutando, comemorando). Fica na mesma
-posição que Player Art (por cima da camisa). Produza **um ou outro**, não
-os dois pro mesmo jogador — se ambos existirem, Player Art tem prioridade
-(é a camada anterior na composição).
+Um asset FOTOGRÁFICO opcional de corpo inteiro do jogador (ex.: chutando,
+comemorando) — usado só se você tiver uma foto/ilustração real pronta.
+Sem ele (o caso de praticamente todo o catálogo), o **Pose Engine**
+(Sprint 28, `apps/web/lib/pose-engine/`) gera uma pose articulada
+determinística — 14 poses catalogadas (correndo/chutando/comemorando/
+voleio/bicicleta pra atacantes, dominando/girando/passando pra meias,
+carrinho/interceptação/disputa aérea pra zagueiros,
+defesa/salto/espalmando pra goleiros), escolhida pela posição real do
+jogador + raridade (poses mais espetaculares reservadas pra Elite+/
+Legendary+) + o mesmo seed determinístico da Scene — nunca aleatório,
+nunca hardcoded por jogador. Ver `/dev/card-assets` → "Pose Gallery" pra
+navegar todas as poses candidatas de uma posição.
 
-### O que é Scene, exatamente (Sprint 21)
+### O que é Scene, exatamente (Sprint 21, consolidado nas Sprints 26/27)
 
-Um cenário cinematográfico completo por trás da camisa/arte/pose —
-estádio, ambiente, iluminação — pra o centro da carta deixar de ser só
-"camisa contra fundo genérico". Fica **atrás** de Kit/Pattern/Player Art/
-Pose (é a camada anterior na composição, `CardSceneLayer` renderiza antes
-do bloco da camisa) e **atrás** de Reflection/Frame — funciona como pano
-de fundo, não como um elemento que compete visualmente com o jogador.
-Sem asset (hoje, nenhum ainda existe), a camada não renderiza nada — o
-centro da carta continua exatamente como sempre foi. Formato WEBP
-(paisagem/ambiente, sem necessidade de transparência — mesma lógica de
-Background).
+Um cenário cinematográfico completo — estádio, luz, partículas — que
+ocupa a área central inteira da carta. **Não existe mais nenhum
+fallback de camisa** (removido na Sprint 26): sem um asset de Scene
+real, o **Scene Generator procedural** (Sprint 27,
+`apps/web/lib/procedural-scene/`) monta uma cena inteira sozinho —
+Background (paleta de estádio da seleção), Lighting (raios volumétricos
+por raridade), Particles (campo determinístico), Country Pattern
+(listras/xadrez reais da seleção, 100% CSS) e a Pose resolvida (Sprint
+28) — tudo a partir de um seed determinístico
+(`playerId+nacionalidade+raridade+posição`): a mesma carta sempre produz
+a mesma cena. Formato WEBP pro asset real (paisagem/ambiente, sem
+necessidade de transparência — mesma lógica de Background).
 
 ## Prioridade recomendada de produção
 
 1. ~~**Frames**~~ e ~~**Backgrounds**~~ — já entregues (12/12).
 2. **Effects/Glow** (12 arquivos) — completa o conjunto "ambiente" da
    carta.
-3. **Kits** — comece pela variante `common` de cada seleção, depois
-   raridades altas só pras ~15 seleções mais puxadas em packs (Brasil,
-   Argentina, França, Alemanha, Inglaterra, Portugal, Espanha, Itália,
-   Holanda, Croácia, Bélgica, Uruguai, Coreia do Sul, Japão).
-4. **Player-art ou Pose** — 574 jogadores no catálogo. Priorize quem já
-   tem cartas `legendary`/`ultra`/`world_cup_hero`.
-5. **Reflection/Ambient/Partícula** (Sprint 18.9) — opcional, refina o
-   comportamento de luz já presente via CSS.
-6. **Scene** (Sprint 21) — opcional, maior impacto visual por arquivo dos
-   itens "opcionais" — transforma o centro da carta inteiro. Priorize
+3. **Scene** (Sprint 21/27) — o maior impacto visual por arquivo: uma
+   Scene real sempre tem prioridade sobre a Scene procedural. Priorize
    `legendary`/`ultra`/`world_cup_hero` primeiro.
-7. **Patterns** — opcional, refinamento visual por cima dos Kits.
-8. **Shine** — opcional, o fallback (reflexo de vidro) já é premium.
+4. **Reflection/Ambient/Partícula** (Sprint 18.9) — opcional, refina o
+   comportamento de luz já presente via CSS.
+5. **Pose** (asset fotográfico, opcional) — só faz sentido produzir se
+   for substituir a pose procedural por uma foto/ilustração real
+   específica; o Pose Engine já cobre o catálogo inteiro sem isso.
+6. **Shine** — opcional, o fallback (reflexo de vidro) já é premium.
 
 ## Especificação técnica
 
 - **Formato**: PNG (com alpha) pra tudo que precisa de transparência
-  (frame, effects, glow, kit, pattern, pose, shine). WEBP é aceito e
-  recomendado pra **backgrounds** e **scenes** (opacos, sem necessidade de
-  transparência — WEBP a qualidade 95 fica bem menor que PNG pro mesmo
-  resultado visual). JPG/SVG também são aceitos pelo pipeline mas sem
-  checagem completa de resolução/alpha em `/dev/card-assets`.
+  (frame, effects, glow, pose, shine). WEBP é aceito e recomendado pra
+  **backgrounds** e **scenes** (opacos, sem necessidade de transparência
+  — WEBP a qualidade 95 fica bem menor que PNG pro mesmo resultado
+  visual). JPG/SVG também são aceitos pelo pipeline mas sem checagem
+  completa de resolução/alpha em `/dev/card-assets`.
 - **Proporção**: 148:199 (≈ 0.744) — a mesma proporção da carta no jogo.
   Tolerância de ±5% no inspetor (calibrado com dados reais de produção
   na Sprint 18.8 — saídas de IA generativa raramente batem a proporção
@@ -125,10 +126,10 @@ Background).
   pequenas diferenças não causam defeito visual).
 - **Resolução mínima recomendada**: 512px de largura. Os 12 assets já
   integrados vieram em 1143×1600 — mais que suficiente.
-- **Transparência**: frame, effects, glow, kit, pattern, pose e shine
-  **precisam** de canal alpha. Background e Scene são opacos de propósito
-  (ambos ficam por trás de tudo — Scene especificamente por trás da
-  camisa/arte/pose, não precisa deixar nada transparecer).
+- **Transparência**: frame, effects, glow, pose e shine **precisam** de
+  canal alpha. Background e Scene são opacos de propósito (ambos ficam
+  por trás de tudo — Scene ocupa toda a área central, não precisa deixar
+  nada transparecer).
 
 ## Metadados por asset (sidecar JSON)
 

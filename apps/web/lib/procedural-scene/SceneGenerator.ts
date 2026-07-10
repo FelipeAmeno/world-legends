@@ -16,11 +16,10 @@
  * nomeados do RNG de partida, `packages/engine`).
  */
 import type { Position, RarityCode } from '@world-legends/types';
-import {
-  type ProceduralCountryPattern,
-  generateCountryPattern,
-} from './CountryPatternGenerator';
+import { resolvePose } from '../pose-engine/poseResolver';
+import type { PoseDef } from '../pose-engine/types';
 import { type ProceduralBackground, generateBackground } from './BackgroundGenerator';
+import { type ProceduralCountryPattern, generateCountryPattern } from './CountryPatternGenerator';
 import { type ProceduralLighting, generateLighting } from './LightingGenerator';
 import { type ProceduralParticles, generateParticles } from './ParticleGenerator';
 import {
@@ -29,8 +28,6 @@ import {
   createRng,
   deriveChannelSeed,
 } from './seed';
-import type { PoseDef } from '../pose-engine/types';
-import { resolvePose } from '../pose-engine/poseResolver';
 
 export type ProceduralScene = Readonly<{
   seed: number;
