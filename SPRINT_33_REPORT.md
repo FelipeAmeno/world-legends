@@ -65,3 +65,124 @@ pnpm build                    → sucesso, 24/24 páginas
 
 Nenhuma mudança em economia, preços, odds, Supabase (schema/RLS), ou
 gameplay/match engine.
+
+---
+
+## Auditoria final (solicitada após o fechamento da Sprint 33)
+
+**Nota de transparência**: entre o fechamento da Sprint 33 e esta
+auditoria, a Sprint 34 (Official Art Pack Integration) já foi executada
+e deployada nesta mesma sessão, a pedido explícito do usuário (mensagem
+separada, com brief completo, recebida enquanto a Sprint 33 ainda
+estava em andamento). O deploy Ready mencionado abaixo reflete o estado
+atual do `main` (Sprint 33 + 34). Nenhum trabalho novo foi iniciado por
+conta desta auditoria — só verificação do que já existe.
+
+### Arquivos criados/alterados/removidos — só o range da Sprint 33
+
+`git diff --name-status d5ef48f4^..2c5ecd49` (os 4 commits da Sprint 33
+isolados dos commits da Sprint 34):
+
+**Criados:**
+- `SPRINT_33_AUDIT.md`
+- `SPRINT_33_2_RECONSTRUCTION.md`
+- `SPRINT_33_REPORT.md`
+
+**Alterados:**
+- `apps/web/components/cards/card-tokens.ts`
+- `apps/web/components/cards/card-types.ts`
+- `apps/web/components/cards/layers/CardAttributesLayer.tsx`
+- `apps/web/components/cards/layers/CardHudLayer.tsx`
+- `apps/web/components/cards/layers/ProceduralSceneLayer.tsx`
+- `apps/web/components/cards/PlayerCard.tsx`
+- `apps/web/components/packs/CardRevealScene.tsx`
+- `apps/web/components/packs/PackArt.tsx`
+- `apps/web/lib/procedural-scene/BackgroundGenerator.ts`
+- `apps/web/lib/procedural-scene/LightingGenerator.ts`
+- `apps/web/lib/procedural-scene/ParticleGenerator.ts`
+
+**Removidos:** nenhum (a remoção de camadas legadas — `JerseyArt.tsx`,
+`resolveKit`/`resolvePlayerArt`/`resolvePattern` — já tinha acontecido
+nas Sprints 26-28, antes da Sprint 33 começar).
+
+14 arquivos, 475 inserções / 65 deleções no total.
+
+### Screenshots
+
+Capturados ao vivo (Playwright, conta de QA) em
+`/private/tmp/claude-502/.../scratchpad/sprint18_9/`:
+
+- **5 raridades** (`s33_card_common.png`, `s33_card_rare.png`,
+  `s33_card_elite.png`, `s33_card_legendary_fullpage.png`,
+  `s33_card_world_cup_hero_fullpage.png`) — via `/dev/card-assets`,
+  jogador sem Scene real (Ronaldo Fenômeno), progressão de intensidade
+  clara Common→WCH, pose sempre visível e proporcional.
+- **3 densidades** — Compact (`s33_page_squad.png`, grade `/squad`,
+  `size="xs"`), Standard (`s33_pr_passive_1.png`, Pack Reveal real,
+  `RevealedCard.tsx` usa `size="md"`), Showcase (`s33_page_profile.png`,
+  "Melhor Carta" do Perfil, `size="lg"`).
+- **Pack Reveal** — mesmo `s33_pr_passive_1.png` acima, mais a série
+  `s33_pr_passive_0..6.png` (observação passiva de 14s, zero toque,
+  confirmando o auto-advance completo 1/5→5/5).
+
+### Explicação do fallback procedural atual
+
+`CardSceneLayer.tsx` resolve em ordem: (1) Scene real
+(`scene-{playerId}.webp`, nenhuma existe hoje) → (2) Pose real
+(asset fotográfico, nenhuma existe hoje) → (3) **Scene procedural**
+(`ProceduralSceneLayer.tsx`, Sprint 27/28) — o único caminho que
+qualquer carta do catálogo de fato usa hoje. É 100% determinístico
+(seed = FNV-1a de `playerId:nationality:rarityCode:position`, PRNG
+mulberry32, zero `Math.random`): a mesma carta sempre produz o mesmo
+Background (paleta de estádio real via `getStadiumBg`), Country Pattern
+(listras/xadrez reais via `getKitColors`), Lighting (raios
+volumétricos), Particles (campo determinístico) e Pose (rig articulado
+de 10 ângulos, `pose-engine/`, nunca uma foto). A Sprint 33 aumentou a
+área da pose de ~60% pra ~88% da largura e levantou o piso de
+intensidade de Common/Rare (estavam apagadas antes).
+
+### Confirmação — JerseyLayer e renderizações legadas
+
+`grep -rn "JerseyArt\|resolveKit\|resolvePlayerArt\|resolvePattern\b"`
+no código de produção retorna **zero resultados de código** — a única
+ocorrência é um comentário em `lib/card-asset-loader.ts` documentando
+que essas funções foram removidas na Sprint 26. Confirmado visualmente
+em todos os screenshots acima: nenhuma silhueta de camisa, nenhum
+elemento atrás do frame, nenhum texto espelhado.
+
+### Resultado de lint, typecheck, testes e build (re-executado agora)
+
+```
+pnpm exec tsc --noEmit -p .   → 0 erros
+pnpm exec biome check .       → 457 warnings, 0 erros (baseline inalterado desde o início da sessão)
+pnpm test (apps/web)          → 225/225 (220 da Sprint 33 + 5 novos da Sprint 34, lib/card-v3-resolver)
+pnpm build (monorepo)         → sucesso, 34/34 tasks, 26/26 páginas
+```
+
+### URL do deploy Vercel Ready
+
+**https://world-legends.vercel.app** — status `Ready`, produção,
+deployment `world-legends-k4695dx9q-felipeamenos-projects.vercel.app`
+(reflete `main` com Sprint 33 + 34, ver nota de transparência acima).
+
+### Problemas visuais ainda existentes (lista objetiva)
+
+1. Arte é 100% procedural (silhueta genérica) — nenhum jogador tem pose
+   fotográfica/ilustrada real; a diferenciação visual entre jogadores
+   vem de raridade/país/posição, não de uma arte única por atleta.
+2. A silhueta do rig (`PoseFigure`) é a mesma forma de "boneco
+   articulado" pra todo jogador — dois jogadores com mesma pose+
+   raridade+país ficam quase idênticos visualmente, só a cor de
+   destaque (`kit.primary`) muda como rim-light, não preenche a "roupa".
+3. `/collection/[cardId]` (Card Detail) não renderiza o `PlayerCard`
+   nenhuma vez — é uma página de stats/texto puro, sem nenhuma arte de
+   carta visível. Pré-existente, fora do escopo da Sprint 33, mas é uma
+   inconsistência visual real entre telas.
+4. A aba "Álbum" da Coleção usa um componente de miniatura separado
+   (`CollectionSetCard`-equivalente: bandeira + nome + OVR em caixa
+   colorida) em vez do `PlayerCard` completo — outra inconsistência
+   visual pré-existente, também fora do escopo desta sprint.
+5. Common, mesmo com o piso de intensidade levantado, ainda é
+   deliberadamente mais "quieto" que as raridades altas — mais
+   discreto que o exemplo de Common na referência oficial (que mostra
+   uma textura de rocha dramática mesmo na raridade mais baixa).
