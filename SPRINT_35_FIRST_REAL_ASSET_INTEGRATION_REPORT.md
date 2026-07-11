@@ -124,7 +124,8 @@ pnpm build (monorepo)          → sucesso, 34/34 tasks, 26/26 páginas
 
 ## URL do deploy Vercel Ready
 
-A confirmar após push+deploy (ver final do relatório / mensagem de fechamento).
+**https://world-legends.vercel.app** — status `Ready`, produção,
+deployment `world-legends-6znsow089-felipeamenos-projects.vercel.app`.
 
 ## Observações / próximos passos
 
