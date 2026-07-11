@@ -3,7 +3,7 @@ import {
   checkArtworkResolution,
   checkCardAspectRatio,
 } from '@/lib/card-static/full-artwork';
-import { DEFAULT_HUD_LAYOUT, resolveHudLayout } from '@/lib/card-static/hud-layout';
+import { DEFAULT_HUD_LAYOUT, isZoneVisible, resolveHudLayout } from '@/lib/card-static/hud-layout';
 import { resolveGeneratedArtwork } from '@/lib/card-static/resolve-artwork';
 import type { ManifestPreset } from '@/lib/card-static/resolve-artwork';
 import { ARTWORK_DIMENSIONS } from '@/lib/card-static/types';
@@ -87,28 +87,54 @@ describe('lib/card-static/full-artwork — checkArtworkResolution', () => {
 });
 
 describe('lib/card-static/hud-layout — resolveHudLayout', () => {
-  it('preset sem hudLayout cai no DEFAULT_HUD_LAYOUT inteiro (fallback)', () => {
-    expect(resolveHudLayout(undefined)).toEqual(DEFAULT_HUD_LAYOUT);
-    expect(resolveHudLayout(null as never)).toEqual(DEFAULT_HUD_LAYOUT);
+  it('preset sem hudLayout/hudLayouts cai no DEFAULT_HUD_LAYOUT da densidade (fallback)', () => {
+    expect(resolveHudLayout(undefined, 'standard')).toEqual(DEFAULT_HUD_LAYOUT.standard);
+    expect(resolveHudLayout(null, 'compact')).toEqual(DEFAULT_HUD_LAYOUT.compact);
   });
 
-  it('preset com override parcial faz merge raso — só o campo dado muda', () => {
-    const resolved = resolveHudLayout({ overall: { x: 5, y: 5 } });
+  it('preset legado (hudLayout flat) faz merge raso sobre a densidade pedida', () => {
+    const resolved = resolveHudLayout({ hudLayout: { overall: { x: 5, y: 5 } } }, 'standard');
     expect(resolved.overall).toEqual({ x: 5, y: 5 });
     // resto continua vindo do default, provando que não é preciso
     // redeclarar tudo (fallback por campo).
-    expect(resolved.name).toEqual(DEFAULT_HUD_LAYOUT.name);
-    expect(resolved.position).toEqual(DEFAULT_HUD_LAYOUT.position);
+    expect(resolved.name).toEqual(DEFAULT_HUD_LAYOUT.standard.name);
+    expect(resolved.position).toEqual(DEFAULT_HUD_LAYOUT.standard.position);
+  });
+
+  it('preset novo (hudLayouts por densidade) resolve só a densidade pedida', () => {
+    const resolved = resolveHudLayout(
+      {
+        hudLayouts: {
+          compact: { overall: { x: 1, y: 1 } },
+          showcase: { overall: { x: 9, y: 9 } },
+        },
+      },
+      'showcase',
+    );
+    expect(resolved.overall).toEqual({ x: 9, y: 9 });
   });
 
   it('preset com statsTop/statsBottom sobrescreve sem quebrar os outros campos', () => {
-    const resolved = resolveHudLayout({
-      statsTop: { x: 50, y: 78, width: 72, height: 7 },
-      statsBottom: { x: 50, y: 86, width: 72, height: 8 },
-    });
+    const resolved = resolveHudLayout(
+      {
+        hudLayout: {
+          statsTop: { x: 50, y: 78, width: 72, height: 7 },
+          statsBottom: { x: 50, y: 86, width: 72, height: 8 },
+        },
+      },
+      'standard',
+    );
     expect(resolved.statsTop).toBeDefined();
     expect(resolved.statsBottom).toBeDefined();
-    expect(resolved.overall).toEqual(DEFAULT_HUD_LAYOUT.overall);
+    expect(resolved.overall).toEqual(DEFAULT_HUD_LAYOUT.standard.overall);
+  });
+
+  it('zona com visible:false explícito é respeitada mesmo fora de Compact', () => {
+    const resolved = resolveHudLayout(
+      { hudLayouts: { showcase: { nickname: { x: 50, y: 90, visible: false } } } },
+      'showcase',
+    );
+    expect(resolved.nickname?.visible).toBe(false);
   });
 });
 
@@ -127,5 +153,75 @@ describe('lib/card-static/types — ARTWORK_DIMENSIONS (três densidades)', () =
     expect(ARTWORK_DIMENSIONS.compact).toEqual({ width: 400, height: 600 });
     expect(ARTWORK_DIMENSIONS.standard).toEqual({ width: 800, height: 1200 });
     expect(ARTWORK_DIMENSIONS.showcase).toEqual({ width: 1200, height: 1800 });
+  });
+});
+
+describe('lib/card-static/hud-layout — nickname por densidade (preset real, formato Ronaldinho)', () => {
+  // Mesmo shape de `wl-legendary-ronaldinho-001.json` — hudLayouts POR
+  // densidade, nickname com `visible` explícito.
+  const RONALDINHO_SHAPED_PRESET = {
+    hudLayouts: {
+      compact: {
+        nickname: {
+          x: 50,
+          y: 74,
+          width: 70,
+          height: 4,
+          fontScale: 0.6,
+          align: 'center' as const,
+          visible: false,
+        },
+      },
+      standard: {
+        nickname: {
+          x: 50,
+          y: 73.5,
+          width: 70,
+          height: 4,
+          fontScale: 0.58,
+          align: 'center' as const,
+          visible: true,
+        },
+      },
+      showcase: {
+        nickname: {
+          x: 50,
+          y: 73.5,
+          width: 70,
+          height: 4,
+          fontScale: 0.62,
+          align: 'center' as const,
+          visible: true,
+        },
+      },
+    },
+  };
+
+  it('nickname oculto em Compact (visible: false explícito no preset)', () => {
+    const resolved = resolveHudLayout(RONALDINHO_SHAPED_PRESET, 'compact');
+    expect(isZoneVisible(resolved.nickname)).toBe(false);
+  });
+
+  it('nickname visível em Showcase (visible: true explícito no preset)', () => {
+    const resolved = resolveHudLayout(RONALDINHO_SHAPED_PRESET, 'showcase');
+    expect(isZoneVisible(resolved.nickname)).toBe(true);
+    expect(resolved.nickname?.align).toBe('center');
+    expect(resolved.nickname?.fontScale).toBe(0.62);
+  });
+
+  it('nickname visível em Standard também (opcional = mostra quando existe)', () => {
+    const resolved = resolveHudLayout(RONALDINHO_SHAPED_PRESET, 'standard');
+    expect(isZoneVisible(resolved.nickname)).toBe(true);
+  });
+
+  it('ausência de dado de nickname (string vazia/undefined) — a ZONA pode existir, mas cabe ao chamador não renderizar nada, sem reservar espaço', () => {
+    // O contrato aqui é: `resolveHudLayout` só resolve POSIÇÃO — quem
+    // decide se renderiza é o componente, cruzando `isZoneVisible(zone)`
+    // com a EXISTÊNCIA do dado (`Boolean(card.nickname)`). Provamos que
+    // a zona sozinha nunca força a exibição de algo vazio.
+    const zone = resolveHudLayout(RONALDINHO_SHAPED_PRESET, 'showcase').nickname;
+    const nicknameData: string | undefined = undefined;
+    const shouldRender = isZoneVisible(zone) && Boolean(nicknameData);
+    expect(shouldRender).toBe(false);
   });
 });

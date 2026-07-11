@@ -2,13 +2,21 @@
  * Layer 9 — Nome. Sempre texto React vindo de `card.displayName` (+
  * `flagEmoji`/`era` como legenda) — nunca imagem, por definição (ver
  * SPRINT_18_5_REPORT.md). A bandeira também é texto (emoji), nunca arte.
+ *
+ * Sprint 35D.3 — `card.nickname` (opcional, vem do dado, nunca da arte)
+ * some por densidade: Compact nunca mostra (`ctx.mode === 'compact'`),
+ * Standard/Showcase mostram SE existir. Sem nickname, não renderiza
+ * nada — nenhum espaço reservado, o layout colapsa normalmente (a
+ * regra é literal: `{card.nickname && ...}`, não uma altura fixa com
+ * texto vazio).
  */
 
 import { NAME_FONT, SUB_FONT } from '../card-tokens';
 import type { CardVisualCtx } from '../card-types';
 
 export function CardNameLayer({ ctx }: { ctx: CardVisualCtx }) {
-  const { card, accent, size, dim, isLegendaryPlus } = ctx;
+  const { card, accent, size, dim, isLegendaryPlus, mode } = ctx;
+  const showNickname = mode !== 'compact' && Boolean(card.nickname);
 
   return (
     <>
@@ -40,6 +48,24 @@ export function CardNameLayer({ ctx }: { ctx: CardVisualCtx }) {
       >
         {card.displayName}
       </p>
+      {showNickname && (
+        <p
+          style={{
+            fontSize: SUB_FONT[size] * 1.05,
+            fontWeight: 700,
+            fontStyle: 'italic',
+            color: accent,
+            margin: `${dim.card.height * 0.006}px 0 0`,
+            lineHeight: 1,
+            letterSpacing: '0.02em',
+            textOverflow: 'ellipsis',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {card.nickname}
+        </p>
+      )}
       <p
         style={{
           fontSize: SUB_FONT[size],

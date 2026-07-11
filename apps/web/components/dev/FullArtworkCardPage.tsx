@@ -2,22 +2,202 @@
 
 /**
  * components/dev/FullArtworkCardPage.tsx — Sprint 35D (Full Card Artwork
- * Pipeline Reset)
+ * Pipeline Reset) + Sprint 35D.3 (Unique Player Artwork and Card
+ * Identity System)
  *
  * Ferramenta interna (`/dev/full-artwork-card`) — não é uma tela de
- * jogo. Mostra: artwork sozinho (sem HUD), artwork com HUD, as 3
- * densidades, e o fallback procedural do Card Engine atual (que
- * continua sendo o fallback real de produção — item 12 do brief).
+ * jogo. Seletor de 10 identidades (item 8 do brief); cada uma passa
+ * por `resolvePlayerCardRenderer` — só Pelé e Ronaldinho têm preset
+ * real hoje (`productionEligible: true` + artwork gerado), as outras 8
+ * mostram o fallback procedural com "artwork preset pending", nunca
+ * reaproveitando a arte de outro jogador.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { CARD_STATIC_MANIFEST } from '../../lib/card-static/manifest.generated';
+import { resolvePlayerCardRenderer } from '../../lib/card-static/resolve-player-card-renderer';
 import { PlayerCard } from '../cards/PlayerCard';
-import type { PlayerCardData } from '../cards/card-types';
+import type { PlayerCardData, PlayerNicknameType } from '../cards/card-types';
 import {
   type FullArtworkDensity,
   type FullArtworkStats,
   FullArtworkWorldLegendsCard,
 } from './FullArtworkWorldLegendsCard';
+
+type Identity = {
+  displayName: string;
+  shortName?: string;
+  nickname: string;
+  nicknameType: PlayerNicknameType;
+  artworkPresetId: string;
+  rarity: 'common' | 'rare' | 'elite' | 'legendary' | 'ultra' | 'world_cup_hero';
+  overall: number;
+  position: string;
+  nationality: string;
+  era: string;
+  stats: FullArtworkStats;
+};
+
+// Item 8/9 do brief — os textos (nickname, nicknameType) são EXATAMENTE
+// os do brief, não alterados. Só Pelé e Ronaldinho têm artworkPresetId
+// apontando pra um preset REAL hoje (ver seção "Piloto" e "Integrate
+// Ronaldinho"); os outros 8 usam um ID que ainda não existe no
+// manifesto de propósito — pra provar que o resolver cai no fallback
+// procedural sem quebrar nada, exatamente como pedido ("não inventar
+// arte", "artwork preset pending").
+const IDENTITIES: Identity[] = [
+  {
+    displayName: 'PELÉ',
+    nickname: 'O REI',
+    nicknameType: 'legend',
+    artworkPresetId: 'wl-goat-brazil-001',
+    rarity: 'ultra',
+    overall: 99,
+    position: 'CAM',
+    nationality: 'BR',
+    era: '1970s',
+    stats: { pace: 91, finishing: 96, passing: 93, dribbling: 97, defending: 40, physical: 82 },
+  },
+  {
+    displayName: 'RONALDINHO GAÚCHO',
+    shortName: 'RONALDINHO',
+    nickname: 'O BRUXO',
+    nicknameType: 'legend',
+    artworkPresetId: 'wl-legendary-ronaldinho-001',
+    rarity: 'legendary',
+    overall: 96,
+    position: 'CAM',
+    nationality: 'BR',
+    era: '2000s',
+    stats: { pace: 88, finishing: 89, passing: 92, dribbling: 97, defending: 35, physical: 74 },
+  },
+  {
+    displayName: 'MESSI',
+    nickname: 'GOAT',
+    nicknameType: 'legend',
+    artworkPresetId: 'wl-goat-messi-001',
+    rarity: 'ultra',
+    overall: 98,
+    position: 'RW',
+    nationality: 'AR',
+    era: '2010s',
+    stats: { pace: 85, finishing: 92, passing: 91, dribbling: 96, defending: 34, physical: 68 },
+  },
+  {
+    displayName: 'CRISTIANO RONALDO',
+    nickname: 'PAPAI CRIS SIIIIU',
+    nicknameType: 'event',
+    artworkPresetId: 'wl-goat-cristiano-001',
+    rarity: 'ultra',
+    overall: 98,
+    position: 'ST',
+    nationality: 'PT',
+    era: '2010s',
+    stats: { pace: 87, finishing: 95, passing: 82, dribbling: 88, defending: 35, physical: 87 },
+  },
+  {
+    displayName: 'MBAPPÉ',
+    nickname: 'O DITADOR',
+    nicknameType: 'event',
+    artworkPresetId: 'wl-elite-mbappe-001',
+    rarity: 'elite',
+    overall: 91,
+    position: 'ST',
+    nationality: 'FR',
+    era: '2020s',
+    stats: { pace: 97, finishing: 91, passing: 80, dribbling: 92, defending: 36, physical: 78 },
+  },
+  {
+    displayName: 'ZIDANE',
+    nickname: 'O MAESTRO',
+    nicknameType: 'legend',
+    artworkPresetId: 'wl-legendary-zidane-001',
+    rarity: 'legendary',
+    overall: 95,
+    position: 'CAM',
+    nationality: 'FR',
+    era: '1990s',
+    stats: { pace: 76, finishing: 85, passing: 90, dribbling: 93, defending: 47, physical: 78 },
+  },
+  {
+    displayName: 'RONALDO',
+    nickname: 'O FENÔMENO',
+    nicknameType: 'legend',
+    artworkPresetId: 'wl-goat-ronaldo-001',
+    rarity: 'ultra',
+    overall: 97,
+    position: 'ST',
+    nationality: 'BR',
+    era: '1990s',
+    stats: { pace: 94, finishing: 94, passing: 76, dribbling: 92, defending: 30, physical: 82 },
+  },
+  {
+    displayName: 'BECKENBAUER',
+    nickname: 'O KAISER',
+    nicknameType: 'legend',
+    artworkPresetId: 'wl-legendary-beckenbauer-001',
+    rarity: 'legendary',
+    overall: 94,
+    position: 'CB',
+    nationality: 'DE',
+    era: '1970s',
+    stats: { pace: 74, finishing: 68, passing: 85, dribbling: 78, defending: 92, physical: 80 },
+  },
+  {
+    displayName: 'MARADONA',
+    nickname: 'ESCOBAR CHEIRADOR',
+    nicknameType: 'meme',
+    artworkPresetId: 'wl-goat-maradona-001',
+    rarity: 'ultra',
+    overall: 97,
+    position: 'CAM',
+    nationality: 'AR',
+    era: '1980s',
+    stats: { pace: 85, finishing: 90, passing: 91, dribbling: 97, defending: 35, physical: 70 },
+  },
+  {
+    displayName: 'NEYMAR',
+    nickname: 'O PRÍNCIPE',
+    nicknameType: 'legend',
+    artworkPresetId: 'wl-legendary-neymar-001',
+    rarity: 'legendary',
+    overall: 92,
+    position: 'LW',
+    nationality: 'BR',
+    era: '2010s',
+    stats: { pace: 91, finishing: 85, passing: 86, dribbling: 95, defending: 32, physical: 62 },
+  },
+];
+
+const NICKNAME_TYPE_LABEL: Record<PlayerNicknameType, string> = {
+  legend: 'lenda',
+  official: 'oficial',
+  event: 'evento',
+  meme: 'meme',
+};
+
+function toPlayerCardData(identity: Identity): PlayerCardData {
+  return {
+    cardId: `identity-${identity.artworkPresetId}`,
+    playerId: `identity-${identity.artworkPresetId}`,
+    displayName: identity.displayName,
+    nationality: identity.nationality,
+    position: identity.position,
+    rarityCode: identity.rarity,
+    rarityLabel: identity.rarity,
+    overall: identity.overall,
+    flagEmoji: '🏳️',
+    era: identity.era,
+    nickname: identity.nickname,
+    nicknameType: identity.nicknameType,
+    ...(identity.shortName ? { shortName: identity.shortName } : {}),
+    // Sprint 35D.3 propositalmente NÃO seta `artworkPresetId` aqui — o
+    // fallback do PlayerCard real tem que continuar 100% procedural
+    // mesmo pra identidades com preset elegível, porque esta seção da
+    // página é especificamente o "fallback de produção" (ver mais
+    // abaixo), não o roteamento pelo resolver.
+  };
+}
 
 const TIERS = [1, 10, 50, 200] as const;
 type Tier = (typeof TIERS)[number];
@@ -84,7 +264,7 @@ function StressTest({ stats }: { stats: FullArtworkStats }) {
   return (
     <div style={{ marginTop: 40 }}>
       <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>
-        Stress test — FullArtworkWorldLegendsCard (Compact)
+        Stress test — FullArtworkWorldLegendsCard (Compact, sempre GOAT/Pelé pra métrica estável)
       </h2>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
         {TIERS.map((t) => (
@@ -106,7 +286,7 @@ function StressTest({ stats }: { stats: FullArtworkStats }) {
           </button>
         ))}
         <span style={{ fontSize: 12, marginLeft: 12 }}>FPS ao vivo: {liveFps}</span>
-        <span style={{ fontSize: 12 }}>· {domNodes ?? '…'} nós DOM (1 carta)</span>
+        <span style={{ fontSize: 12 }}>· {domNodes ?? '…'} nós DOM (grade inteira)</span>
         <button
           type="button"
           onClick={runMeasurement}
@@ -161,146 +341,213 @@ function StressTest({ stats }: { stats: FullArtworkStats }) {
   );
 }
 
-const GOAT_PRESET_ID = 'wl-goat-brazil-001';
-
-const GOAT_STATS: FullArtworkStats = {
-  pace: 88,
-  finishing: 94,
-  passing: 82,
-  dribbling: 91,
-  defending: 45,
-  physical: 79,
-};
-
-// Fallback procedural — MESMA carta GOAT (Sprint 35), sem
-// `v3CompositionId` apontando pra um asset real, então o Card Engine
-// cai 100% no procedural (Sprint 27/28). Prova viva que o fallback
-// continua funcionando mesmo depois do reset de estratégia.
-const FALLBACK_CARD: PlayerCardData = {
-  cardId: 'full-artwork-fallback-demo',
-  playerId: 'full-artwork-fallback-demo',
-  displayName: 'Fallback Procedural',
-  nationality: 'BR',
-  position: 'ST',
-  rarityCode: 'ultra',
-  rarityLabel: 'GOAT',
-  overall: 96,
-  flagEmoji: '🇧🇷',
-  era: '1970s',
-};
-
 export function FullArtworkCardPage() {
   const [density, setDensity] = useState<FullArtworkDensity>('standard');
+  const [identityIndex, setIdentityIndex] = useState(0);
+  const identity = IDENTITIES[identityIndex] as Identity;
+
+  const resolution = useMemo(
+    () =>
+      resolvePlayerCardRenderer(
+        {
+          artworkPresetId: identity.artworkPresetId,
+          cardId: identity.artworkPresetId,
+          playerId: identity.artworkPresetId,
+          rarity: identity.rarity,
+        },
+        CARD_STATIC_MANIFEST,
+      ),
+    [identity],
+  );
 
   return (
     <div style={{ padding: 24, color: '#e5e7eb', background: '#0a0b10', minHeight: '100vh' }}>
       <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>Full Card Artwork</h1>
       <p style={{ fontSize: 13, color: '#9ca3af', marginBottom: 20, maxWidth: 680 }}>
-        Ferramenta interna (Sprint 35D) — não é uma tela de jogo. A arte é uma composição ÚNICA (
-        <code>{GOAT_PRESET_ID}</code>: jogador+frame+background+luz+material+efeitos já prontos na
-        imagem) — o pipeline só redimensiona pras 3 densidades, nunca decompõe em layers. O HUD
-        (OVR/posição/nome/país/era/stats) é 100% React, posicionado nas safe zones que o preset
-        define. O Card Engine atual (procedural) continua como fallback de produção — última seção
-        desta página.
+        Ferramenta interna (Sprint 35D/35D.3) — não é uma tela de jogo. Cada identidade passa por{' '}
+        <code>resolvePlayerCardRenderer</code>: com preset real + <code>productionEligible</code>,
+        usa o artwork exclusivo (<code>FullArtworkWorldLegendsCard</code>); sem preset, cai no Card
+        Engine procedural com um aviso — nunca reaproveita a arte de outro jogador, nunca inventa
+        arte nova.
       </p>
 
-      <fieldset
-        style={{
-          border: '1px solid #27272a',
-          borderRadius: 8,
-          padding: 12,
-          marginBottom: 24,
-          display: 'inline-block',
-        }}
-      >
-        <legend style={{ fontSize: 11, color: '#9ca3af', padding: '0 6px' }}>Densidade</legend>
-        {(['compact', 'standard', 'showcase'] as FullArtworkDensity[]).map((d) => (
-          <label key={d} style={{ marginRight: 12, fontSize: 13 }}>
-            <input
-              type="radio"
-              name="density"
-              checked={density === d}
-              onChange={() => setDensity(d)}
-            />{' '}
-            {d}
-          </label>
-        ))}
-      </fieldset>
+      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 24 }}>
+        <fieldset
+          style={{
+            border: '1px solid #27272a',
+            borderRadius: 8,
+            padding: 12,
+            display: 'inline-block',
+          }}
+        >
+          <legend style={{ fontSize: 11, color: '#9ca3af', padding: '0 6px' }}>Identidade</legend>
+          <select
+            value={identityIndex}
+            onChange={(e) => setIdentityIndex(Number(e.target.value))}
+            style={{
+              background: '#18181b',
+              color: '#e5e7eb',
+              border: '1px solid #3f3f46',
+              borderRadius: 6,
+              padding: '4px 8px',
+              fontSize: 13,
+            }}
+          >
+            {IDENTITIES.map((id, i) => (
+              <option key={id.artworkPresetId} value={i}>
+                {id.displayName} — {id.nickname}
+              </option>
+            ))}
+          </select>
+        </fieldset>
+
+        <fieldset
+          style={{
+            border: '1px solid #27272a',
+            borderRadius: 8,
+            padding: 12,
+            display: 'inline-block',
+          }}
+        >
+          <legend style={{ fontSize: 11, color: '#9ca3af', padding: '0 6px' }}>Densidade</legend>
+          {(['compact', 'standard', 'showcase'] as FullArtworkDensity[]).map((d) => (
+            <label key={d} style={{ marginRight: 12, fontSize: 13 }}>
+              <input
+                type="radio"
+                name="density"
+                checked={density === d}
+                onChange={() => setDensity(d)}
+              />{' '}
+              {d}
+            </label>
+          ))}
+        </fieldset>
+      </div>
+
+      <p style={{ fontSize: 12, marginBottom: 16 }}>
+        resolver:{' '}
+        <strong style={{ color: resolution.renderer === 'full-artwork' ? '#4ade80' : '#fbbf24' }}>
+          {resolution.renderer}
+        </strong>
+        {resolution.renderer === 'procedural' && (
+          <span style={{ color: '#9ca3af' }}>
+            {' '}
+            — artwork preset pending ({resolution.fallbackReason})
+          </span>
+        )}
+        {' · nicknameType: '}
+        <em>{NICKNAME_TYPE_LABEL[identity.nicknameType]}</em>
+      </p>
 
       <div style={{ display: 'flex', gap: 48, flexWrap: 'wrap', marginBottom: 40 }}>
         <div style={{ textAlign: 'center' }}>
-          <FullArtworkWorldLegendsCard
-            presetId={GOAT_PRESET_ID}
-            density={density}
-            displayName="Dinamite"
-            overall={97}
-            position="ST"
-            countryFlag="🇧🇷"
-            era="1970s"
-            stats={GOAT_STATS}
-            trait="Ícone"
-            hideHud
-          />
+          {resolution.renderer === 'full-artwork' ? (
+            <FullArtworkWorldLegendsCard
+              presetId={identity.artworkPresetId}
+              density={density}
+              displayName={identity.shortName ?? identity.displayName}
+              overall={identity.overall}
+              position={identity.position}
+              countryFlag="🏳️"
+              era={identity.era}
+              stats={identity.stats}
+              nickname={identity.nickname}
+              hideHud
+            />
+          ) : (
+            <div
+              style={{
+                width: 116,
+                height: 156,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px dashed #3f3f46',
+                borderRadius: 8,
+                fontSize: 10,
+                color: '#6b7280',
+                textAlign: 'center',
+                padding: 8,
+              }}
+            >
+              sem artwork (só HUD não se aplica)
+            </div>
+          )}
           <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 8 }}>
             Artwork sem HUD ({density})
           </p>
         </div>
 
         <div style={{ textAlign: 'center' }}>
-          <FullArtworkWorldLegendsCard
-            presetId={GOAT_PRESET_ID}
-            density={density}
-            displayName="Dinamite"
-            overall={97}
-            position="ST"
-            countryFlag="🇧🇷"
-            era="1970s"
-            stats={GOAT_STATS}
-            trait="Ícone"
-          />
+          {resolution.renderer === 'full-artwork' ? (
+            <FullArtworkWorldLegendsCard
+              presetId={identity.artworkPresetId}
+              density={density}
+              displayName={identity.shortName ?? identity.displayName}
+              overall={identity.overall}
+              position={identity.position}
+              countryFlag="🏳️"
+              era={identity.era}
+              stats={identity.stats}
+              nickname={identity.nickname}
+            />
+          ) : (
+            <PlayerCard
+              card={toPlayerCardData(identity)}
+              size={density === 'compact' ? 'sm' : density === 'standard' ? 'md' : 'lg'}
+              glow
+            />
+          )}
           <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 8 }}>
-            Artwork com HUD ({density})
+            {resolution.renderer === 'full-artwork'
+              ? 'Artwork com HUD'
+              : 'Fallback procedural (artwork preset pending)'}{' '}
+            ({density})
           </p>
         </div>
       </div>
 
-      <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>
-        As 3 densidades lado a lado
-      </h2>
-      <div style={{ display: 'flex', gap: 32, marginBottom: 40 }}>
-        {(['compact', 'standard', 'showcase'] as FullArtworkDensity[]).map((d) => (
-          <div key={d} style={{ textAlign: 'center' }}>
-            <FullArtworkWorldLegendsCard
-              presetId={GOAT_PRESET_ID}
-              density={d}
-              displayName="Dinamite"
-              overall={97}
-              position="ST"
-              countryFlag="🇧🇷"
-              era="1970s"
-              stats={GOAT_STATS}
-              trait="Ícone"
-            />
-            <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 8 }}>{d}</p>
+      {resolution.renderer === 'full-artwork' && (
+        <>
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>
+            As 3 densidades lado a lado
+          </h2>
+          <div style={{ display: 'flex', gap: 32, marginBottom: 40 }}>
+            {(['compact', 'standard', 'showcase'] as FullArtworkDensity[]).map((d) => (
+              <div key={d} style={{ textAlign: 'center' }}>
+                <FullArtworkWorldLegendsCard
+                  presetId={identity.artworkPresetId}
+                  density={d}
+                  displayName={identity.shortName ?? identity.displayName}
+                  overall={identity.overall}
+                  position={identity.position}
+                  countryFlag="🏳️"
+                  era={identity.era}
+                  stats={identity.stats}
+                  nickname={identity.nickname}
+                />
+                <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 8 }}>{d}</p>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
 
       <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>
         Fallback — Card Engine procedural (produção)
       </h2>
       <p style={{ fontSize: 12, color: '#9ca3af', marginBottom: 12, maxWidth: 640 }}>
-        Mesma carta GOAT, sem <code>v3CompositionId</code> — o <code>PlayerCard</code> real cai 100%
-        no motor procedural (Sprint 27/28). Isso é o que toda carta de produção usa hoje; o pipeline
-        de full-card-artwork é aditivo, não substitui isso ainda (item 12 do brief).
+        A mesma identidade, sempre pelo <code>PlayerCard</code> real (Card Engine procedural, Sprint
+        27/28) — é o que toda carta de produção usa hoje, e continua funcionando idêntico pra
+        qualquer identidade, com ou sem preset elegível.
       </p>
       <PlayerCard
-        card={FALLBACK_CARD}
+        card={toPlayerCardData(identity)}
         size={density === 'compact' ? 'sm' : density === 'standard' ? 'md' : 'lg'}
         glow
       />
 
-      <StressTest stats={GOAT_STATS} />
+      <StressTest stats={identity.stats} />
     </div>
   );
 }

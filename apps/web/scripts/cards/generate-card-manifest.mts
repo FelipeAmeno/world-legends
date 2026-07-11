@@ -44,6 +44,9 @@ function main() {
       rarity: preset.rarity,
       sourceType: preset.sourceType ?? 'layered',
       hudLayout: preset.hudLayout ?? null,
+      hudLayouts: preset.hudLayouts ?? null,
+      experimental: preset.experimental ?? false,
+      productionEligible: preset.productionEligible ?? false,
       frame: preset.frame,
       generated: Object.fromEntries(densities),
     };

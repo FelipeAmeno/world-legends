@@ -3,6 +3,8 @@
   "sourceType": "full-card-artwork",
   "rarity": "goat",
   "artwork": "source/artworks/goat/wl-artwork-goat-brazil-001-v1.png",
+  "experimental": false,
+  "productionEligible": true,
   "hudLayout": {
     "overall": {
       "x": 17,
@@ -21,6 +23,14 @@
       "y": 69,
       "width": 72,
       "height": 7
+    },
+    "nickname": {
+      "x": 50,
+      "y": 73.5,
+      "width": 72,
+      "height": 4,
+      "fontScale": 0.6,
+      "align": "center"
     },
     "statsTop": {
       "x": 50,

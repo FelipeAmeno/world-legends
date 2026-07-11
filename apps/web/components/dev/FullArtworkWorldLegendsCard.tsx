@@ -2,7 +2,8 @@
 
 /**
  * components/dev/FullArtworkWorldLegendsCard.tsx — Sprint 35D (Full Card
- * Artwork Pipeline Reset)
+ * Artwork Pipeline Reset) + Sprint 35D.3 (Unique Player Artwork and Card
+ * Identity System)
  *
  * Renderer EXPERIMENTAL — não substitui `PlayerCard` nem
  * `StaticWorldLegendsCard`, não é usado por nenhum call site de
@@ -12,7 +13,7 @@
  * ÚNICA (`sourceType: 'full-card-artwork'`) já com tudo (jogador+
  * frame+background+luz+material+efeitos+textura) exceto texto
  * dinâmico. Esse componente só soma o HUD React por cima, nas "safe
- * zones" percentuais que o PRÓPRIO preset define (`hudLayout`).
+ * zones" percentuais que o PRÓPRIO preset define (`hudLayout`/`hudLayouts`).
  *
  * Estrutura EXATA pedida pelo brief — no máximo 3 camadas DOM
  * principais sob `CardRoot`:
@@ -25,13 +26,13 @@
  */
 
 import Image from 'next/image';
-import type { HudZone } from '../../lib/card-static/hud-layout';
-import { resolveHudLayout } from '../../lib/card-static/hud-layout';
+import type { Density, HudZone } from '../../lib/card-static/hud-layout';
+import { isZoneVisible, resolveHudLayout } from '../../lib/card-static/hud-layout';
 import { CARD_STATIC_MANIFEST } from '../../lib/card-static/manifest.generated';
 import { resolveGeneratedArtwork } from '../../lib/card-static/resolve-artwork';
 import { useCardTilt } from '../cards/use-card-tilt';
 
-export type FullArtworkDensity = 'compact' | 'standard' | 'showcase';
+export type FullArtworkDensity = Density;
 
 const NATIVE_DIMENSIONS: Record<FullArtworkDensity, { width: number; height: number }> = {
   compact: { width: 400, height: 600 },
@@ -73,16 +74,42 @@ type Props = {
   era: string;
   stats: FullArtworkStats;
   trait?: string;
+  /** Sprint 35D.3 — apelido/título, sempre do dado, nunca da arte. Ausente = nenhum espaço reservado. */
+  nickname?: string;
   /** Mostra o artwork sozinho, sem nenhum HUD por cima (item 10 do brief: "artwork sem HUD"). */
   hideHud?: boolean;
 };
 
+/**
+ * Zona visível quando: existe E (`visible` declarado explicitamente no
+ * preset → respeita exatamente OU, se o preset não declarou nada pra
+ * esse campo, cai no heurístico de densidade — presets legados, ex.
+ * `wl-goat-brazil-001`, não declaram `visible` em canto nenhum, então
+ * precisam de um piso sensato). Nunca reserva espaço quando `false`.
+ */
+function shouldShowZone(
+  zone: HudZone | undefined,
+  density: Density,
+  hideByDefaultIn: Density[] = [],
+): zone is HudZone {
+  if (!isZoneVisible(zone)) return false;
+  if (zone.visible !== undefined) return true; // já filtrado por isZoneVisible acima
+  return !hideByDefaultIn.includes(density);
+}
+
+const ALIGN_TO_JUSTIFY: Record<NonNullable<HudZone['align']>, string> = {
+  left: 'flex-start',
+  center: 'center',
+  right: 'flex-end',
+};
+
 function Zone({
   zone,
-  fontSize,
+  baseFontSize,
   children,
-}: { zone: HudZone | undefined; fontSize: number; children: React.ReactNode }) {
+}: { zone: HudZone | undefined; baseFontSize: number; children: React.ReactNode }) {
   if (!zone) return null;
+  const align = zone.align ?? 'center';
   return (
     <div
       style={{
@@ -94,10 +121,10 @@ function Zone({
         transform: 'translate(-50%, -50%)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        fontSize,
+        justifyContent: ALIGN_TO_JUSTIFY[align],
+        fontSize: baseFontSize * (zone.fontScale ?? 1),
         color: '#fff',
-        textAlign: 'center',
+        textAlign: align,
         lineHeight: 1.1,
       }}
     >
@@ -116,6 +143,7 @@ export function FullArtworkWorldLegendsCard({
   era,
   stats,
   trait,
+  nickname,
   hideHud,
 }: Props) {
   // `useCardTilt` escreve `--tilt-rx`/`--tilt-ry` no elemento ref'd, e
@@ -125,18 +153,20 @@ export function FullArtworkWorldLegendsCard({
   const tiltRef = useCardTilt<HTMLDivElement>();
   const preset = CARD_STATIC_MANIFEST.find((p) => p.id === presetId);
   const generated = resolveGeneratedArtwork(CARD_STATIC_MANIFEST, presetId, density);
-  const hud = resolveHudLayout(preset?.hudLayout ?? undefined);
+  const hud = resolveHudLayout(preset, density);
   const { width, height } = NATIVE_DIMENSIONS[density];
   const displayWidth = DISPLAY_WIDTH[density];
   const displayHeight = Math.round(displayWidth * (height / width));
   const baseFont = displayWidth * 0.09;
 
-  // Compact reduz densidade de informação (mesma filosofia do Card
-  // Engine v3, Sprint 33/34) — esconde stats/trait mesmo que o preset
-  // defina zonas pra eles, não porque o layout "universal" manda, mas
-  // porque é uma decisão de UX por densidade.
-  const showStats = density !== 'compact';
-  const showTrait = density === 'showcase';
+  // Piso de densidade — só entra em jogo quando o preset NÃO declarou
+  // `visible` pra aquele campo (ver `shouldShowZone`). Mesma filosofia
+  // do Card Engine v3 (Sprint 33/34): Compact é minimalista por padrão.
+  const showStatsTop = shouldShowZone(hud.statsTop, density, ['compact']);
+  const showStatsBottom = shouldShowZone(hud.statsBottom, density, ['compact']);
+  const showStats = shouldShowZone(hud.stats, density, ['compact']);
+  const showTrait = shouldShowZone(hud.trait, density, ['compact', 'standard']);
+  const showNickname = shouldShowZone(hud.nickname, density, ['compact']) && Boolean(nickname);
 
   return (
     // <CardRoot>
@@ -186,40 +216,45 @@ export function FullArtworkWorldLegendsCard({
       {/* <HudReact /> — nunca dentro da imagem, sempre nas safe zones do preset */}
       {!hideHud && (
         <div className="absolute inset-0" style={{ zIndex: 9, pointerEvents: 'none' }}>
-          <Zone zone={hud.overall} fontSize={baseFont * 1.6}>
+          <Zone zone={hud.overall} baseFontSize={baseFont * 1.6}>
             <span style={{ fontWeight: 800 }}>{overall}</span>
           </Zone>
-          <Zone zone={hud.position} fontSize={baseFont * 0.75}>
+          <Zone zone={hud.position} baseFontSize={baseFont * 0.75}>
             <span style={{ fontWeight: 700, opacity: 0.9 }}>{position}</span>
           </Zone>
-          <Zone zone={hud.name} fontSize={baseFont * 0.85}>
+          <Zone zone={hud.name} baseFontSize={baseFont * 0.85}>
             <span style={{ fontWeight: 800, textTransform: 'uppercase' }}>{displayName}</span>
           </Zone>
-          <Zone zone={hud.country} fontSize={baseFont * 0.9}>
+          {showNickname && (
+            <Zone zone={hud.nickname} baseFontSize={baseFont * 0.55}>
+              <span style={{ fontStyle: 'italic', opacity: 0.9 }}>{nickname}</span>
+            </Zone>
+          )}
+          <Zone zone={hud.country} baseFontSize={baseFont * 0.9}>
             {countryFlag}
           </Zone>
-          <Zone zone={hud.era} fontSize={baseFont * 0.55}>
+          <Zone zone={hud.era} baseFontSize={baseFont * 0.55}>
             <span style={{ opacity: 0.75 }}>{era}</span>
           </Zone>
 
-          {showStats &&
-            (hud.statsTop && hud.statsBottom ? (
-              <>
-                <Zone zone={hud.statsTop} fontSize={baseFont * 0.55}>
-                  <StatsRow stats={stats} slice={[0, 3]} />
-                </Zone>
-                <Zone zone={hud.statsBottom} fontSize={baseFont * 0.55}>
-                  <StatsRow stats={stats} slice={[3, 6]} />
-                </Zone>
-              </>
-            ) : (
-              <Zone zone={hud.stats} fontSize={baseFont * 0.55}>
-                <StatsRow stats={stats} slice={[0, 6]} />
-              </Zone>
-            ))}
+          {showStatsTop && (
+            <Zone zone={hud.statsTop} baseFontSize={baseFont * 0.55}>
+              <StatsRow stats={stats} slice={[0, 3]} />
+            </Zone>
+          )}
+          {showStatsBottom && (
+            <Zone zone={hud.statsBottom} baseFontSize={baseFont * 0.55}>
+              <StatsRow stats={stats} slice={[3, 6]} />
+            </Zone>
+          )}
+          {showStats && !hud.statsTop && !hud.statsBottom && (
+            <Zone zone={hud.stats} baseFontSize={baseFont * 0.55}>
+              <StatsRow stats={stats} slice={[0, 6]} />
+            </Zone>
+          )}
 
           {showTrait && trait && (
-            <Zone zone={hud.trait} fontSize={baseFont * 0.6}>
+            <Zone zone={hud.trait} baseFontSize={baseFont * 0.6}>
               <span style={{ opacity: 0.85 }}>{trait}</span>
             </Zone>
           )}

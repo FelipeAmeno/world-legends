@@ -17,6 +17,9 @@ export type CardDebugOverride = {
   animationSpeedMultiplier?: number;
 };
 
+/** Sprint 35D.3 — categoriza a origem/tom do apelido, puramente informativo hoje (não muda renderização). */
+export type PlayerNicknameType = 'legend' | 'official' | 'event' | 'meme';
+
 export type PlayerCardData = {
   cardId: string;
   playerId: string;
@@ -32,6 +35,21 @@ export type PlayerCardData = {
    * `undefined` em toda carta real hoje (nenhum asset oficial ainda existe) —
    * só as 5 cartas de validação de `/dev/card-v3-gallery` setam isso. */
   v3CompositionId?: string;
+  /** Sprint 35D.3 — nome curto opcional (não usado ainda pelo HUD do Card
+   * Engine procedural, reservado pra telas compactas futuras). */
+  shortName?: string;
+  /** Sprint 35D.3 — apelido/título opcional, vem SEMPRE do dado da carta,
+   * nunca da arte. `CardNameLayer` decide visibilidade por densidade
+   * (Compact oculto, Standard/Showcase mostram se existir) — ver
+   * `CardNameLayer.tsx`. Ausente = nenhum espaço reservado. */
+  nickname?: string;
+  nicknameType?: PlayerNicknameType;
+  /** Sprint 35D.3 — ID de preset `full-card-artwork` opcional
+   * (`lib/card-static/`). Quando presente e válido/elegível, o resolver
+   * (`resolvePlayerCardRenderer`) escolhe `FullArtworkWorldLegendsCard`
+   * em vez do Card Engine procedural. `undefined` em toda carta real hoje
+   * — nenhum catálogo foi migrado ainda. */
+  artworkPresetId?: string;
 };
 
 /**

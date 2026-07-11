@@ -32,10 +32,34 @@ export type CardArtworkPreset = {
   composition: { playerScale: number; playerOffsetX: number; playerOffsetY: number };
   artwork?: string | null;
   hudLayout?: Record<string, { x: number; y: number; width?: number; height?: number }> | null;
+  hudLayouts?: Record<
+    string,
+    Record<
+      string,
+      {
+        x: number;
+        y: number;
+        width?: number;
+        height?: number;
+        fontScale?: number;
+        align?: string;
+        visible?: boolean;
+      }
+    >
+  > | null;
+  experimental?: boolean;
+  productionEligible?: boolean;
   generated: { compact: string | null; standard: string | null; showcase: string | null };
   frame: string | null;
 };
 
+/**
+ * Um preset JSON vazio/malformado (ex.: um arquivo criado como
+ * placeholder antes do conteúdo real existir — já aconteceu com
+ * `wl-legendary-neymar-001.json`, 0 bytes) NUNCA derruba o script
+ * inteiro — só é ignorado, com aviso, e os outros presets continuam
+ * processando normalmente.
+ */
 export function loadPresets(): CardArtworkPreset[] {
   let files: string[] = [];
   try {
@@ -43,9 +67,16 @@ export function loadPresets(): CardArtworkPreset[] {
   } catch {
     return [];
   }
-  return files.map(
-    (f) => JSON.parse(readFileSync(join(METADATA_DIR, f), 'utf-8')) as CardArtworkPreset,
-  );
+  const presets: CardArtworkPreset[] = [];
+  for (const f of files) {
+    try {
+      const raw = readFileSync(join(METADATA_DIR, f), 'utf-8');
+      presets.push(JSON.parse(raw) as CardArtworkPreset);
+    } catch {
+      console.warn(`⚠ [${f}] preset JSON vazio ou inválido — ignorado`);
+    }
+  }
+  return presets;
 }
 
 export function sourcePath(

@@ -18,7 +18,7 @@
  * está ausente — nenhum preset antigo quebra) NÃO foi apagado, os dois
  * `sourceType` coexistem no mesmo schema.
  */
-import type { HudFieldsLayout, HudZone } from './hud-layout';
+import type { Density, HudFieldsLayout, HudZone } from './hud-layout';
 
 export type { HudZone };
 
@@ -63,8 +63,14 @@ export type CardArtworkPreset = {
   composition: CardArtworkComposition;
   /** Só usado quando `sourceType === 'full-card-artwork'` — filename em `source/artworks/<rarity>/`. */
   artwork?: string | null;
-  /** Só usado quando `sourceType === 'full-card-artwork'` — sobrescreve zonas específicas do `DEFAULT_HUD_LAYOUT` (merge raso, percentuais únicos pras 3 densidades — ver `hud-layout.ts`). */
+  /** Legado (Sprint 35D) — sobrescreve zonas pras 3 densidades igualmente. Preferir `hudLayouts`. */
   hudLayout?: Partial<HudFieldsLayout> | null;
+  /** Sprint 35D.3 — sobrescreve zonas POR densidade (`compact`/`standard`/`showcase`), cada uma com seu próprio `fontScale`/`align`/`visible`. Formato preferido pra presets novos. */
+  hudLayouts?: Partial<Record<Density, Partial<HudFieldsLayout>>> | null;
+  /** Sprint 35D.3 — marcador informativo de preset em rascunho/teste; não usado pelo resolver hoje (reservado). */
+  experimental?: boolean;
+  /** Sprint 35D.3 — só presets com `productionEligible === true` podem ser escolhidos pelo `resolvePlayerCardRenderer`; ausente/`false` cai no fallback procedural com warning (dev-only). */
+  productionEligible?: boolean;
   /** Metadata livre não usada pelo pipeline (ex.: `version`) — presets reais podem trazer campos extras. */
   version?: number;
   generated: CardArtworkGenerated;

@@ -13,6 +13,9 @@ export type ManifestPreset = {
   id: string;
   generated: { compact: GeneratedEntry; standard: GeneratedEntry; showcase: GeneratedEntry };
   hudLayout?: unknown;
+  hudLayouts?: unknown;
+  /** Sprint 35D.3 — só presets elegíveis podem ser escolhidos em produção pelo resolver. */
+  productionEligible?: boolean;
 };
 
 export type Density = 'compact' | 'standard' | 'showcase';

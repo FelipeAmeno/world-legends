@@ -144,9 +144,9 @@ async function validateFullArtworkPreset(
     warnings.push(`[${preset.id}] artwork: ${resolution.warning}`);
   }
 
-  if (!preset.hudLayout) {
+  if (!preset.hudLayout && !preset.hudLayouts) {
     warnings.push(
-      `[${preset.id}] sem "hudLayout" no preset — vai usar o DEFAULT_HUD_LAYOUT inteiro (isso é válido, só um aviso informativo)`,
+      `[${preset.id}] sem "hudLayout"/"hudLayouts" no preset — vai usar o DEFAULT_HUD_LAYOUT inteiro (isso é válido, só um aviso informativo)`,
     );
   }
 

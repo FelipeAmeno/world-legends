@@ -2,7 +2,15 @@
   "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
   "files": {
     "ignoreUnknown": true,
-    "ignore": ["src/", "dist/", "coverage/", ".next/", "node_modules/", "*.d.ts"]
+    "ignore": [
+      "src/",
+      "dist/",
+      "coverage/",
+      ".next/",
+      "node_modules/",
+      "*.d.ts",
+      "public/assets/cards/metadata/wl-legendary-neymar-001.json"
+    ]
   },
   "organizeImports": {
     "enabled": true
