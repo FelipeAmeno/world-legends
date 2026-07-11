@@ -94,4 +94,4 @@ Nenhuma mudança de código adicional necessária — a dev tool e o resolver j�
 
 ## Vercel Ready URL
 
-_A confirmar após deploy._
+**Status: Ready.** https://world-legends.vercel.app (deployment `world-legends-5cq6gnv4l`, commit `95e76611`).
