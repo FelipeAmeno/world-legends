@@ -143,7 +143,11 @@ export function FullArtworkWorldLegendsCard({
     <div
       ref={tiltRef}
       className="noise relative shrink-0 overflow-hidden card-tilt-root"
-      style={{ width: displayWidth, height: displayHeight, borderRadius: Math.round(displayWidth * 0.06) }}
+      style={{
+        width: displayWidth,
+        height: displayHeight,
+        borderRadius: Math.round(displayWidth * 0.06),
+      }}
     >
       {/* <ArtworkImage /> — a ÚNICA fonte visual, nunca decomposta */}
       {generated ? (
@@ -154,7 +158,13 @@ export function FullArtworkWorldLegendsCard({
           height={height}
           sizes={`${displayWidth}px`}
           loading={density === 'showcase' ? 'eager' : 'lazy'}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
         />
       ) : (
         // Fallback — artwork gerado ausente. Card Engine procedural
@@ -162,7 +172,12 @@ export function FullArtworkWorldLegendsCard({
         // é só um placeholder visual pra não quebrar a ferramenta dev.
         <div
           className="absolute inset-0 flex items-center justify-center text-center"
-          style={{ background: '#0c0d12', color: 'rgba(255,255,255,0.4)', fontSize: 10, padding: 8 }}
+          style={{
+            background: '#0c0d12',
+            color: 'rgba(255,255,255,0.4)',
+            fontSize: 10,
+            padding: 8,
+          }}
         >
           artwork não gerado — rode `pnpm cards:build`
         </div>
@@ -220,10 +235,7 @@ export function FullArtworkWorldLegendsCard({
   );
 }
 
-function StatsRow({
-  stats,
-  slice,
-}: { stats: FullArtworkStats; slice: [number, number] }) {
+function StatsRow({ stats, slice }: { stats: FullArtworkStats; slice: [number, number] }) {
   const entries = STAT_LABELS.slice(slice[0], slice[1]);
   return (
     <div style={{ display: 'flex', gap: 8, justifyContent: 'center', width: '100%' }}>

@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import {
   MIN_SHOWCASE_WIDTH,
   checkArtworkResolution,
@@ -8,6 +7,7 @@ import { DEFAULT_HUD_LAYOUT, resolveHudLayout } from '@/lib/card-static/hud-layo
 import { resolveGeneratedArtwork } from '@/lib/card-static/resolve-artwork';
 import type { ManifestPreset } from '@/lib/card-static/resolve-artwork';
 import { ARTWORK_DIMENSIONS } from '@/lib/card-static/types';
+import { describe, expect, it } from 'vitest';
 
 const SAMPLE_MANIFEST: ManifestPreset[] = [
   {
@@ -23,7 +23,10 @@ const SAMPLE_MANIFEST: ManifestPreset[] = [
 describe('lib/card-static/resolve-artwork — resolveGeneratedArtwork', () => {
   it('artwork válido: encontra a densidade gerada', () => {
     const result = resolveGeneratedArtwork(SAMPLE_MANIFEST, 'wl-goat-brazil-001', 'compact');
-    expect(result).toEqual({ src: '/assets/cards/generated/compact/wl-goat-brazil-001.webp', sizeKB: 81 });
+    expect(result).toEqual({
+      src: '/assets/cards/generated/compact/wl-goat-brazil-001.webp',
+      sizeKB: 81,
+    });
   });
 
   it('artwork ausente: presetId desconhecido retorna null (fallback)', () => {

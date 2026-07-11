@@ -12,9 +12,7 @@ const ASPECT_TOLERANCE = 0.03; // ±3% — cobre variações de crop de export s
 
 export const MIN_SHOWCASE_WIDTH = 1200;
 
-export type AspectRatioCheck =
-  | { valid: true }
-  | { valid: false; reason: string };
+export type AspectRatioCheck = { valid: true } | { valid: false; reason: string };
 
 export function checkCardAspectRatio(width: number, height: number): AspectRatioCheck {
   if (width <= 0 || height <= 0) {

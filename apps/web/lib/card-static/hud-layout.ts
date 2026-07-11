@@ -47,7 +47,9 @@ export const DEFAULT_HUD_LAYOUT: HudFieldsLayout = {
 };
 
 /** Merge raso — um preset pode sobrescrever só um campo (ex.: `name.y`) sem precisar redeclarar o resto. */
-export function resolveHudLayout(override: Partial<HudFieldsLayout> | undefined | null): HudFieldsLayout {
+export function resolveHudLayout(
+  override: Partial<HudFieldsLayout> | undefined | null,
+): HudFieldsLayout {
   if (!override) return DEFAULT_HUD_LAYOUT;
   return { ...DEFAULT_HUD_LAYOUT, ...override };
 }

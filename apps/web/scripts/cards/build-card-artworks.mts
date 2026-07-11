@@ -119,7 +119,8 @@ async function buildFullArtworkDensity(
   preset: CardArtworkPreset,
   density: Density,
 ): Promise<{ outPath: string; sizeKB: number }> {
-  if (!preset.artwork) throw new Error(`[${preset.id}] sourceType full-card-artwork sem campo "artwork"`);
+  if (!preset.artwork)
+    throw new Error(`[${preset.id}] sourceType full-card-artwork sem campo "artwork"`);
   const { width, height } = DIMENSIONS[density];
   const outDir = join(GENERATED_DIR, density);
   mkdirSync(outDir, { recursive: true });
@@ -147,7 +148,9 @@ async function main() {
     console.log(`[cards:build] ${preset.id} (${preset.rarity}, ${sourceType})`);
 
     if (sourceType === 'full-card-artwork' && !preset.artwork) {
-      console.error(`  ✗ [${preset.id}] sourceType full-card-artwork mas campo "artwork" ausente — pulando`);
+      console.error(
+        `  ✗ [${preset.id}] sourceType full-card-artwork mas campo "artwork" ausente — pulando`,
+      );
       continue;
     }
     if (sourceType === 'full-card-artwork' && preset.artwork) {
@@ -158,7 +161,11 @@ async function main() {
       }
     }
 
-    const generated: CardArtworkPreset['generated'] = { compact: null, standard: null, showcase: null };
+    const generated: CardArtworkPreset['generated'] = {
+      compact: null,
+      standard: null,
+      showcase: null,
+    };
 
     for (const density of Object.keys(DIMENSIONS) as Density[]) {
       const { outPath, sizeKB } =

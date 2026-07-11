@@ -20,7 +20,10 @@
  */
 import { existsSync } from 'node:fs';
 import sharp from 'sharp';
-import { checkArtworkResolution, checkCardAspectRatio } from '../../lib/card-static/full-artwork.ts';
+import {
+  checkArtworkResolution,
+  checkCardAspectRatio,
+} from '../../lib/card-static/full-artwork.ts';
 import { CHANNEL_DIR, artworkPath, loadPresets, sourcePath } from './_shared.mts';
 
 /**

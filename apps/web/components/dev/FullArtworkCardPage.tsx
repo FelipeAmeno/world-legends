@@ -14,9 +14,9 @@ import { useEffect, useRef, useState } from 'react';
 import { PlayerCard } from '../cards/PlayerCard';
 import type { PlayerCardData } from '../cards/card-types';
 import {
-  FullArtworkWorldLegendsCard,
   type FullArtworkDensity,
   type FullArtworkStats,
+  FullArtworkWorldLegendsCard,
 } from './FullArtworkWorldLegendsCard';
 
 const TIERS = [1, 10, 50, 200] as const;
@@ -62,7 +62,9 @@ function StressTest({ stats }: { stats: FullArtworkStats }) {
   }, []);
 
   useEffect(() => {
-    const raf = requestAnimationFrame(() => setDomNodes(domRef.current?.querySelectorAll('*').length ?? 0));
+    const raf = requestAnimationFrame(() =>
+      setDomNodes(domRef.current?.querySelectorAll('*').length ?? 0),
+    );
     return () => cancelAnimationFrame(raf);
   }, [tier]);
 
@@ -194,8 +196,8 @@ export function FullArtworkCardPage() {
     <div style={{ padding: 24, color: '#e5e7eb', background: '#0a0b10', minHeight: '100vh' }}>
       <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>Full Card Artwork</h1>
       <p style={{ fontSize: 13, color: '#9ca3af', marginBottom: 20, maxWidth: 680 }}>
-        Ferramenta interna (Sprint 35D) — não é uma tela de jogo. A arte é uma composição ÚNICA
-        (<code>{GOAT_PRESET_ID}</code>: jogador+frame+background+luz+material+efeitos já prontos na
+        Ferramenta interna (Sprint 35D) — não é uma tela de jogo. A arte é uma composição ÚNICA (
+        <code>{GOAT_PRESET_ID}</code>: jogador+frame+background+luz+material+efeitos já prontos na
         imagem) — o pipeline só redimensiona pras 3 densidades, nunca decompõe em layers. O HUD
         (OVR/posição/nome/país/era/stats) é 100% React, posicionado nas safe zones que o preset
         define. O Card Engine atual (procedural) continua como fallback de produção — última seção
@@ -203,12 +205,23 @@ export function FullArtworkCardPage() {
       </p>
 
       <fieldset
-        style={{ border: '1px solid #27272a', borderRadius: 8, padding: 12, marginBottom: 24, display: 'inline-block' }}
+        style={{
+          border: '1px solid #27272a',
+          borderRadius: 8,
+          padding: 12,
+          marginBottom: 24,
+          display: 'inline-block',
+        }}
       >
         <legend style={{ fontSize: 11, color: '#9ca3af', padding: '0 6px' }}>Densidade</legend>
         {(['compact', 'standard', 'showcase'] as FullArtworkDensity[]).map((d) => (
           <label key={d} style={{ marginRight: 12, fontSize: 13 }}>
-            <input type="radio" name="density" checked={density === d} onChange={() => setDensity(d)} />{' '}
+            <input
+              type="radio"
+              name="density"
+              checked={density === d}
+              onChange={() => setDensity(d)}
+            />{' '}
             {d}
           </label>
         ))}
@@ -228,7 +241,9 @@ export function FullArtworkCardPage() {
             trait="Ícone"
             hideHud
           />
-          <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 8 }}>Artwork sem HUD ({density})</p>
+          <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 8 }}>
+            Artwork sem HUD ({density})
+          </p>
         </div>
 
         <div style={{ textAlign: 'center' }}>
@@ -243,11 +258,15 @@ export function FullArtworkCardPage() {
             stats={GOAT_STATS}
             trait="Ícone"
           />
-          <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 8 }}>Artwork com HUD ({density})</p>
+          <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 8 }}>
+            Artwork com HUD ({density})
+          </p>
         </div>
       </div>
 
-      <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>As 3 densidades lado a lado</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>
+        As 3 densidades lado a lado
+      </h2>
       <div style={{ display: 'flex', gap: 32, marginBottom: 40 }}>
         {(['compact', 'standard', 'showcase'] as FullArtworkDensity[]).map((d) => (
           <div key={d} style={{ textAlign: 'center' }}>
@@ -275,7 +294,11 @@ export function FullArtworkCardPage() {
         no motor procedural (Sprint 27/28). Isso é o que toda carta de produção usa hoje; o pipeline
         de full-card-artwork é aditivo, não substitui isso ainda (item 12 do brief).
       </p>
-      <PlayerCard card={FALLBACK_CARD} size={density === 'compact' ? 'sm' : density === 'standard' ? 'md' : 'lg'} glow />
+      <PlayerCard
+        card={FALLBACK_CARD}
+        size={density === 'compact' ? 'sm' : density === 'standard' ? 'md' : 'lg'}
+        glow
+      />
 
       <StressTest stats={GOAT_STATS} />
     </div>
