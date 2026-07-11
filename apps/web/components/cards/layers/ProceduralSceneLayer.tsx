@@ -66,13 +66,20 @@ export function ProceduralSceneLayer({ ctx, v3 }: Props) {
       {/* Background — arte real (v3) se existir, senão paleta de estádio
           procedural da seleção (Sprint 27) */}
       {v3?.background ? (
-        <ImageLayer
-          asset={v3ToResolvedCardAsset(v3.background, v3.meta)}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-          fallback={null}
-          eager
-        />
+        <div
+          className="absolute inset-0 card-v3-parallax"
+          style={
+            { '--v3-parallax-weight': v3.background.meta.parallaxDepth } as React.CSSProperties
+          }
+        >
+          <ImageLayer
+            asset={v3ToResolvedCardAsset(v3.background.src, v3.background.meta)}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            fallback={null}
+            eager
+          />
+        </div>
       ) : (
         <div
           className="absolute inset-0"
@@ -89,7 +96,7 @@ export function ProceduralSceneLayer({ ctx, v3 }: Props) {
           reais da seleção, 100% CSS */}
       {v3?.pattern ? (
         <ImageLayer
-          asset={v3ToResolvedCardAsset(v3.pattern, v3.meta)}
+          asset={v3ToResolvedCardAsset(v3.pattern.src, v3.pattern.meta)}
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
           fallback={null}
@@ -107,7 +114,7 @@ export function ProceduralSceneLayer({ ctx, v3 }: Props) {
           mesma técnica de VolumetricLight (Sprint 22) */}
       {v3?.light ? (
         <ImageLayer
-          asset={v3ToResolvedCardAsset(v3.light, v3.meta)}
+          asset={v3ToResolvedCardAsset(v3.light.src, v3.light.meta)}
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
           fallback={null}
@@ -166,13 +173,20 @@ export function ProceduralSceneLayer({ ctx, v3 }: Props) {
           }}
         >
           {v3?.player ? (
-            <ImageLayer
-              asset={v3ToResolvedCardAsset(v3.player, v3.meta)}
-              alt={card.displayName}
-              className="w-full h-full object-contain object-bottom"
-              fallback={null}
-              eager
-            />
+            <div
+              className="w-full h-full card-v3-parallax"
+              style={
+                { '--v3-parallax-weight': v3.player.meta.parallaxDepth } as React.CSSProperties
+              }
+            >
+              <ImageLayer
+                asset={v3ToResolvedCardAsset(v3.player.src, v3.player.meta)}
+                alt={card.displayName}
+                className="w-full h-full object-contain object-bottom"
+                fallback={null}
+                eager
+              />
+            </div>
           ) : (
             <PoseFigure
               pose={scene.pose}
@@ -191,7 +205,7 @@ export function ProceduralSceneLayer({ ctx, v3 }: Props) {
           composição do brief (04 Player Pose → 05 Front Particles). */}
       {v3?.particles ? (
         <ImageLayer
-          asset={v3ToResolvedCardAsset(v3.particles, v3.meta)}
+          asset={v3ToResolvedCardAsset(v3.particles.src, v3.particles.meta)}
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
           fallback={null}

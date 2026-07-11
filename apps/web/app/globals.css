@@ -633,6 +633,18 @@ body {
   transform: translate(calc(var(--px, 0) * 9px), calc(var(--py, 0) * 9px));
 }
 
+/* Sprint 35 — parallax de canal v3, peso vem do PRÓPRIO metadata do asset
+   (`parallaxDepth`, 0-1) via `--v3-parallax-weight` setada inline por
+   canal, nunca hardcoded aqui. Reaproveita as mesmas `--px`/--py` que
+   `useCardTilt` já escreve no `.card-tilt-root` ancestor — mesmo
+   mecanismo dos `.card-parallax-*` acima, só que o peso é dado, não fixo. */
+.card-v3-parallax {
+  transform: translate(
+    calc(var(--px, 0) * var(--v3-parallax-weight, 0) * 12px),
+    calc(var(--py, 0) * var(--v3-parallax-weight, 0) * 12px)
+  );
+}
+
 /* Respiração lenta — só legendary/ultra(GOAT)/world_cup_hero (item 4) */
 @keyframes cardBreatheScale {
   0%,

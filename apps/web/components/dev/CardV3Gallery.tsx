@@ -78,6 +78,9 @@ const VALIDATION_SPECS: Array<{
   { rarityCode: 'rare', label: 'Rare', overall: 74 },
   { rarityCode: 'elite', label: 'Elite', overall: 84 },
   { rarityCode: 'legendary', label: 'Legendary', overall: 91 },
+  // Sprint 35 — GOAT (ultra) usa a composição v3 real (ultra-validation-01,
+  // ver buildValidationCard abaixo), as outras 5 continuam procedurais.
+  { rarityCode: 'ultra', label: 'GOAT', overall: 97 },
   { rarityCode: 'world_cup_hero', label: 'World Cup Hero', overall: 98 },
 ];
 

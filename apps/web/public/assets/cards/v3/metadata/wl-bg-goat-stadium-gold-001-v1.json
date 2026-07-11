@@ -1,0 +1,19 @@
+{
+  "id": "wl-bg-goat-stadium-gold-001-v1",
+  "type": "background",
+  "rarity": "goat",
+  "scale": 1,
+  "offsetX": 0,
+  "offsetY": 0,
+  "rotation": 0,
+  "opacity": 1,
+  "blendMode": "normal",
+  "blur": 0,
+  "intensity": 1,
+  "parallaxDepth": 0.15,
+  "anchor": "center",
+  "safeForCompact": true,
+  "safeForStandard": true,
+  "safeForShowcase": true,
+  "version": 1
+}

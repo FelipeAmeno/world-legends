@@ -24,7 +24,9 @@ export function CardFrameLayer({ ctx }: { ctx: CardVisualCtx }) {
   // por raridade de sempre; sem composição (toda carta real hoje), cai no
   // `resolveFrame` de sempre, comportamento idêntico ao de antes.
   const v3 = ctx.card.v3CompositionId ? resolveCardV3(ctx.card.v3CompositionId) : null;
-  const asset = v3?.frame ? v3ToResolvedCardAsset(v3.frame, v3.meta) : resolveFrame(ctx.rarityCode);
+  const asset = v3?.frame
+    ? v3ToResolvedCardAsset(v3.frame.src, v3.frame.meta)
+    : resolveFrame(ctx.rarityCode);
 
   return (
     <ImageLayer

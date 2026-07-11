@@ -1,0 +1,21 @@
+{
+  "id": "wl-player-goat-brazil-001-v1",
+  "type": "player",
+  "rarity": "goat",
+  "country": "brazil",
+  "era": "1970s",
+  "scale": 1,
+  "offsetX": 0,
+  "offsetY": 0,
+  "rotation": 0,
+  "opacity": 1,
+  "blendMode": "normal",
+  "blur": 0,
+  "intensity": 1,
+  "parallaxDepth": 0.65,
+  "anchor": "center-bottom",
+  "safeForCompact": true,
+  "safeForStandard": true,
+  "safeForShowcase": true,
+  "version": 1
+}

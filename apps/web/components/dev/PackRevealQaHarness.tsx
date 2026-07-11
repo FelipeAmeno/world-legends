@@ -16,11 +16,17 @@
  */
 
 import { CardRevealScene } from '@/components/packs/CardRevealScene';
+import type { CollectionCard } from '@/lib/collection-data';
 import { getCollection } from '@/lib/collection-data';
 import { GLOW_MAP, PACK_DEFS, PARTICLE_MAP } from '@/lib/pack-logic';
 import type { DrawnCard, RevealEffect } from '@/lib/pack-logic';
 import type { RarityCode } from '@world-legends/types';
 import { useMemo, useState } from 'react';
+
+// Sprint 35 — a raridade GOAT (ultra) da QA usa a primeira composição v3
+// com arte real (`ultra-validation-01`, ver CARD_V3_ASSET_SPEC.md) pra
+// que o mesmo Pack Reveal real mostre o asset novo, não só a Gallery.
+const GOAT_V3_COMPOSITION_ID = 'ultra-validation-01';
 
 const RARITY_OPTIONS: Array<{ code: RarityCode; label: string }> = [
   { code: 'common', label: 'Common' },
@@ -56,7 +62,13 @@ export function PackRevealQaHarness() {
     const picked = pool.length > 0 ? pool.slice(0, 3) : allCards.slice(0, 3);
     return picked.map((card, i) => ({
       index: i,
-      card,
+      // GOAT (ultra) mostra a composição v3 real na primeira carta — as
+      // demais raridades continuam 100% procedurais, sem nenhum `if` de
+      // rarity dentro do Card Engine (a decisão mora aqui, no dado).
+      card:
+        selected === 'ultra' && i === 0
+          ? ({ ...card, v3CompositionId: GOAT_V3_COMPOSITION_ID } as CollectionCard)
+          : card,
       effect: EFFECT_MAP[selected],
       wasForced: false,
       glowColor: GLOW_MAP[selected],
