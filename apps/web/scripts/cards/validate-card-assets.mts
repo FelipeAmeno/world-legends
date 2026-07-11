@@ -1,25 +1,33 @@
 /**
  * scripts/cards/validate-card-assets.mts — Sprint 35B (Static Card Pipeline
- * Foundation)
+ * Foundation) + Sprint 35D (Full Card Artwork Pipeline Reset)
  *
- * Lê todo preset em `public/assets/cards/metadata/*.json`, confere que
- * cada asset de canal referenciado existe em `source/<canal>/`, valida
- * dimensões (não corrompido, não vazio) e alpha (player precisa de
- * transparência — sem isso a composição vaza fundo opaco sobre o
- * background). Nunca falha o processo por warning — só por erro real
- * (asset referenciado que não existe em disco).
+ * Lê todo preset em `public/assets/cards/metadata/*.json`. Dois modos:
+ *
+ *   sourceType 'layered' — confere cada canal (background/player/light/
+ *   particles) em `source/<canal>/`, valida dimensões e alpha do player.
+ *
+ *   sourceType 'full-card-artwork' — confere o ÚNICO artwork em
+ *   `source/artworks/<raridade>/`, valida proporção 2:3 e resolução
+ *   mínima. NÃO exige player/alpha/background/frame separados (item 4
+ *   do brief) — a composição inteira já está na imagem.
+ *
+ * Nunca falha o processo por warning — só por erro real (asset
+ * referenciado que não existe em disco, ou artwork com proporção
+ * inválida).
  *
  * Uso: node --experimental-strip-types scripts/cards/validate-card-assets.mts
  */
 import { existsSync } from 'node:fs';
 import sharp from 'sharp';
-import { CHANNEL_DIR, loadPresets, sourcePath } from './_shared.mts';
+import { checkArtworkResolution, checkCardAspectRatio } from '../../lib/card-static/full-artwork.ts';
+import { CHANNEL_DIR, artworkPath, loadPresets, sourcePath } from './_shared.mts';
 
 /**
  * Ter um 4º canal não garante transparência de verdade — alguns exports
  * (ex.: preview de "transparência" de gerador de imagem) têm alpha=255
  * uniforme, com o padrão de xadrez QUEIMADO nos pixels RGB em vez de
- * recortado de verdade. Extraído à parte só pra manter `validatePreset`
+ * recortado de verdade. Extraído à parte só pra manter `validateChannel`
  * simples o bastante pro limite de complexidade do linter.
  */
 async function checkPlayerAlpha(
@@ -74,10 +82,9 @@ async function validateChannel(
   return { errors, warnings };
 }
 
-async function validatePreset(preset: ReturnType<typeof loadPresets>[number]): Promise<{
-  errors: string[];
-  warnings: string[];
-}> {
+async function validateLayeredPreset(
+  preset: ReturnType<typeof loadPresets>[number],
+): Promise<{ errors: string[]; warnings: string[] }> {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -99,6 +106,50 @@ async function validatePreset(preset: ReturnType<typeof loadPresets>[number]): P
   return { errors, warnings };
 }
 
+async function validateFullArtworkPreset(
+  preset: ReturnType<typeof loadPresets>[number],
+): Promise<{ errors: string[]; warnings: string[] }> {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  if (!preset.artwork) {
+    errors.push(`[${preset.id}] sourceType "full-card-artwork" sem campo "artwork"`);
+    return { errors, warnings };
+  }
+
+  const path = artworkPath(preset.rarity, preset.artwork);
+  if (!existsSync(path)) {
+    errors.push(
+      `[${preset.id}] artwork: arquivo não encontrado em source/artworks/${preset.rarity}/${preset.artwork}`,
+    );
+    return { errors, warnings };
+  }
+
+  const meta = await sharp(path).metadata();
+  if (!meta.width || !meta.height) {
+    errors.push(`[${preset.id}] artwork: imagem sem dimensões válidas (${path})`);
+    return { errors, warnings };
+  }
+
+  const aspect = checkCardAspectRatio(meta.width, meta.height);
+  if (!aspect.valid) {
+    errors.push(`[${preset.id}] artwork: ${aspect.reason}`);
+  }
+
+  const resolution = checkArtworkResolution(meta.width);
+  if (!resolution.sufficient && resolution.warning) {
+    warnings.push(`[${preset.id}] artwork: ${resolution.warning}`);
+  }
+
+  if (!preset.hudLayout) {
+    warnings.push(
+      `[${preset.id}] sem "hudLayout" no preset — vai usar o DEFAULT_HUD_LAYOUT inteiro (isso é válido, só um aviso informativo)`,
+    );
+  }
+
+  return { errors, warnings };
+}
+
 async function main() {
   const presets = loadPresets();
   if (presets.length === 0) {
@@ -110,7 +161,11 @@ async function main() {
   let totalWarnings = 0;
 
   for (const preset of presets) {
-    const { errors, warnings } = await validatePreset(preset);
+    const sourceType = preset.sourceType ?? 'layered';
+    const { errors, warnings } =
+      sourceType === 'full-card-artwork'
+        ? await validateFullArtworkPreset(preset)
+        : await validateLayeredPreset(preset);
     for (const e of errors) console.error(`✗ ${e}`);
     for (const w of warnings) console.warn(`⚠ ${w}`);
     totalErrors += errors.length;
