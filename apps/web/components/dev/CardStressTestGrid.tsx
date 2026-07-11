@@ -20,6 +20,14 @@ const TIERS = [1, 10, 50, 200] as const;
 type Tier = (typeof TIERS)[number];
 const MEASURE_DURATION_MS = 4000;
 
+// Sprint 34 (item 9 do brief) — mede exatamente a combinação pedida:
+// 1 Showcase / 10 Standard / 50 Compact / 200 Compact. Tamanho maior =
+// mais pixels de blur/glow por carta, então variar por tier (em vez de
+// fixar tudo em "sm") reflete o custo real de cada tela de produção
+// (Spotlight/Card Detail = 1 Showcase; Coleção = 10-50 Standard/Compact;
+// Squad grid grande = 200 Compact).
+const TIER_SIZE: Record<Tier, 'lg' | 'md' | 'sm'> = { 1: 'lg', 10: 'md', 50: 'sm', 200: 'sm' };
+
 type Props = {
   players: ReadonlyArray<{ id: string; knownAs: string; nationality: string }>;
   rarityCodes: readonly RarityCode[];
@@ -194,7 +202,7 @@ export function CardStressTestGrid({ players, rarityCodes }: Props) {
           </h2>
           <div className="flex flex-wrap gap-2">
             {cards.map((c) => (
-              <PlayerCard key={c.cardId} card={c} size="sm" glow />
+              <PlayerCard key={c.cardId} card={c} size={TIER_SIZE[tier]} glow />
             ))}
           </div>
         </section>
