@@ -129,4 +129,4 @@ Para cada jogador pendente (Messi, Cristiano, Mbappé, Zidane, Ronaldo, Beckenba
 
 ## Vercel Ready URL
 
-_A confirmar após deploy._
+**Status: Ready.** https://world-legends.vercel.app (deployment `world-legends-2gfbqn27v`, commit `ca54f332`).
