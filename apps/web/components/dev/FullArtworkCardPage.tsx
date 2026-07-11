@@ -3,14 +3,17 @@
 /**
  * components/dev/FullArtworkCardPage.tsx — Sprint 35D (Full Card Artwork
  * Pipeline Reset) + Sprint 35D.3 (Unique Player Artwork and Card
- * Identity System)
+ * Identity System) + Sprint 35D.4 (Neymar and Mbappé Integration)
  *
  * Ferramenta interna (`/dev/full-artwork-card`) — não é uma tela de
  * jogo. Seletor de 10 identidades (item 8 do brief); cada uma passa
- * por `resolvePlayerCardRenderer` — só Pelé e Ronaldinho têm preset
- * real hoje (`productionEligible: true` + artwork gerado), as outras 8
- * mostram o fallback procedural com "artwork preset pending", nunca
- * reaproveitando a arte de outro jogador.
+ * por `resolvePlayerCardRenderer` — Pelé, Ronaldinho e Neymar têm
+ * preset real hoje (`productionEligible: true` + artwork gerado);
+ * Mbappé tem preset registrado mas ainda sem artwork entregue (cai em
+ * `artwork-output-not-found`); os demais 6 usam um ID que ainda não
+ * existe no manifesto de propósito — pra provar que o resolver cai no
+ * fallback procedural sem quebrar nada, exatamente como pedido ("não
+ * inventar arte", "artwork preset pending").
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -96,7 +99,8 @@ const IDENTITIES: Identity[] = [
     stats: { pace: 87, finishing: 95, passing: 82, dribbling: 88, defending: 35, physical: 87 },
   },
   {
-    displayName: 'MBAPPÉ',
+    displayName: 'KYLIAN MBAPPÉ',
+    shortName: 'MBAPPÉ',
     nickname: 'O DITADOR',
     nicknameType: 'event',
     artworkPresetId: 'wl-elite-mbappe-001',
@@ -157,11 +161,12 @@ const IDENTITIES: Identity[] = [
   },
   {
     displayName: 'NEYMAR',
+    shortName: 'NEYMAR',
     nickname: 'O PRÍNCIPE',
     nicknameType: 'legend',
     artworkPresetId: 'wl-legendary-neymar-001',
     rarity: 'legendary',
-    overall: 92,
+    overall: 94,
     position: 'LW',
     nationality: 'BR',
     era: '2010s',

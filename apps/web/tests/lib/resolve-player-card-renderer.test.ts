@@ -1,3 +1,4 @@
+import { CARD_STATIC_MANIFEST } from '@/lib/card-static/manifest.generated';
 import { resolveGeneratedArtwork } from '@/lib/card-static/resolve-artwork';
 import type { ManifestPreset } from '@/lib/card-static/resolve-artwork';
 import { resolvePlayerCardRenderer } from '@/lib/card-static/resolve-player-card-renderer';
@@ -45,6 +46,37 @@ const MANIFEST: ManifestPreset[] = [
   {
     id: 'wl-no-output-yet-001',
     generated: { compact: null, standard: null, showcase: null },
+    productionEligible: true,
+  },
+  {
+    id: 'wl-legendary-neymar-001',
+    generated: {
+      compact: { src: '/assets/cards/generated/compact/wl-legendary-neymar-001.webp', sizeKB: 66 },
+      standard: {
+        src: '/assets/cards/generated/standard/wl-legendary-neymar-001.webp',
+        sizeKB: 183,
+      },
+      showcase: {
+        src: '/assets/cards/generated/showcase/wl-legendary-neymar-001.webp',
+        sizeKB: 287,
+      },
+    },
+    productionEligible: true,
+  },
+  // Sprint 35D.4 — Mbappé no mesmo formato do Ronaldinho/Neymar. Usado
+  // aqui pra provar que o resolver generaliza pra qualquer preset com
+  // esse shape (genérico, não hardcoded pra 2 jogadores). O preset REAL
+  // (`wl-elite-mbappe-001.json`) ainda não foi criado no repo porque o
+  // artwork (`wl-artwork-elite-mbappe-001-v1.png`) ainda não foi
+  // entregue — ver teste "estado real hoje" abaixo, que confirma que o
+  // manifesto de PRODUÇÃO cai no fallback procedural até isso acontecer.
+  {
+    id: 'wl-elite-mbappe-001',
+    generated: {
+      compact: { src: '/assets/cards/generated/compact/wl-elite-mbappe-001.webp', sizeKB: 70 },
+      standard: { src: '/assets/cards/generated/standard/wl-elite-mbappe-001.webp', sizeKB: 190 },
+      showcase: { src: '/assets/cards/generated/showcase/wl-elite-mbappe-001.webp', sizeKB: 300 },
+    },
     productionEligible: true,
   },
 ];
@@ -149,5 +181,80 @@ describe('lib/card-static/resolve-player-card-renderer — resolvePlayerCardRend
       MANIFEST,
     );
     expect(migrated.renderer).toBe('full-artwork');
+  });
+});
+
+describe('lib/card-static/resolve-player-card-renderer — Sprint 35D.4 (Neymar e Mbappé)', () => {
+  it('Neymar (wl-legendary-neymar-001) resolve full-artwork quando preset+output existem e é elegível', () => {
+    const result = resolvePlayerCardRenderer(
+      {
+        artworkPresetId: 'wl-legendary-neymar-001',
+        cardId: 'c-neymar',
+        playerId: 'p-neymar',
+        rarity: 'legendary',
+      },
+      MANIFEST,
+    );
+    expect(result.renderer).toBe('full-artwork');
+    if (result.renderer === 'full-artwork') {
+      expect(result.preset.id).toBe('wl-legendary-neymar-001');
+      expect(result.preset.productionEligible).toBe(true);
+    }
+  });
+
+  it('Mbappé (wl-elite-mbappe-001) resolveria full-artwork pelo MESMO resolver, sem lógica dedicada — mesmo shape do Neymar/Ronaldinho', () => {
+    // Prova a generalização do resolver: nenhum branch por jogador,
+    // qualquer preset com o shape correto (generated + productionEligible)
+    // resolve igual, seja Neymar, Mbappé ou qualquer futuro jogador.
+    const result = resolvePlayerCardRenderer(
+      {
+        artworkPresetId: 'wl-elite-mbappe-001',
+        cardId: 'c-mbappe',
+        playerId: 'p-mbappe',
+        rarity: 'elite',
+      },
+      MANIFEST,
+    );
+    expect(result.renderer).toBe('full-artwork');
+    if (result.renderer === 'full-artwork') expect(result.preset.id).toBe('wl-elite-mbappe-001');
+  });
+
+  it('artwork de Neymar nunca é reutilizado pra Mbappé — resolvem pra arquivos .webp distintos', () => {
+    const neymar = resolveGeneratedArtwork(MANIFEST, 'wl-legendary-neymar-001', 'showcase');
+    const mbappe = resolveGeneratedArtwork(MANIFEST, 'wl-elite-mbappe-001', 'showcase');
+    expect(neymar?.src).not.toBe(mbappe?.src);
+    expect(neymar?.src).toContain('wl-legendary-neymar-001');
+    expect(mbappe?.src).toContain('wl-elite-mbappe-001');
+  });
+
+  it('estado real hoje: manifesto de PRODUÇÃO já contém wl-legendary-neymar-001 (artwork entregue e integrado)', () => {
+    const preset = CARD_STATIC_MANIFEST.find((p) => p.id === 'wl-legendary-neymar-001');
+    expect(preset).toBeDefined();
+    expect(preset?.productionEligible).toBe(true);
+    const result = resolvePlayerCardRenderer(
+      {
+        artworkPresetId: 'wl-legendary-neymar-001',
+        cardId: 'c-neymar',
+        playerId: 'p-neymar',
+        rarity: 'legendary',
+      },
+      CARD_STATIC_MANIFEST,
+    );
+    expect(result.renderer).toBe('full-artwork');
+  });
+
+  it('estado real hoje: wl-elite-mbappe-001 ainda NÃO está no manifesto de produção (asset ainda não entregue) — cai no fallback procedural sem quebrar nada', () => {
+    const preset = CARD_STATIC_MANIFEST.find((p) => (p.id as string) === 'wl-elite-mbappe-001');
+    expect(preset).toBeUndefined();
+    const result = resolvePlayerCardRenderer(
+      {
+        artworkPresetId: 'wl-elite-mbappe-001',
+        cardId: 'c-mbappe',
+        playerId: 'p-mbappe',
+        rarity: 'elite',
+      },
+      CARD_STATIC_MANIFEST,
+    );
+    expect(result).toEqual({ renderer: 'procedural', fallbackReason: 'preset-not-found' });
   });
 });
