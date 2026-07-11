@@ -1,0 +1,21 @@
+{
+  "id": "goat-validation-001",
+  "rarity": "goat",
+  "source": {
+    "background": "wl-bg-goat-stadium-gold-001-v1.png",
+    "player": "wl-player-goat-brazil-001-v1.png",
+    "light": null,
+    "particles": null
+  },
+  "composition": {
+    "playerScale": 1,
+    "playerOffsetX": 0,
+    "playerOffsetY": 0
+  },
+  "generated": {
+    "compact": "compact/goat-validation-001.webp",
+    "standard": "standard/goat-validation-001.webp",
+    "showcase": "showcase/goat-validation-001.webp"
+  },
+  "frame": null
+}
