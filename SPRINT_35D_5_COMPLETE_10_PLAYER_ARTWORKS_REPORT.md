@@ -84,4 +84,4 @@ Nenhuma mudança de arquitetura, catálogo real, economia, odds ou gameplay. Nen
 
 ## URL de produção
 
-**Status: Ready.** https://world-legends.vercel.app (a confirmar após deploy desta sprint).
+**Status: Ready.** https://world-legends.vercel.app (deployment `world-legends-3nbe2xi93`, commit `40021577`).
