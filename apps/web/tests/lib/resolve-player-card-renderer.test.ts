@@ -278,3 +278,76 @@ describe('lib/card-static/resolve-player-card-renderer — Sprint 35D.4 (Neymar 
     }
   });
 });
+
+describe('lib/card-static/resolve-player-card-renderer — Sprint 35D.5 (os 10 jogadores completos)', () => {
+  const TEN_PRESET_IDS = [
+    'wl-goat-brazil-001',
+    'wl-legendary-ronaldinho-001',
+    'wl-goat-messi-001',
+    'wl-goat-cristiano-001',
+    'wl-elite-mbappe-001',
+    'wl-legendary-zidane-001',
+    'wl-goat-ronaldo-001',
+    'wl-legendary-beckenbauer-001',
+    'wl-goat-maradona-001',
+    'wl-legendary-neymar-001',
+  ] as const;
+
+  const NEW_SIX = [
+    { id: 'wl-goat-messi-001', rarity: 'goat' },
+    { id: 'wl-goat-cristiano-001', rarity: 'goat' },
+    { id: 'wl-goat-ronaldo-001', rarity: 'goat' },
+    { id: 'wl-legendary-zidane-001', rarity: 'legendary' },
+    { id: 'wl-legendary-beckenbauer-001', rarity: 'legendary' },
+    { id: 'wl-goat-maradona-001', rarity: 'goat' },
+  ] as const;
+
+  it.each(NEW_SIX)('$id resolve full-artwork no manifesto de produção', ({ id, rarity }) => {
+    const result = resolvePlayerCardRenderer(
+      { artworkPresetId: id, cardId: `c-${id}`, playerId: `p-${id}`, rarity },
+      CARD_STATIC_MANIFEST,
+    );
+    expect(result.renderer).toBe('full-artwork');
+    if (result.renderer === 'full-artwork') {
+      expect(result.preset.id).toBe(id);
+      expect(result.preset.productionEligible).toBe(true);
+    }
+  });
+
+  it('manifesto de produção contém os 10 presets reais', () => {
+    for (const id of TEN_PRESET_IDS) {
+      expect(CARD_STATIC_MANIFEST.some((p) => p.id === id)).toBe(true);
+    }
+  });
+
+  it('todos os 10 jogadores retornam full-artwork pelo mesmo resolver, sem exceção', () => {
+    for (const id of TEN_PRESET_IDS) {
+      const result = resolvePlayerCardRenderer(
+        { artworkPresetId: id, cardId: `c-${id}`, playerId: `p-${id}`, rarity: 'legendary' },
+        CARD_STATIC_MANIFEST,
+      );
+      expect(result.renderer).toBe('full-artwork');
+    }
+  });
+
+  it('nenhum artwork é reutilizado entre os 10 — todos os 10 arquivos showcase gerados são distintos', () => {
+    const srcs = TEN_PRESET_IDS.map((id) => {
+      const artwork = resolveGeneratedArtwork(CARD_STATIC_MANIFEST, id, 'showcase');
+      expect(artwork?.src).toContain(id);
+      return artwork?.src;
+    });
+    expect(new Set(srcs).size).toBe(TEN_PRESET_IDS.length);
+  });
+
+  it('nickname respeita densidade num preset real dos 6 novos (Messi) — oculto em Compact, visível em Standard/Showcase', () => {
+    const preset = CARD_STATIC_MANIFEST.find((p) => p.id === 'wl-goat-messi-001');
+    expect(preset).toBeDefined();
+    const hudLayouts = preset?.hudLayouts as
+      | Record<string, { nickname?: { visible?: boolean } }>
+      | null
+      | undefined;
+    expect(hudLayouts?.compact?.nickname?.visible).toBe(false);
+    expect(hudLayouts?.standard?.nickname?.visible).toBe(true);
+    expect(hudLayouts?.showcase?.nickname?.visible).toBe(true);
+  });
+});

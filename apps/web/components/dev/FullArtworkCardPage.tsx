@@ -3,16 +3,18 @@
 /**
  * components/dev/FullArtworkCardPage.tsx — Sprint 35D (Full Card Artwork
  * Pipeline Reset) + Sprint 35D.3 (Unique Player Artwork and Card
- * Identity System) + Sprint 35D.4/35D.5 (Neymar and Mbappé Integration)
+ * Identity System) + Sprint 35D.4/35D.5 (Neymar, Mbappé e os 6
+ * jogadores restantes — os 10 completos)
  *
  * Ferramenta interna (`/dev/full-artwork-card`) — não é uma tela de
- * jogo. Seletor de 10 identidades (item 8 do brief); cada uma passa
- * por `resolvePlayerCardRenderer` — Pelé, Ronaldinho, Neymar e Mbappé
- * têm preset real hoje (`productionEligible: true` + artwork gerado);
- * os demais 6 usam um ID que ainda não existe no manifesto de
- * propósito — pra provar que o resolver cai no fallback procedural sem
- * quebrar nada, exatamente como pedido ("não inventar arte", "artwork
- * preset pending").
+ * jogo. Seletor de 10 identidades; cada uma passa por
+ * `resolvePlayerCardRenderer` — os 10 têm preset real hoje
+ * (`productionEligible: true` + artwork gerado nas 3 densidades). A
+ * grade de QA abaixo do seletor roda o resolver pros 10 de uma vez e
+ * destaca em vermelho qualquer um que caia no fallback procedural,
+ * não encontre preset/output ou não seja productionEligible — nunca
+ * deveria acontecer hoje, mas é o jeito de flagrar regressão sem abrir
+ * o seletor 10 vezes.
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -40,13 +42,10 @@ type Identity = {
   stats: FullArtworkStats;
 };
 
-// Item 8/9 do brief — os textos (nickname, nicknameType) são EXATAMENTE
-// os do brief, não alterados. Só Pelé e Ronaldinho têm artworkPresetId
-// apontando pra um preset REAL hoje (ver seção "Piloto" e "Integrate
-// Ronaldinho"); os outros 8 usam um ID que ainda não existe no
-// manifesto de propósito — pra provar que o resolver cai no fallback
-// procedural sem quebrar nada, exatamente como pedido ("não inventar
-// arte", "artwork preset pending").
+// Os textos (nickname, nicknameType) são EXATAMENTE os do brief, não
+// alterados. Os 10 artworkPresetId abaixo apontam pra presets REAIS no
+// manifesto hoje (Sprint 35D.5) — todos productionEligible + com as 3
+// densidades geradas.
 const IDENTITIES: Identity[] = [
   {
     displayName: 'PELÉ',
@@ -75,23 +74,25 @@ const IDENTITIES: Identity[] = [
   },
   {
     displayName: 'MESSI',
+    shortName: 'MESSI',
     nickname: 'GOAT',
     nicknameType: 'legend',
     artworkPresetId: 'wl-goat-messi-001',
     rarity: 'ultra',
-    overall: 98,
-    position: 'RW',
+    overall: 99,
+    position: 'CAM',
     nationality: 'AR',
     era: '2010s',
     stats: { pace: 85, finishing: 92, passing: 91, dribbling: 96, defending: 34, physical: 68 },
   },
   {
     displayName: 'CRISTIANO RONALDO',
+    shortName: 'CRISTIANO',
     nickname: 'PAPAI CRIS SIIIIU',
     nicknameType: 'event',
     artworkPresetId: 'wl-goat-cristiano-001',
     rarity: 'ultra',
-    overall: 98,
+    overall: 99,
     position: 'ST',
     nationality: 'PT',
     era: '2010s',
@@ -112,11 +113,12 @@ const IDENTITIES: Identity[] = [
   },
   {
     displayName: 'ZIDANE',
+    shortName: 'ZIDANE',
     nickname: 'O MAESTRO',
     nicknameType: 'legend',
     artworkPresetId: 'wl-legendary-zidane-001',
     rarity: 'legendary',
-    overall: 95,
+    overall: 96,
     position: 'CAM',
     nationality: 'FR',
     era: '1990s',
@@ -124,11 +126,12 @@ const IDENTITIES: Identity[] = [
   },
   {
     displayName: 'RONALDO',
+    shortName: 'RONALDO',
     nickname: 'O FENÔMENO',
     nicknameType: 'legend',
     artworkPresetId: 'wl-goat-ronaldo-001',
     rarity: 'ultra',
-    overall: 97,
+    overall: 98,
     position: 'ST',
     nationality: 'BR',
     era: '1990s',
@@ -136,11 +139,12 @@ const IDENTITIES: Identity[] = [
   },
   {
     displayName: 'BECKENBAUER',
+    shortName: 'BECKENBAUER',
     nickname: 'O KAISER',
     nicknameType: 'legend',
     artworkPresetId: 'wl-legendary-beckenbauer-001',
     rarity: 'legendary',
-    overall: 94,
+    overall: 96,
     position: 'CB',
     nationality: 'DE',
     era: '1970s',
@@ -148,11 +152,12 @@ const IDENTITIES: Identity[] = [
   },
   {
     displayName: 'MARADONA',
+    shortName: 'MARADONA',
     nickname: 'ESCOBAR CHEIRADOR',
     nicknameType: 'meme',
     artworkPresetId: 'wl-goat-maradona-001',
     rarity: 'ultra',
-    overall: 97,
+    overall: 99,
     position: 'CAM',
     nationality: 'AR',
     era: '1980s',
@@ -179,6 +184,120 @@ const NICKNAME_TYPE_LABEL: Record<PlayerNicknameType, string> = {
   event: 'evento',
   meme: 'meme',
 };
+
+const QA_DENSITIES: FullArtworkDensity[] = ['compact', 'standard', 'showcase'];
+
+/**
+ * Item 11/12 do brief — grade de QA com os 10 jogadores de uma vez,
+ * cada um resolvido pelo MESMO `resolvePlayerCardRenderer` do seletor
+ * acima (nenhum resolver novo). Uma linha fica vermelha se: cair no
+ * procedural, o preset não existir no manifesto, nenhuma densidade
+ * tiver output gerado, ou `productionEligible` não for `true` — nunca
+ * deveria acontecer pros 10 hoje, é só o jeito de flagrar regressão
+ * futura sem abrir o seletor 10 vezes.
+ */
+function QaGrid() {
+  const rows = IDENTITIES.map((identity) => {
+    const resolution = resolvePlayerCardRenderer(
+      {
+        artworkPresetId: identity.artworkPresetId,
+        cardId: identity.artworkPresetId,
+        playerId: identity.artworkPresetId,
+        rarity: identity.rarity,
+      },
+      CARD_STATIC_MANIFEST,
+    );
+    const preset = CARD_STATIC_MANIFEST.find((p) => p.id === identity.artworkPresetId);
+    const problem =
+      resolution.renderer !== 'full-artwork' || !preset || preset.productionEligible !== true;
+    return { identity, resolution, preset, problem };
+  });
+
+  return (
+    <div style={{ marginBottom: 40 }}>
+      <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>
+        Grade de QA — os 10 jogadores
+      </h2>
+      <p style={{ fontSize: 12, color: '#9ca3af', marginBottom: 12, maxWidth: 640 }}>
+        Cada linha roda pelo mesmo <code>resolvePlayerCardRenderer</code> do seletor acima. Fundo
+        vermelho = fallback procedural, preset ausente, output ausente ou{' '}
+        <code>productionEligible</code> false.
+      </p>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ fontSize: 12, borderCollapse: 'collapse', width: '100%' }}>
+          <thead>
+            <tr style={{ color: '#9ca3af', textAlign: 'left' }}>
+              <th style={{ padding: '4px 12px 4px 0' }}>Nome</th>
+              <th style={{ padding: '4px 12px' }}>Nickname</th>
+              <th style={{ padding: '4px 12px' }}>Preset ID</th>
+              <th style={{ padding: '4px 12px' }}>renderer</th>
+              <th style={{ padding: '4px 12px' }}>productionEligible</th>
+              <th style={{ padding: '4px 12px' }}>compact</th>
+              <th style={{ padding: '4px 12px' }}>standard</th>
+              <th style={{ padding: '4px 12px' }}>showcase</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(({ identity, resolution, preset, problem }) => (
+              <tr
+                key={identity.artworkPresetId}
+                style={{
+                  background: problem ? 'rgba(239,68,68,0.15)' : undefined,
+                  outline: problem ? '1px solid rgba(239,68,68,0.5)' : undefined,
+                }}
+              >
+                <td style={{ padding: '6px 12px 6px 0', fontWeight: 600 }}>
+                  {identity.displayName}
+                </td>
+                <td style={{ padding: '6px 12px' }}>{identity.nickname}</td>
+                <td style={{ padding: '6px 12px', fontFamily: 'monospace', fontSize: 11 }}>
+                  {identity.artworkPresetId}
+                </td>
+                <td
+                  style={{
+                    padding: '6px 12px',
+                    color: resolution.renderer === 'full-artwork' ? '#4ade80' : '#f87171',
+                    fontWeight: 700,
+                  }}
+                >
+                  {resolution.renderer}
+                  {resolution.renderer === 'procedural' && ` (${resolution.fallbackReason})`}
+                </td>
+                <td
+                  style={{
+                    padding: '6px 12px',
+                    color: preset?.productionEligible === true ? '#4ade80' : '#f87171',
+                  }}
+                >
+                  {preset ? String(preset.productionEligible === true) : 'preset não encontrado'}
+                </td>
+                {QA_DENSITIES.map((d) => (
+                  <td key={d} style={{ padding: '6px 12px' }}>
+                    {resolution.renderer === 'full-artwork' ? (
+                      <FullArtworkWorldLegendsCard
+                        presetId={identity.artworkPresetId}
+                        density={d}
+                        displayName={identity.shortName ?? identity.displayName}
+                        overall={identity.overall}
+                        position={identity.position}
+                        countryFlag="🏳️"
+                        era={identity.era}
+                        stats={identity.stats}
+                        nickname={identity.nickname}
+                      />
+                    ) : (
+                      <span style={{ color: '#f87171' }}>—</span>
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
 function toPlayerCardData(identity: Identity): PlayerCardData {
   return {
@@ -374,6 +493,8 @@ export function FullArtworkCardPage() {
         Engine procedural com um aviso — nunca reaproveita a arte de outro jogador, nunca inventa
         arte nova.
       </p>
+
+      <QaGrid />
 
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 24 }}>
         <fieldset
