@@ -3,17 +3,16 @@
 /**
  * components/dev/FullArtworkCardPage.tsx — Sprint 35D (Full Card Artwork
  * Pipeline Reset) + Sprint 35D.3 (Unique Player Artwork and Card
- * Identity System) + Sprint 35D.4 (Neymar and Mbappé Integration)
+ * Identity System) + Sprint 35D.4/35D.5 (Neymar and Mbappé Integration)
  *
  * Ferramenta interna (`/dev/full-artwork-card`) — não é uma tela de
  * jogo. Seletor de 10 identidades (item 8 do brief); cada uma passa
- * por `resolvePlayerCardRenderer` — Pelé, Ronaldinho e Neymar têm
- * preset real hoje (`productionEligible: true` + artwork gerado);
- * Mbappé tem preset registrado mas ainda sem artwork entregue (cai em
- * `artwork-output-not-found`); os demais 6 usam um ID que ainda não
- * existe no manifesto de propósito — pra provar que o resolver cai no
- * fallback procedural sem quebrar nada, exatamente como pedido ("não
- * inventar arte", "artwork preset pending").
+ * por `resolvePlayerCardRenderer` — Pelé, Ronaldinho, Neymar e Mbappé
+ * têm preset real hoje (`productionEligible: true` + artwork gerado);
+ * os demais 6 usam um ID que ainda não existe no manifesto de
+ * propósito — pra provar que o resolver cai no fallback procedural sem
+ * quebrar nada, exatamente como pedido ("não inventar arte", "artwork
+ * preset pending").
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';

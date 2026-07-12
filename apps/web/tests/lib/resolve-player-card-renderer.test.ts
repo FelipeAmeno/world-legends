@@ -243,9 +243,10 @@ describe('lib/card-static/resolve-player-card-renderer — Sprint 35D.4 (Neymar 
     expect(result.renderer).toBe('full-artwork');
   });
 
-  it('estado real hoje: wl-elite-mbappe-001 ainda NÃO está no manifesto de produção (asset ainda não entregue) — cai no fallback procedural sem quebrar nada', () => {
-    const preset = CARD_STATIC_MANIFEST.find((p) => (p.id as string) === 'wl-elite-mbappe-001');
-    expect(preset).toBeUndefined();
+  it('estado real hoje: manifesto de PRODUÇÃO já contém wl-elite-mbappe-001 (Sprint 35D.5 — artwork entregue e integrado)', () => {
+    const preset = CARD_STATIC_MANIFEST.find((p) => p.id === 'wl-elite-mbappe-001');
+    expect(preset).toBeDefined();
+    expect(preset?.productionEligible).toBe(true);
     const result = resolvePlayerCardRenderer(
       {
         artworkPresetId: 'wl-elite-mbappe-001',
@@ -255,6 +256,25 @@ describe('lib/card-static/resolve-player-card-renderer — Sprint 35D.4 (Neymar 
       },
       CARD_STATIC_MANIFEST,
     );
-    expect(result).toEqual({ renderer: 'procedural', fallbackReason: 'preset-not-found' });
+    expect(result.renderer).toBe('full-artwork');
+  });
+
+  it('estado real hoje: artwork de Mbappé no manifesto de produção não é o mesmo arquivo do Neymar, Pelé ou Ronaldinho', () => {
+    const mbappe = resolveGeneratedArtwork(CARD_STATIC_MANIFEST, 'wl-elite-mbappe-001', 'showcase');
+    const neymar = resolveGeneratedArtwork(
+      CARD_STATIC_MANIFEST,
+      'wl-legendary-neymar-001',
+      'showcase',
+    );
+    const pele = resolveGeneratedArtwork(CARD_STATIC_MANIFEST, 'wl-goat-brazil-001', 'showcase');
+    const ronaldinho = resolveGeneratedArtwork(
+      CARD_STATIC_MANIFEST,
+      'wl-legendary-ronaldinho-001',
+      'showcase',
+    );
+    expect(mbappe?.src).toContain('wl-elite-mbappe-001');
+    for (const other of [neymar, pele, ronaldinho]) {
+      expect(mbappe?.src).not.toBe(other?.src);
+    }
   });
 });
