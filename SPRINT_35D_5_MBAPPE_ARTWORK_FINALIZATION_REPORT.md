@@ -48,4 +48,4 @@ Nenhuma mudança de arquitetura, catálogo real, economia, odds ou gameplay.
 
 ## URL de produção
 
-**Status: Ready.** https://world-legends.vercel.app (deployment `world-legends-pik5n3g04`, commit `06a387b5`).
+**Status: Ready.** https://world-legends.vercel.app (deployment `world-legends-5y2qgblyh`, commit `dad3fd5d`; deploy anterior `world-legends-pik5n3g04` corresponde ao commit de feature `06a387b5`, também Ready).
