@@ -29,8 +29,11 @@
  * Atributos continuam 100% React (nunca fazem parte de nenhuma arte).
  */
 
+import { CARD_STATIC_MANIFEST } from '@/lib/card-static/manifest.generated';
+import { resolvePlayerCardRenderer } from '@/lib/card-static/resolve-player-card-renderer';
 import { getKitColors } from '@/lib/kit-data';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
+import { FullArtworkWorldLegendsCard } from '../dev/FullArtworkWorldLegendsCard';
 import { RARITY_MATERIAL } from './card-materials';
 import {
   type CardSize,
@@ -87,6 +90,42 @@ function PlayerCardImpl({
 }: Props) {
   const tiltRef = useCardTilt<HTMLDivElement>();
   const { ref: viewportRef, inViewport } = useCardInViewport<HTMLDivElement>();
+
+  // Migração de catálogo (Sprint 35D.6) — mesmo resolver da dev tool,
+  // nenhuma lógica nova. `artworkPresetId` só existe hoje nas 10 cartas
+  // GOAT/lendárias com artwork exclusivo pronto (`lib/collection-data.ts`);
+  // toda outra carta do jogo continua 100% procedural, sem nenhuma mudança.
+  const resolution = useMemo(
+    () =>
+      resolvePlayerCardRenderer(
+        {
+          artworkPresetId: card.artworkPresetId,
+          cardId: card.cardId,
+          playerId: card.playerId,
+          rarity: card.rarityCode,
+        },
+        CARD_STATIC_MANIFEST,
+      ),
+    [card.artworkPresetId, card.cardId, card.playerId, card.rarityCode],
+  );
+
+  if (resolution.renderer === 'full-artwork' && card.stats) {
+    return (
+      <FullArtworkWorldLegendsCard
+        presetId={resolution.preset.id}
+        density={SIZE_TO_MODE[size]}
+        displayName={card.displayName}
+        overall={card.overall}
+        position={card.position}
+        countryFlag={card.flagEmoji}
+        era={card.era}
+        stats={card.stats}
+        displayWidth={SIZES[size].card.width}
+        {...(card.nickname ? { nickname: card.nickname } : {})}
+      />
+    );
+  }
+
   const kit = getKitColors(card.nationality);
   const accent = RARITY_ACCENT[card.rarityCode];
   const dim = SIZES[size];

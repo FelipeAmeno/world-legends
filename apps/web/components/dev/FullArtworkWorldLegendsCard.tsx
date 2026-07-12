@@ -78,6 +78,11 @@ type Props = {
   nickname?: string;
   /** Mostra o artwork sozinho, sem nenhum HUD por cima (item 10 do brief: "artwork sem HUD"). */
   hideHud?: boolean;
+  /** Migração de catálogo — permite `PlayerCard.tsx` renderizar exatamente
+   * na largura que o `size` procedural já ocupava (`SIZES[size].card.width`),
+   * pra zero layout shift em grids/flex existentes. `undefined` = usa
+   * `DISPLAY_WIDTH[density]` (comportamento de sempre da dev tool). */
+  displayWidth?: number;
 };
 
 /**
@@ -145,6 +150,7 @@ export function FullArtworkWorldLegendsCard({
   trait,
   nickname,
   hideHud,
+  displayWidth: displayWidthOverride,
 }: Props) {
   // `useCardTilt` escreve `--tilt-rx`/`--tilt-ry` no elemento ref'd, e
   // `.card-tilt-root` (globals.css) lê essas MESMAS variáveis pra girar
@@ -155,7 +161,7 @@ export function FullArtworkWorldLegendsCard({
   const generated = resolveGeneratedArtwork(CARD_STATIC_MANIFEST, presetId, density);
   const hud = resolveHudLayout(preset, density);
   const { width, height } = NATIVE_DIMENSIONS[density];
-  const displayWidth = DISPLAY_WIDTH[density];
+  const displayWidth = displayWidthOverride ?? DISPLAY_WIDTH[density];
   const displayHeight = Math.round(displayWidth * (height / width));
   const baseFont = displayWidth * 0.09;
 

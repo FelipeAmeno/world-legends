@@ -71,7 +71,88 @@ export type CollectionCard = Readonly<{
   readonly userCardId?: string; // ID da instância na tabela user_cards
   readonly contracts?: number; // Contratos restantes (padrão 10 — não rastreado ainda)
   readonly evolution?: number; // Nível de evolução (padrão 0 — não rastreado ainda)
+
+  // Migração de catálogo (full-card-artwork) — só as 10 cartas GOAT/lendárias
+  // com artwork exclusivo pronto setam esses campos (ver PLAYER_ARTWORK_IDENTITY
+  // abaixo); todas as outras ficam undefined e continuam 100% procedurais,
+  // exatamente como hoje. `PlayerCard.tsx` decide o renderer via
+  // `resolvePlayerCardRenderer`, nunca esta camada.
+  readonly shortName?: string;
+  readonly nickname?: string;
+  readonly nicknameType?: 'legend' | 'official' | 'event' | 'meme';
+  readonly artworkPresetId?: string;
+  readonly stats?: Readonly<{
+    pace: number;
+    finishing: number;
+    passing: number;
+    dribbling: number;
+    defending: number;
+    physical: number;
+  }>;
 }>;
+
+/**
+ * Migração de catálogo — mapeia os 10 jogadores cujo artwork exclusivo já
+ * foi gerado e validado (Sprints 35D.3–35D.5) pro respectivo preset. Os
+ * textos de nickname/nicknameType são EXATAMENTE os do brief original,
+ * não alterados. Chave = `Player['id']` (mesmo id usado em
+ * PLAYER_SEEDS/ALL_PLAYER_SEEDS), não o `cardId`.
+ */
+const PLAYER_ARTWORK_IDENTITY: Record<
+  string,
+  {
+    nickname: string;
+    nicknameType: 'legend' | 'official' | 'event' | 'meme';
+    artworkPresetId: string;
+  }
+> = {
+  pelé: { nickname: 'O REI', nicknameType: 'legend', artworkPresetId: 'wl-goat-brazil-001' },
+  ronaldinho: {
+    nickname: 'O BRUXO',
+    nicknameType: 'legend',
+    artworkPresetId: 'wl-legendary-ronaldinho-001',
+  },
+  ronaldo: {
+    nickname: 'O FENÔMENO',
+    nicknameType: 'legend',
+    artworkPresetId: 'wl-goat-ronaldo-001',
+  },
+  maradona: {
+    nickname: 'ESCOBAR CHEIRADOR',
+    nicknameType: 'meme',
+    artworkPresetId: 'wl-goat-maradona-001',
+  },
+  'lionel-messi': {
+    nickname: 'GOAT',
+    nicknameType: 'legend',
+    artworkPresetId: 'wl-goat-messi-001',
+  },
+  'cristiano-ronaldo': {
+    nickname: 'PAPAI CRIS SIIIIU',
+    nicknameType: 'event',
+    artworkPresetId: 'wl-goat-cristiano-001',
+  },
+  neymar: {
+    nickname: 'O PRÍNCIPE',
+    nicknameType: 'legend',
+    artworkPresetId: 'wl-legendary-neymar-001',
+  },
+  'kylian-mbappe': {
+    nickname: 'O DITADOR',
+    nicknameType: 'event',
+    artworkPresetId: 'wl-elite-mbappe-001',
+  },
+  'zinedine-zidane': {
+    nickname: 'O MAESTRO',
+    nicknameType: 'legend',
+    artworkPresetId: 'wl-legendary-zidane-001',
+  },
+  'franz-beckenbauer': {
+    nickname: 'O KAISER',
+    nicknameType: 'legend',
+    artworkPresetId: 'wl-legendary-beckenbauer-001',
+  },
+};
 
 // ─── Mapa de bandeiras ────────────────────────────────────────────────────────
 
@@ -1003,6 +1084,8 @@ function toCollectionCard(card: Card, player: Player): CollectionCard {
     delete attrs.Defesa;
   }
 
+  const artworkIdentity = PLAYER_ARTWORK_IDENTITY[player.id as string];
+
   return Object.freeze({
     cardId: card.id as string,
     playerId: player.id as string,
@@ -1019,6 +1102,21 @@ function toCollectionCard(card: Card, player: Player): CollectionCard {
     traits: card.traits.map((t) => ({ name: t.trait as string, tier: t.tier })),
     bioShort: player.bioShort,
     era: eraText(player.era.start),
+    ...(artworkIdentity
+      ? {
+          nickname: artworkIdentity.nickname,
+          nicknameType: artworkIdentity.nicknameType,
+          artworkPresetId: artworkIdentity.artworkPresetId,
+          stats: Object.freeze({
+            pace: player.baseAttributes.pace,
+            finishing: player.baseAttributes.finishing,
+            passing: player.baseAttributes.passing,
+            dribbling: player.baseAttributes.dribbling,
+            defending: player.baseAttributes.defending,
+            physical: player.baseAttributes.physical,
+          }),
+        }
+      : {}),
   });
 }
 

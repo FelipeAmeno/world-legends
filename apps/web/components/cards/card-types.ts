@@ -1,6 +1,7 @@
 import type { BlendMode } from '@/lib/card-asset-loader';
 import type { KitColors } from '@/lib/kit-data';
 import type { RarityCode } from '@world-legends/types';
+import type { FullArtworkStats } from '../dev/FullArtworkWorldLegendsCard';
 import type { MaterialDef } from './card-materials';
 import type { CardMode, CardSize, SIZES } from './card-tokens';
 
@@ -47,9 +48,16 @@ export type PlayerCardData = {
   /** Sprint 35D.3 — ID de preset `full-card-artwork` opcional
    * (`lib/card-static/`). Quando presente e válido/elegível, o resolver
    * (`resolvePlayerCardRenderer`) escolhe `FullArtworkWorldLegendsCard`
-   * em vez do Card Engine procedural. `undefined` em toda carta real hoje
-   * — nenhum catálogo foi migrado ainda. */
+   * em vez do Card Engine procedural — ver `PlayerCard.tsx`. Migração de
+   * catálogo: só as 10 cartas GOAT/lendárias com artwork exclusivo
+   * pronto (Pelé, Ronaldinho, Messi, Cristiano, Mbappé, Zidane, Ronaldo,
+   * Beckenbauer, Maradona, Neymar) setam isso hoje — `lib/collection-data.ts`. */
   artworkPresetId?: string;
+  /** Necessário só quando `artworkPresetId` está presente — stats brutos
+   * (0-99) pro HUD do `FullArtworkWorldLegendsCard`. `undefined` = a carta
+   * cai no Card Engine procedural mesmo com `artworkPresetId` setado
+   * (nunca quebra por falta de dado). */
+  stats?: FullArtworkStats;
 };
 
 /**
