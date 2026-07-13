@@ -1,5 +1,6 @@
 'use client';
 
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
 import { vibrate } from '@/lib/haptics';
 import type { DrawnCard } from '@/lib/pack-logic';
 import { SFX } from '@/lib/sound-manager';
@@ -202,8 +203,6 @@ export function GoatReveal({ card, onComplete }: Props) {
     timerRefs.current.push(setTimeout(onComplete, (remaining.at(-1)?.[0] ?? 2200) + 2000));
   }, [onComplete, advancePhase]);
 
-  const nameLetters = card.card.displayName.split('');
-
   return (
     <motion.div
       className="fixed inset-0 z-[90] flex items-center justify-center overflow-hidden"
@@ -390,9 +389,15 @@ export function GoatReveal({ card, onComplete }: Props) {
             animate={{ opacity: 1, y: 0, scale: 1, rotateY: 0 }}
             transition={{ type: 'spring', stiffness: 95, damping: 13 }}
           >
-            {/* Carta */}
+            {/* Carta — Sprint 38: halo/glow cinemático preservado; o
+                conteúdo de identidade (era markup manual de OVR/nome/
+                bandeira) foi substituído pelo card resolvido de verdade,
+                centralizado dentro do halo. Monta só quando phase é
+                'card'/'burst'/'hold' (o AnimatePresence pai já garante
+                isso), então a identidade nunca aparece antes do ponto de
+                reveal pretendido. */}
             <div
-              className="relative w-52 h-72 rounded-2xl overflow-hidden"
+              className="relative w-52 h-72 rounded-2xl overflow-hidden flex items-center justify-center"
               style={{
                 background: 'linear-gradient(145deg, #04040a, #0a0812, #110e1a)',
                 border: '2px solid rgba(240,244,255,0.85)',
@@ -419,63 +424,9 @@ export function GoatReveal({ card, onComplete }: Props) {
                 />
               )}
 
-              {/* Card content */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-3">
-                <p className="text-[8px] font-black tracking-widest text-white/50 uppercase mb-1">
-                  World Cup Hero
-                </p>
-
-                <motion.p
-                  className="font-display leading-none"
-                  style={{
-                    fontSize: 70,
-                    background: 'linear-gradient(180deg, #fff 0%, #c9a84c 55%, #e6c85a 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    filter: 'drop-shadow(0 0 18px rgba(201,168,76,0.9))',
-                  }}
-                  animate={{ scale: [1, 1.04, 1] }}
-                  transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
-                >
-                  {card.card.overall}
-                </motion.p>
-
-                <div
-                  className="mt-2 mb-4 h-px w-24"
-                  style={{
-                    background:
-                      'linear-gradient(90deg, transparent, rgba(240,244,255,0.6), transparent)',
-                  }}
-                />
-
-                {/* Nome do jogador (hold: letra por letra) */}
-                {phase === 'hold' ? (
-                  <div className="flex flex-wrap justify-center">
-                    {nameLetters.map((letter, i) => (
-                      <motion.span
-                        key={i}
-                        className="text-white font-bold text-sm leading-tight"
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{
-                          delay: 0.3 + i * 0.045,
-                          duration: 0.25,
-                          ease: 'easeOut',
-                        }}
-                      >
-                        {letter === ' ' ? ' ' : letter}
-                      </motion.span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-white font-bold text-sm leading-tight">
-                    {card.card.displayName}
-                  </p>
-                )}
-
-                <p className="text-white/40 text-[9px] mt-1">
-                  {card.card.flagEmoji} {card.card.position} · {card.card.era}
-                </p>
+              {/* Card resolvido — full-artwork Showcase quando elegível, procedural (fallback seguro) caso contrário */}
+              <div className="relative z-10">
+                <ResolvedWorldLegendsCard card={card.card} size="lg" density="showcase" glow />
               </div>
             </div>
 

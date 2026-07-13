@@ -1,6 +1,6 @@
 'use client';
 
-import { PlayerCard } from '@/components/cards/PlayerCard';
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
 import { RARITY_VISUAL } from '@/lib/collection-data';
 import { RARITY_HAPTIC, vibrate } from '@/lib/haptics';
 import type { DrawnCard, RevealEffect } from '@/lib/pack-logic';
@@ -692,7 +692,18 @@ export function RevealedCard({ drawn, flipped, onFlip, onHighRarity }: Props) {
             />
           )}
 
-          {/* Suspense em estágios (Legendary/Ultra): glow → silhueta → nome */}
+          {/* Suspense em estágios (Legendary/Ultra): glow → silhueta → nome.
+              Sprint 38 — a silhueta é decorativa (blackout via CSS filter),
+              mas o card resolvido por baixo pode ser full-artwork (com
+              `alt={displayName}` na imagem) pra jogadores piloto — sem
+              `aria-hidden`, um leitor de tela anunciaria o nome do jogador
+              ANTES do estágio "nome" pretendido pelo design (que já mostra
+              o nome como texto puro, de propósito, um instante depois).
+              `aria-hidden` aqui só impede o vazamento prematuro por trás da
+              silhueta; o reveal de texto em si continua intocado. Também
+              serve como preload natural do asset Standard — pelo momento em
+              que a face frontal vira visível (~duração de ANTICIPATION_DUR),
+              a mesma imagem já deve estar em cache do navegador. */}
           <AnimatePresence>
             {(suspenseStage === 'silhouette' || suspenseStage === 'name') && (
               <motion.div
@@ -702,9 +713,10 @@ export function RevealedCard({ drawn, flipped, onFlip, onHighRarity }: Props) {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.25 }}
+                aria-hidden="true"
               >
                 <div style={{ filter: 'brightness(0) saturate(0)', opacity: 0.88 }}>
-                  <PlayerCard card={card} size="md" />
+                  <ResolvedWorldLegendsCard card={card} size="md" density="standard" />
                 </div>
               </motion.div>
             )}
@@ -755,7 +767,17 @@ export function RevealedCard({ drawn, flipped, onFlip, onHighRarity }: Props) {
               : undefined,
           }}
         >
-          <PlayerCard card={card} size="md" glow={visuallyFlipped} />
+          {/* Sprint 38 — densidade Standard explícita: o card renderiza num
+              container 130×175px (menor que Showcase justificaria), o
+              mesmo tamanho visual "md" de sempre. resolvePlayerCardRendererForDensity
+              decide full-artwork vs. procedural — esta tela não sabe qual
+              jogador tem preset. */}
+          <ResolvedWorldLegendsCard
+            card={card}
+            size="md"
+            density="standard"
+            glow={visuallyFlipped}
+          />
 
           {/* Legendary: gold sweep overlay */}
           {effect === 'legendary' && visuallyFlipped && (
