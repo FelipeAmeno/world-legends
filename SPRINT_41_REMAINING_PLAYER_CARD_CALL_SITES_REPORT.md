@@ -104,4 +104,4 @@ See §1 above for the complete table. Summary counts:
 
 ## 13. Production deployment
 
-URL: _pending — updated after deploy confirmation._
+URL: https://world-legends.vercel.app (confirmed aliased to commit `3220b4f8`, deployment `world-legends-ex8n0jtqf`, status ● Ready)
