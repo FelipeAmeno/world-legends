@@ -33,7 +33,7 @@ import {
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 
-import { PlayerCard } from '@/components/cards/PlayerCard';
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
 import { CardDetailModal } from '@/components/collection/CardDetailModal';
 import { Particles, useBurst } from '@/components/fx/Particles';
 import { toast } from '@/lib/wl-toast';
@@ -810,9 +810,14 @@ function SectorMini({ label, value, color }: { label: string; value: number; col
 // ─── DragPreviewCard ─────────────────────────────────────────────────────────
 
 function DragPreviewCard({ card }: { card: CollectionCard }) {
+  // Sprint 39 — o overlay de arraste (dnd-kit `DragOverlay`) monta uma
+  // SEGUNDA instância do mesmo card enquanto o original (em PremiumPitch/
+  // BenchStrip/CardPoolSheet) fica com opacity reduzida, não desmontado.
+  // Ambas pedem a MESMA densidade Compact do MESMO jogador — o navegador
+  // deduplica pela URL (mesmo webp), nunca dois downloads distintos.
   return (
     <div className="rotate-2 shadow-2xl">
-      <PlayerCard card={card} size="xs" glow />
+      <ResolvedWorldLegendsCard card={card} size="xs" density="compact" glow />
     </div>
   );
 }

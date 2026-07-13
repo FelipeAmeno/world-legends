@@ -1,6 +1,6 @@
 'use client';
 
-import { PlayerCard } from '@/components/cards/PlayerCard';
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
 import type { CollectionCard } from '@/lib/collection-data';
 import { getPositionCompat } from '@/lib/squad-builder';
 import type { DragSource } from '@/lib/squad-builder';
@@ -81,7 +81,7 @@ function PoolCard({
         onTap();
       }}
     >
-      <PlayerCard card={card} size="xs" glow />
+      <ResolvedWorldLegendsCard card={card} size="xs" density="compact" glow />
 
       {/* Best-fit glow badge */}
       {isBestFit && (

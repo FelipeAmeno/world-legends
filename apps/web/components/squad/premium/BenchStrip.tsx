@@ -1,6 +1,6 @@
 'use client';
 
-import { PlayerCard } from '@/components/cards/PlayerCard';
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
 import type { CollectionCard } from '@/lib/collection-data';
 import { MAX_BENCH } from '@/lib/squad-builder';
 import type { DragSource } from '@/lib/squad-builder';
@@ -64,7 +64,7 @@ function BenchCard({
       whileHover={{ scale: 1.06, y: -2 }}
       whileTap={{ scale: 0.95 }}
     >
-      <PlayerCard card={card} size="xs" glow />
+      <ResolvedWorldLegendsCard card={card} size="xs" density="compact" glow />
       <button
         onClick={(e) => {
           e.stopPropagation();

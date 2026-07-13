@@ -1,6 +1,6 @@
 'use client';
 
-import { PlayerCard } from '@/components/cards/PlayerCard';
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
 import type { CollectionCard } from '@/lib/collection-data';
 import { getPositionCompat } from '@/lib/squad-builder';
 import type { SBSnapshot } from '@/lib/squad-builder';
@@ -75,7 +75,7 @@ function CardCell({
       whileTap={{ scale: 0.93 }}
       className={['relative shrink-0', compat === 'awkward' ? 'opacity-40' : ''].join(' ')}
     >
-      <PlayerCard card={card} size="xs" glow />
+      <ResolvedWorldLegendsCard card={card} size="xs" density="compact" glow />
       {/* Compat dot */}
       <div
         className="absolute bottom-1.5 right-1.5 w-2 h-2 rounded-full ring-1 ring-black/60 z-10"
@@ -130,7 +130,7 @@ function MiniCard({ card, label }: { card: CollectionCard | null; label: string 
   }
   return (
     <div className="flex flex-col items-center gap-1 shrink-0">
-      <PlayerCard card={card} size="xs" glow />
+      <ResolvedWorldLegendsCard card={card} size="xs" density="compact" glow />
       <span className="text-[8px] text-white/30 uppercase tracking-wide">{label}</span>
     </div>
   );

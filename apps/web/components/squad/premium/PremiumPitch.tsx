@@ -1,6 +1,6 @@
 'use client';
 
-import { PlayerCard } from '@/components/cards/PlayerCard';
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
 import type { CollectionCard } from '@/lib/collection-data';
 import { RARITY_VISUAL } from '@/lib/collection-data';
 import type { ChemLine, SBSnapshot, SlotDef, SquadSlots } from '@/lib/squad-builder';
@@ -80,7 +80,11 @@ function PitchCard({
 
   return (
     <div style={{ position: 'relative', opacity: isDragging ? 0.2 : 1, flexShrink: 0 }}>
-      <PlayerCard card={card} size="xs" glow />
+      {/* Sprint 39 — density Compact explícita: slot do campo nunca pede
+          Standard/Showcase. resolvePlayerCardRendererForDensity decide
+          full-artwork vs. procedural, este componente não sabe qual
+          jogador tem preset. */}
+      <ResolvedWorldLegendsCard card={card} size="xs" density="compact" glow />
 
       {/* Status dots: compat + química — canto inferior direito, sobre a faixa do nome */}
       <div
