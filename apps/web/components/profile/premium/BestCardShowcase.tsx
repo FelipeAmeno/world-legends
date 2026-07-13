@@ -1,6 +1,6 @@
 'use client';
 
-import { PlayerCard } from '@/components/cards/PlayerCard';
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
 import type { CollectionCard } from '@/lib/collection-data';
 import { RARITY_VISUAL } from '@/lib/collection-data';
 import { motion } from 'framer-motion';
@@ -50,7 +50,10 @@ export function BestCardShowcase({ card, avgOvr, legendaryPlus }: Props) {
           className="relative shrink-0"
           style={{ perspective: 800 }}
         >
-          <PlayerCard card={card} size="lg" glow />
+          {/* Sprint 41 — carta primária de Perfil: density="standard"
+              explícito (regra de densidade do Perfil), não Showcase — não é
+              um reveal/modal hero pontual, fica sempre visível na tela. */}
+          <ResolvedWorldLegendsCard card={card} size="lg" density="standard" glow />
 
           {/* Pulse rings */}
           {[0, 1].map((i) => (

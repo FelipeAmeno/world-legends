@@ -1,7 +1,7 @@
 'use client';
 
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
 import type { CollectionCard } from '@/lib/collection-data';
-import { RARITY_VISUAL } from '@/lib/collection-data';
 import { compareCards } from '@/lib/collection-filters';
 import { motion } from 'framer-motion';
 import { useMemo } from 'react';
@@ -58,34 +58,21 @@ export function CompareModal({ cards, onClose }: Props) {
           </div>
 
           <div className="p-4 space-y-4">
-            {/* Headers das cartas */}
+            {/* Headers das cartas — Sprint 41: cada lado do comparativo
+                resolve independentemente (mesmo cardId de entrada, mesma
+                densidade Compact pros dois), sem afetar compareCards() —
+                o cálculo de diffs é feito só com os dados numéricos de
+                CollectionCard, nunca com o resultado do resolver. */}
             <div
               className={'grid gap-3'}
               style={{ gridTemplateColumns: `140px repeat(${cards.length}, 1fr)` }}
             >
               <div /> {/* label column placeholder */}
-              {cards.map((card) => {
-                const visual = RARITY_VISUAL[card.rarityCode];
-                return (
-                  <div
-                    key={card.cardId}
-                    className={`rounded-xl border p-3 text-center ${visual.bgClass} ${visual.borderClass} ${visual.glowClass}`}
-                  >
-                    <p className={`font-display text-3xl ${visual.textClass}`}>{card.overall}</p>
-                    <p className="text-parchment text-[10px] font-bold mt-1 leading-tight">
-                      {card.displayName}
-                    </p>
-                    <p className="text-muted text-[8px] mt-0.5">
-                      {card.position} · {card.flagEmoji}
-                    </p>
-                    <span
-                      className={`text-[7px] font-black uppercase mt-1 inline-block ${visual.textClass}`}
-                    >
-                      {card.rarityCode === 'world_cup_hero' ? 'WCH' : card.rarityLabel.slice(0, 3)}
-                    </span>
-                  </div>
-                );
-              })}
+              {cards.map((card) => (
+                <div key={card.cardId} className="flex justify-center">
+                  <ResolvedWorldLegendsCard card={card} size="sm" density="compact" glow />
+                </div>
+              ))}
             </div>
 
             {/* Tabela de atributos */}

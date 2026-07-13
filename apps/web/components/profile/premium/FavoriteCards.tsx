@@ -1,6 +1,6 @@
 'use client';
 
-import { PlayerCard } from '@/components/cards/PlayerCard';
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
 import type { CollectionCard } from '@/lib/collection-data';
 import { loadFavorites } from '@/lib/collection-filters';
 import { motion } from 'framer-motion';
@@ -46,7 +46,9 @@ export function FavoriteCards({ allCards }: Props) {
             transition={{ type: 'spring', stiffness: 200, delay: i * 0.07 }}
             className="relative shrink-0"
           >
-            <PlayerCard card={card} size="sm" glow />
+            {/* Sprint 41 — fileira de histórico (favoritas): density="compact"
+                explícito. */}
+            <ResolvedWorldLegendsCard card={card} size="sm" density="compact" glow />
             {/* Heart — canto inferior esquerdo, longe do OVR e da faixa de raridade */}
             <div className="absolute bottom-1.5 left-1.5 z-10">
               <span className="text-xs drop-shadow">❤️</span>

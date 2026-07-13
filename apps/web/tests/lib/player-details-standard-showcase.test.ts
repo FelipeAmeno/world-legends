@@ -179,14 +179,15 @@ describe('Sprint 37 — Player Details Standard/Showcase integration', () => {
     expect(src).toMatch(/onClick=\{\(\)\s*=>\s*router\.back\(\)\}/);
   });
 
-  it('12. consumidores da fachada PlayerCard não migrados nesta sprint continuam funcionando (Profile) — Squad migrou pra ResolvedWorldLegendsCard direto na Sprint 39', () => {
-    const untouchedConsumers = [
+  it('12. Profile migrou pra ResolvedWorldLegendsCard direto na Sprint 41 (Squad migrou na Sprint 39, Marketplace nunca usou a fachada)', () => {
+    const migratedConsumers = [
       'components/profile/premium/BestCardShowcase.tsx',
       'components/profile/premium/FavoriteCards.tsx',
     ];
-    for (const file of untouchedConsumers) {
+    for (const file of migratedConsumers) {
       const src = readSource(file);
-      expect(src).toContain("from '@/components/cards/PlayerCard'");
+      expect(src).not.toContain("from '@/components/cards/PlayerCard'");
+      expect(src).toContain("from '@/components/cards/ResolvedWorldLegendsCard'");
     }
   });
 

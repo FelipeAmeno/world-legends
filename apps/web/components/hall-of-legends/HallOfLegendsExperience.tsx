@@ -1,6 +1,5 @@
 'use client';
 
-import { PlayerCard } from '@/components/cards/PlayerCard';
 import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
 import { CompareModal } from '@/components/collection/CompareModal';
 import { toggleFavoriteCardAction } from '@/lib/actions';

@@ -1,6 +1,6 @@
 'use client';
 
-import { PlayerCard } from '@/components/cards/PlayerCard';
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
 import type { CollectionCard } from '@/lib/collection-data';
 import { RARITY_VISUAL } from '@/lib/collection-data';
 import { motion } from 'framer-motion';
@@ -120,9 +120,15 @@ export function CardDetailModal({ card, isFav, isComparing, onClose, onFav, onCo
               </div>
             </div>
 
-            {/* Carta (Card Preview — mesmo PlayerCard usado em toda a Sprint 18.5) + nome */}
+            {/* Sprint 41 — este modal já pedia efetivamente a densidade
+                Showcase antes desta sprint (size="lg" sem density explícita
+                caía no SIZE_TO_MODE default da fachada PlayerCard). Migrado
+                pra ResolvedWorldLegendsCard preservando o mesmo resultado
+                visual — só torna explícito o que já era o comportamento:
+                este é um preview tipo hero (modal de detalhe rápido, usado
+                tanto pela Coleção quanto pelo Squad), não uma grade. */}
             <div className="flex items-end gap-4 relative z-10">
-              <PlayerCard card={card} size="lg" glow />
+              <ResolvedWorldLegendsCard card={card} size="lg" density="showcase" glow />
               <div className="pb-1 min-w-0">
                 <p
                   className={`text-[10px] font-black uppercase tracking-widest mb-1 ${visual.textClass}`}

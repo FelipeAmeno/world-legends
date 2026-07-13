@@ -1,6 +1,6 @@
 'use client';
 
-import { PlayerCard } from '@/components/cards/PlayerCard';
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
 import type { MatchExperienceData } from '@/lib/match-experience';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -304,8 +304,17 @@ export function MatchResultScreen({ data, onRematch, onBack }: Props) {
                             />
                           ))}
 
-                        {/* PlayerCard */}
-                        <PlayerCard card={display.mvp} size="lg" glow />
+                        {/* Sprint 41 — reveal do MVP é uma apresentação hero
+                            pontual (só monta quando mvpPhase !== 'hidden' e a
+                            aba MVP está aberta), igual ao GoatReveal da
+                            Sprint 38 — Showcase explícito é justificado aqui,
+                            não é uma grade. */}
+                        <ResolvedWorldLegendsCard
+                          card={display.mvp}
+                          size="lg"
+                          density="showcase"
+                          glow
+                        />
                       </motion.div>
                     )}
                   </AnimatePresence>
