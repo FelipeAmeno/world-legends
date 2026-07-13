@@ -1,21 +1,25 @@
 'use client';
 
 /**
- * components/hall-of-legends/CardSpotlightModal.tsx — Sprint 23 (Museum Collection)
+ * components/hall-of-legends/CardSpotlightModal.tsx — Sprint 23 (Museum
+ * Collection) + Sprint 37 (Showcase density via ResolvedWorldLegendsCard)
  *
  * "Modo Spotlight" — visualização em tela cheia de uma única carta, fundo
  * escurecido/borrado, com Zoom (botões +/-) e Rotação deliberada (arrastar
  * horizontalmente gira a carta de verdade, além do tilt sutil que o
- * `PlayerCard` já tem embutido reagindo ao mouse desde a Sprint 18.7 —
+ * card renderizado já tem embutido reagindo ao mouse desde a Sprint 18.7 —
  * aqui é um gesto explícito do usuário, não uma reação passiva). Aberta
  * via toque longo (450ms) num card do Álbum — não substitui o toque curto
  * normal (que continua navegando/selecionando pra comparar).
+ *
+ * É a apresentação "hero" real do app (Sprint 37) — usa
+ * `ResolvedWorldLegendsCard` com `density="showcase"` explícita.
  *
  * Zero mudança de economia/gameplay — só uma forma nova de olhar pra carta
  * que você já tem.
  */
 
-import { PlayerCard } from '@/components/cards/PlayerCard';
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
 import type { CollectionCard } from '@/lib/collection-data';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -106,7 +110,11 @@ export function CardSpotlightModal({ card, onClose }: Props) {
             }}
             transition={{ type: 'tween', duration: 0 }}
           >
-            <PlayerCard card={card} size="lg" glow />
+            {/* Sprint 37 — Spotlight é a apresentação "hero" real do app;
+                densidade Showcase explícita, montada só enquanto o modal
+                está aberto (AnimatePresence acima já garante isso — nunca
+                pré-carrega o asset Showcase antes do usuário abrir). */}
+            <ResolvedWorldLegendsCard card={card} size="lg" density="showcase" glow />
           </motion.div>
         </div>
 

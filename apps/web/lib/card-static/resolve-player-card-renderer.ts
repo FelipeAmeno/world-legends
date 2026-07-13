@@ -18,7 +18,8 @@
  */
 
 import { findPresetById } from './manifest-index';
-import type { ManifestPreset } from './resolve-artwork';
+import type { Density, ManifestPreset } from './resolve-artwork';
+import { resolveGeneratedArtwork } from './resolve-artwork';
 
 export type PlayerCardRendererFallbackReason =
   | 'missing-artwork-preset-id'
@@ -69,4 +70,31 @@ export function resolvePlayerCardRenderer(
   }
 
   return { renderer: 'full-artwork', preset };
+}
+
+/**
+ * Sprint 37 — mesma decisão de `resolvePlayerCardRenderer`, mas também
+ * confirma que a densidade ESPECÍFICA pedida (Compact/Standard/Showcase)
+ * tem asset gerado. `resolvePlayerCardRenderer` sozinho só confirma que
+ * ALGUMA densidade existe (`hasAnyGeneratedOutput`) — um preset pode
+ * "passar" no full-artwork geral mas não ter, por exemplo, o Showcase
+ * gerado ainda. Quem pede uma densidade específica (Collection força
+ * Compact, o hero de detalhe usa Standard, o Spotlight usa Showcase)
+ * precisa dessa checagem extra pra nunca cair no placeholder interno
+ * "artwork não gerado" do `FullArtworkWorldLegendsCard` — cai no
+ * procedural de verdade em vez disso. Único lugar onde esse critério
+ * combinado existe — `ResolvedWorldLegendsCard` chama só esta função,
+ * nunca reimplementa o critério.
+ */
+export function resolvePlayerCardRendererForDensity(
+  input: ResolvePlayerCardRendererInput,
+  manifest: readonly ManifestPreset[],
+  density: Density,
+): PlayerCardRendererResult {
+  const base = resolvePlayerCardRenderer(input, manifest);
+  if (base.renderer !== 'full-artwork') return base;
+  const hasDensityAsset = Boolean(resolveGeneratedArtwork(manifest, base.preset.id, density));
+  return hasDensityAsset
+    ? base
+    : { renderer: 'procedural', fallbackReason: 'artwork-output-not-found' };
 }

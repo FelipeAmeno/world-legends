@@ -1,5 +1,6 @@
 'use client';
 
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
 import { toggleFavoriteCardAction } from '@/lib/actions';
 import type { CollectionCard } from '@/lib/collection-data';
 import { RARITY_META } from '@/lib/hall-of-legends-data';
@@ -245,6 +246,20 @@ export function CardFullPage({ card, owned }: Props) {
               · Não possui
             </span>
           )}
+        </motion.div>
+
+        {/* Sprint 37 — card visual do hero. Densidade Standard sempre,
+            independente do tamanho visual escolhido (mesmo padrão de
+            desacoplar size/density já usado na Collection, Sprint 36) —
+            resolvePlayerCardRenderer decide full-artwork vs. procedural,
+            esta página não sabe qual jogador tem preset. */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92 }}
+          animate={{ opacity: owned ? 1 : 0.4, scale: 1 }}
+          transition={{ delay: 0.1, duration: 0.4 }}
+          className="flex justify-center mb-5"
+        >
+          <ResolvedWorldLegendsCard card={card} size="lg" density="standard" glow />
         </motion.div>
 
         {/* OVR + Name */}

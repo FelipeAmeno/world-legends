@@ -178,18 +178,23 @@ describe('Sprint 36 — Collection renderer integration', () => {
     }
   });
 
-  it('10. resolvePlayerCardRenderer só é chamado de UM lugar de produção (ResolvedWorldLegendsCard) — sem lógica duplicada', () => {
+  it('10. resolvePlayerCardRenderer(ForDensity) só é chamado de UM lugar de produção (ResolvedWorldLegendsCard) — sem lógica duplicada', () => {
     const productionCardFiles = [
       'components/cards/PlayerCard.tsx',
       'components/cards/ResolvedWorldLegendsCard.tsx',
       'components/collection/CollectionCardTile.tsx',
       'components/collection/CardDetailModal.tsx',
+      'components/collection/CardFullPage.tsx',
       'components/hall-of-legends/HallOfLegendsExperience.tsx',
       'components/hall-of-legends/CardSpotlightModal.tsx',
     ];
-    const callers = productionCardFiles.filter((f) =>
-      readSource(f).includes('resolvePlayerCardRenderer('),
-    );
+    const callers = productionCardFiles.filter((f) => {
+      const src = readSource(f);
+      return (
+        src.includes('resolvePlayerCardRenderer(') ||
+        src.includes('resolvePlayerCardRendererForDensity(')
+      );
+    });
     expect(callers).toEqual(['components/cards/ResolvedWorldLegendsCard.tsx']);
   });
 

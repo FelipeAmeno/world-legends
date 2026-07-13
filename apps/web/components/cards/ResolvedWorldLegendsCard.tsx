@@ -22,8 +22,7 @@
  */
 
 import { CARD_STATIC_MANIFEST } from '@/lib/card-static/manifest.generated';
-import { resolveGeneratedArtwork } from '@/lib/card-static/resolve-artwork';
-import { resolvePlayerCardRenderer } from '@/lib/card-static/resolve-player-card-renderer';
+import { resolvePlayerCardRendererForDensity } from '@/lib/card-static/resolve-player-card-renderer';
 import { getKitColors } from '@/lib/kit-data';
 import { memo, useMemo } from 'react';
 import {
@@ -93,38 +92,31 @@ function ResolvedWorldLegendsCardImpl({
 
   const effectiveDensity = density ?? SIZE_TO_MODE[size];
 
-  // Migração de catálogo (Sprint 35D.6/36) — resolver único, chamado
+  // Migração de catálogo (Sprint 35D.6/36/37) — resolver único, chamado
   // uma vez por render via useMemo. `artworkPresetId` só existe hoje
   // nas 10 cartas GOAT/lendárias com artwork exclusivo pronto
   // (`lib/collection-data.ts`); toda outra carta do jogo continua
   // 100% procedural, sem nenhuma mudança.
   //
-  // `resolvePlayerCardRenderer` confirma que ALGUMA densidade foi
-  // gerada (`hasAnyGeneratedOutput`), mas quem chama aqui pode pedir
-  // uma densidade ESPECÍFICA (Collection sempre força `compact`) — se
-  // só standard/showcase existirem, "full-artwork" seria verdade mas
-  // não haveria asset compact real, e `FullArtworkWorldLegendsCard`
-  // cairia no placeholder "artwork não gerado" em vez do procedural.
-  // A segunda checagem (`resolveGeneratedArtwork` pra densidade exata)
-  // fecha essa lacuna sem duplicar critério nenhum do resolver.
-  const resolution = useMemo(() => {
-    const base = resolvePlayerCardRenderer(
-      {
-        artworkPresetId: card.artworkPresetId,
-        cardId: card.cardId,
-        playerId: card.playerId,
-        rarity: card.rarityCode,
-      },
-      CARD_STATIC_MANIFEST,
-    );
-    if (base.renderer !== 'full-artwork') return base;
-    const hasDensityAsset = Boolean(
-      resolveGeneratedArtwork(CARD_STATIC_MANIFEST, base.preset.id, effectiveDensity),
-    );
-    return hasDensityAsset
-      ? base
-      : ({ renderer: 'procedural', fallbackReason: 'artwork-output-not-found' } as const);
-  }, [card.artworkPresetId, card.cardId, card.playerId, card.rarityCode, effectiveDensity]);
+  // `resolvePlayerCardRendererForDensity` (lib/card-static/) já confirma
+  // que a densidade ESPECÍFICA pedida (Collection força compact, o hero
+  // de detalhe usa standard, o Spotlight usa showcase) tem asset
+  // gerado — não só "alguma" densidade. Critério mora só lá, nunca
+  // duplicado aqui.
+  const resolution = useMemo(
+    () =>
+      resolvePlayerCardRendererForDensity(
+        {
+          artworkPresetId: card.artworkPresetId,
+          cardId: card.cardId,
+          playerId: card.playerId,
+          rarity: card.rarityCode,
+        },
+        CARD_STATIC_MANIFEST,
+        effectiveDensity,
+      ),
+    [card.artworkPresetId, card.cardId, card.playerId, card.rarityCode, effectiveDensity],
+  );
 
   if (resolution.renderer === 'full-artwork' && card.stats) {
     return (
