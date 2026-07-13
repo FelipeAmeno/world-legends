@@ -1,11 +1,13 @@
 /**
  * lib/card-static/resolve-artwork.ts — Sprint 35D (Full Card Artwork
- * Pipeline Reset)
+ * Pipeline Reset) + Sprint 36 (índice O(1) — ver manifest-index.ts)
  *
  * Função pura de lookup no manifesto gerado — extraída à parte pra ser
  * testável sem precisar montar o componente React (`FullArtworkWorldLegendsCard`
  * só CONSOME o resultado, nunca reimplementa a busca).
  */
+
+import { findPresetById } from './manifest-index';
 
 export type GeneratedEntry = { src: string; sizeKB: number } | null;
 
@@ -32,7 +34,7 @@ export function resolveGeneratedArtwork(
   presetId: string,
   density: Density,
 ): GeneratedEntry {
-  const preset = manifest.find((p) => p.id === presetId);
+  const preset = findPresetById(manifest, presetId);
   if (!preset) return null;
   return preset.generated[density];
 }

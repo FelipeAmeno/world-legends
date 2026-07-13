@@ -1,7 +1,7 @@
 import type { BlendMode } from '@/lib/card-asset-loader';
 import type { KitColors } from '@/lib/kit-data';
 import type { RarityCode } from '@world-legends/types';
-import type { FullArtworkStats } from '../dev/FullArtworkWorldLegendsCard';
+import type { FullArtworkStats } from './FullArtworkWorldLegendsCard';
 import type { MaterialDef } from './card-materials';
 import type { CardMode, CardSize, SIZES } from './card-tokens';
 

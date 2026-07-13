@@ -1,6 +1,7 @@
 'use client';
 
 import { PlayerCard } from '@/components/cards/PlayerCard';
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
 import { CompareModal } from '@/components/collection/CompareModal';
 import { toggleFavoriteCardAction } from '@/lib/actions';
 import type { CollectionCard } from '@/lib/collection-data';
@@ -1420,7 +1421,11 @@ function AlbumSlot({
         onPointerUp={cancelLongPress}
         onPointerLeave={cancelLongPress}
       >
-        <PlayerCard card={card} size="sm" glow />
+        {/* Sprint 36 — grid do Museu (Collection) sempre pede a densidade
+            Compact do artwork exclusivo, mesmo exibindo em size="sm";
+            resolvePlayerCardRenderer decide full-artwork vs. procedural,
+            esta tela não sabe qual jogador tem preset. */}
+        <ResolvedWorldLegendsCard card={card} size="sm" density="compact" glow />
 
         {/* Sprint 23 — marca de seleção do Modo Comparar */}
         {compareMode && (

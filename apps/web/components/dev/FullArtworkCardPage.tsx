@@ -20,13 +20,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CARD_STATIC_MANIFEST } from '../../lib/card-static/manifest.generated';
 import { resolvePlayerCardRenderer } from '../../lib/card-static/resolve-player-card-renderer';
-import { PlayerCard } from '../cards/PlayerCard';
-import type { PlayerCardData, PlayerNicknameType } from '../cards/card-types';
 import {
   type FullArtworkDensity,
   type FullArtworkStats,
   FullArtworkWorldLegendsCard,
-} from './FullArtworkWorldLegendsCard';
+} from '../cards/FullArtworkWorldLegendsCard';
+import { PlayerCard } from '../cards/PlayerCard';
+import type { PlayerCardData, PlayerNicknameType } from '../cards/card-types';
 
 type Identity = {
   displayName: string;

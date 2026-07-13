@@ -1,19 +1,16 @@
 'use client';
 
 /**
- * components/dev/FullArtworkWorldLegendsCard.tsx — Sprint 35D (Full Card
+ * components/cards/FullArtworkWorldLegendsCard.tsx — Sprint 35D (Full Card
  * Artwork Pipeline Reset) + Sprint 35D.3 (Unique Player Artwork and Card
- * Identity System)
+ * Identity System) + Sprint 36 (moved out of components/dev/ — this is a
+ * production renderer now, used by ResolvedWorldLegendsCard)
  *
- * Renderer EXPERIMENTAL — não substitui `PlayerCard` nem
- * `StaticWorldLegendsCard`, não é usado por nenhum call site de
- * produção, só existe em `/dev/full-artwork-card`. A estratégia da
- * Sprint 35B (canais separados: player/background/light/particles) foi
- * REJEITADA pelo product owner — a unidade visual agora é uma imagem
- * ÚNICA (`sourceType: 'full-card-artwork'`) já com tudo (jogador+
- * frame+background+luz+material+efeitos+textura) exceto texto
- * dinâmico. Esse componente só soma o HUD React por cima, nas "safe
- * zones" percentuais que o PRÓPRIO preset define (`hudLayout`/`hudLayouts`).
+ * A unidade visual é uma imagem ÚNICA (`sourceType: 'full-card-artwork'`)
+ * já com tudo (jogador+frame+background+luz+material+efeitos+textura)
+ * exceto texto dinâmico. Esse componente só soma o HUD React por cima,
+ * nas "safe zones" percentuais que o PRÓPRIO preset define
+ * (`hudLayout`/`hudLayouts`).
  *
  * Estrutura EXATA pedida pelo brief — no máximo 3 camadas DOM
  * principais sob `CardRoot`:
@@ -28,9 +25,10 @@
 import Image from 'next/image';
 import type { Density, HudZone } from '../../lib/card-static/hud-layout';
 import { isZoneVisible, resolveHudLayout } from '../../lib/card-static/hud-layout';
+import { findPresetById } from '../../lib/card-static/manifest-index';
 import { CARD_STATIC_MANIFEST } from '../../lib/card-static/manifest.generated';
 import { resolveGeneratedArtwork } from '../../lib/card-static/resolve-artwork';
-import { useCardTilt } from '../cards/use-card-tilt';
+import { useCardTilt } from './use-card-tilt';
 
 export type FullArtworkDensity = Density;
 
@@ -78,10 +76,11 @@ type Props = {
   nickname?: string;
   /** Mostra o artwork sozinho, sem nenhum HUD por cima (item 10 do brief: "artwork sem HUD"). */
   hideHud?: boolean;
-  /** Migração de catálogo — permite `PlayerCard.tsx` renderizar exatamente
-   * na largura que o `size` procedural já ocupava (`SIZES[size].card.width`),
-   * pra zero layout shift em grids/flex existentes. `undefined` = usa
-   * `DISPLAY_WIDTH[density]` (comportamento de sempre da dev tool). */
+  /** Migração de catálogo — permite `ResolvedWorldLegendsCard` renderizar
+   * exatamente na largura que o `size` procedural já ocupava
+   * (`SIZES[size].card.width`), pra zero layout shift em grids/flex
+   * existentes. `undefined` = usa `DISPLAY_WIDTH[density]` (comportamento
+   * de sempre da dev tool). */
   displayWidth?: number;
 };
 
@@ -92,7 +91,7 @@ type Props = {
  * `wl-goat-brazil-001`, não declaram `visible` em canto nenhum, então
  * precisam de um piso sensato). Nunca reserva espaço quando `false`.
  */
-function shouldShowZone(
+export function shouldShowZone(
   zone: HudZone | undefined,
   density: Density,
   hideByDefaultIn: Density[] = [],
@@ -157,7 +156,7 @@ export function FullArtworkWorldLegendsCard({
   // — as duas coisas têm que estar no mesmo elemento, por isso o ref
   // vai no CardRoot (que já carrega a classe), não no InteractionLayer.
   const tiltRef = useCardTilt<HTMLDivElement>();
-  const preset = CARD_STATIC_MANIFEST.find((p) => p.id === presetId);
+  const preset = findPresetById(CARD_STATIC_MANIFEST, presetId);
   const generated = resolveGeneratedArtwork(CARD_STATIC_MANIFEST, presetId, density);
   const hud = resolveHudLayout(preset, density);
   const { width, height } = NATIVE_DIMENSIONS[density];

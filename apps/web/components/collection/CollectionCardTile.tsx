@@ -1,6 +1,6 @@
 'use client';
 
-import { PlayerCard } from '@/components/cards/PlayerCard';
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
 import type { CollectionCard } from '@/lib/collection-data';
 import { RARITY_VISUAL } from '@/lib/collection-data';
 import { motion } from 'framer-motion';
@@ -125,7 +125,12 @@ export function CollectionCardTile({
           whileTap={{ scale: 0.96 }}
           style={{ display: 'inline-block', width: '100%' }}
         >
-          <PlayerCard card={card} size="md" glow />
+          {/* Sprint 36 — Collection sempre pede a densidade Compact do
+              artwork exclusivo (menor asset, sem nickname), mesmo
+              exibindo no tamanho visual "md" — resolvePlayerCardRenderer
+              decide full-artwork vs. procedural, esta tela não sabe qual
+              jogador tem preset. */}
+          <ResolvedWorldLegendsCard card={card} size="md" density="compact" glow />
 
           {/* Hover actions — overlay on top of card */}
           <div

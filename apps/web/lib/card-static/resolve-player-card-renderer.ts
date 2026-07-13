@@ -17,6 +17,7 @@
  *   tudo OK                                → full-artwork
  */
 
+import { findPresetById } from './manifest-index';
 import type { ManifestPreset } from './resolve-artwork';
 
 export type PlayerCardRendererFallbackReason =
@@ -54,7 +55,7 @@ export function resolvePlayerCardRenderer(
     return { renderer: 'procedural', fallbackReason: 'missing-artwork-preset-id' };
   }
 
-  const preset = manifest.find((p) => p.id === input.artworkPresetId);
+  const preset = findPresetById(manifest, input.artworkPresetId);
   if (!preset) {
     return { renderer: 'procedural', fallbackReason: 'preset-not-found' };
   }

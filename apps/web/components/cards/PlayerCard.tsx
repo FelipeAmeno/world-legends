@@ -2,282 +2,33 @@
 
 /**
  * components/cards/PlayerCard.tsx — Sprint 18.5 (Card Rendering Engine) +
- * Sprint 18.7 (Premium Card Engine — tilt/parallax/glass/breathing/metallic) +
- * Sprint 24 (Card Composition Refactor)
+ * Sprint 18.7 (Premium Card Engine) + Sprint 24 (Card Composition
+ * Refactor) + Sprint 35D.6 (resolver wiring) + Sprint 36 (extracted)
  *
- * Motor de renderização em camadas. A API pública ({ card, size, glow }) é
- * idêntica à de antes da Sprint 18.5 — todo call site existente (Coleção,
- * Pack Opening, Squad Builder, Perfil, Hall of Legends, Match) continua
- * funcionando sem nenhuma mudança.
+ * @deprecated fachada de compatibilidade — toda a lógica (resolver +
+ * composição procedural de 9 camadas) mora em `ResolvedWorldLegendsCard`
+ * agora (Sprint 36). Este componente só existe pra os call sites
+ * legados (Squad, Compare, Pack Reveal, Hall of Legends, Match, Perfil
+ * — ver grep por `<PlayerCard` fora de `components/collection/`)
+ * continuarem funcionando SEM NENHUMA MUDANÇA de comportamento
+ * enquanto não são migrados um a um pra `ResolvedWorldLegendsCard`
+ * diretamente. Novo código (Collection, Sprint 36) já importa
+ * `ResolvedWorldLegendsCard` direto — não use `PlayerCard` em código
+ * novo.
  *
- * Sprint 24 — "carta antiga" eliminada de vez: antes desta sprint, o centro
- * da carta era renderizado por CINCO camadas irmãs competindo pelo mesmo
- * espaço (Scene + Kit + Pattern + Player Art + Pose), com a camisa vivendo
- * numa `<div>` própria com posicionamento/escala manual — um resquício
- * literal do design pré-Sprint-18.5. Agora é uma composição de 9 camadas
- * limpas, cada uma dona de UM espaço z-index bem definido:
- *
- *   1. Background   4. Scene        7. Shine
- *   2. Ambient      5. Frame        8. HUD (+ Atributos)
- *   3. Particles    6. Reflection   9. Glow
- *
- * "Ambient" agrupa Material + Ambient Light + Efeito de raridade (mesma
- * camada conceitual: atmosfera por trás da cena). Scene agora é a ÚNICA
- * camada do centro — ela mesma decide, internamente, entre asset real de
- * Scene, Player Art, Pose, ou o fallback de camisa (ver CardSceneLayer.tsx)
- * — nunca mais de uma competindo ao mesmo tempo. Nome, OVR, Posição e
- * Atributos continuam 100% React (nunca fazem parte de nenhuma arte).
+ * A API pública ({ card, size, glow, ... }) é idêntica à de sempre —
+ * só delega, não reimplementa nada.
  */
 
-import { CARD_STATIC_MANIFEST } from '@/lib/card-static/manifest.generated';
-import { resolvePlayerCardRenderer } from '@/lib/card-static/resolve-player-card-renderer';
-import { getKitColors } from '@/lib/kit-data';
-import { memo, useMemo } from 'react';
-import { FullArtworkWorldLegendsCard } from '../dev/FullArtworkWorldLegendsCard';
-import { RARITY_MATERIAL } from './card-materials';
-import {
-  type CardSize,
-  RARITY_ACCENT,
-  RARITY_BG_ALPHA,
-  RARITY_DISPLAY_LABEL,
-  RARITY_FRAME_CLASS,
-  RARITY_GLOW_CLASS,
-  RARITY_ICON,
-  RIBBON_FONT,
-  SIZES,
-  SIZE_TO_MODE,
-} from './card-tokens';
-import type { CardDebugOverride, CardLayerName, CardVisualCtx, PlayerCardData } from './card-types';
-import { CardAmbientLightLayer } from './layers/CardAmbientLightLayer';
-import { type CardAttributes, CardAttributesLayer } from './layers/CardAttributesLayer';
-import { CardBackgroundLayer } from './layers/CardBackgroundLayer';
-import { CardFrameLayer } from './layers/CardFrameLayer';
-import { CardGlowLayer } from './layers/CardGlowLayer';
-import { CardHudLayer } from './layers/CardHudLayer';
-import { CardMaterialLayer } from './layers/CardMaterialLayer';
-import { CardNameLayer } from './layers/CardNameLayer';
-import { CardOvrLayer } from './layers/CardOvrLayer';
-import { CardParticleLayer } from './layers/CardParticleLayer';
-import { CardPositionLayer } from './layers/CardPositionLayer';
-import { CardRarityEffectLayer } from './layers/CardRarityEffectLayer';
-import { CardReflectionLayer } from './layers/CardReflectionLayer';
-import { CardSceneLayer } from './layers/CardSceneLayer';
-import { CardShineLayer } from './layers/CardShineLayer';
-import { useCardInViewport } from './use-card-in-viewport';
-import { useCardTilt } from './use-card-tilt';
+import type { ResolvedWorldLegendsCardProps } from './ResolvedWorldLegendsCard';
+import { ResolvedWorldLegendsCard } from './ResolvedWorldLegendsCard';
+import type { PlayerCardData } from './card-types';
 
 export type { PlayerCardData };
 
-type Props = {
-  card: PlayerCardData;
-  size?: CardSize;
-  glow?: boolean;
-  /** Opcional, off por padrão — nenhum call site existente precisa passar isso. */
-  attributes?: CardAttributes;
-  /** Modo Visual Debug (Sprint 19) — só usado por /dev/card-assets, nenhum call site existente precisa passar isso. */
-  hiddenLayers?: ReadonlySet<CardLayerName>;
-  /** Dev Tool only (Sprint 18.9) — ver `CardDebugOverride`. Nenhum call site de produção precisa passar isso. */
-  debugOverride?: CardDebugOverride;
-};
+type Props = Omit<ResolvedWorldLegendsCardProps, 'density'>;
 
-function PlayerCardImpl({
-  card,
-  size = 'md',
-  glow,
-  attributes,
-  hiddenLayers,
-  debugOverride,
-}: Props) {
-  const tiltRef = useCardTilt<HTMLDivElement>();
-  const { ref: viewportRef, inViewport } = useCardInViewport<HTMLDivElement>();
-
-  // Migração de catálogo (Sprint 35D.6) — mesmo resolver da dev tool,
-  // nenhuma lógica nova. `artworkPresetId` só existe hoje nas 10 cartas
-  // GOAT/lendárias com artwork exclusivo pronto (`lib/collection-data.ts`);
-  // toda outra carta do jogo continua 100% procedural, sem nenhuma mudança.
-  const resolution = useMemo(
-    () =>
-      resolvePlayerCardRenderer(
-        {
-          artworkPresetId: card.artworkPresetId,
-          cardId: card.cardId,
-          playerId: card.playerId,
-          rarity: card.rarityCode,
-        },
-        CARD_STATIC_MANIFEST,
-      ),
-    [card.artworkPresetId, card.cardId, card.playerId, card.rarityCode],
-  );
-
-  if (resolution.renderer === 'full-artwork' && card.stats) {
-    return (
-      <FullArtworkWorldLegendsCard
-        presetId={resolution.preset.id}
-        density={SIZE_TO_MODE[size]}
-        displayName={card.displayName}
-        overall={card.overall}
-        position={card.position}
-        countryFlag={card.flagEmoji}
-        era={card.era}
-        stats={card.stats}
-        displayWidth={SIZES[size].card.width}
-        {...(card.nickname ? { nickname: card.nickname } : {})}
-      />
-    );
-  }
-
-  const kit = getKitColors(card.nationality);
-  const accent = RARITY_ACCENT[card.rarityCode];
-  const dim = SIZES[size];
-  const icon = RARITY_ICON[card.rarityCode];
-  const label = RARITY_DISPLAY_LABEL[card.rarityCode];
-  const isCommon = card.rarityCode === 'common';
-  const isGoat = card.rarityCode === 'world_cup_hero';
-  const isUltra = card.rarityCode === 'ultra';
-  const isLegendaryPlus = card.rarityCode === 'legendary' || isUltra || isGoat;
-  const isElitePlus = card.rarityCode === 'elite' || isLegendaryPlus;
-  const bgAlpha = RARITY_BG_ALPHA[card.rarityCode];
-  const metallicSuffix =
-    card.rarityCode === 'ultra'
-      ? 'ultra'
-      : card.rarityCode === 'world_cup_hero'
-        ? 'wch'
-        : card.rarityCode;
-  const metallicClass = isCommon ? '' : `card-metallic card-metallic-${metallicSuffix}`;
-
-  const ctx: CardVisualCtx = {
-    card,
-    size,
-    mode: SIZE_TO_MODE[size],
-    glow: Boolean(glow),
-    kit,
-    accent,
-    dim,
-    icon,
-    label,
-    bgAlpha,
-    isCommon,
-    isElitePlus,
-    isLegendaryPlus,
-    isUltra,
-    isGoat,
-    rarityCode: card.rarityCode,
-    material: RARITY_MATERIAL[card.rarityCode],
-    hiddenLayers,
-    debugOverride,
-  };
-
-  return (
-    // Wrapper de respiração (item 4, Sprint 18.7) — separado do container de
-    // tilt abaixo porque uma animação CSS de `transform` substitui o valor
-    // inteiro da propriedade; misturar scale (respiração) com rotate (tilt)
-    // no mesmo elemento faria um sobrescrever o outro. Sprint 34: também o
-    // wrapper que carrega `.card-offscreen` (via `useCardInViewport`) — as
-    // animações de TODOS os descendentes pausam juntas quando o card sai da
-    // viewport (item 9 do brief).
-    <div
-      ref={viewportRef}
-      className={[isLegendaryPlus ? 'card-breathe' : '', inViewport ? '' : 'card-offscreen']
-        .filter(Boolean)
-        .join(' ')}
-      style={{ display: 'inline-block' }}
-    >
-      <div
-        ref={tiltRef}
-        className={[
-          'noise relative shrink-0 overflow-hidden card-tilt-root',
-          RARITY_FRAME_CLASS[card.rarityCode],
-          glow ? RARITY_GLOW_CLASS[card.rarityCode] : '',
-          isLegendaryPlus ? 'card-holo' : '',
-          card.rarityCode === 'legendary' && glow ? 'legendary-aura' : '',
-          metallicClass,
-        ]
-          .filter(Boolean)
-          .join(' ')}
-        style={{
-          width: dim.card.width,
-          height: dim.card.height,
-          borderRadius: Math.round(dim.card.width * 0.09),
-          overflow: 'hidden',
-        }}
-      >
-        {/* Layer 1 — Background */}
-        <CardBackgroundLayer ctx={ctx} />
-
-        {/* Layer 2 — Ambient (Material + Ambient Light + Efeito de raridade) */}
-        <CardMaterialLayer ctx={ctx} />
-        <CardAmbientLightLayer ctx={ctx} />
-        <CardRarityEffectLayer ctx={ctx} />
-
-        {/* Layer 3 — Particles (só legendary+; a própria camada decide) */}
-        <CardParticleLayer ctx={ctx} />
-
-        {/* Layer 4 — Scene (única camada do centro: scene real > player art >
-            pose > camisa, nunca mais de uma ao mesmo tempo — ver CardSceneLayer.tsx) */}
-        <CardSceneLayer ctx={ctx} />
-
-        {/* Layer 5 — Frame (moldura, por cima da Scene como um frame físico) */}
-        <CardFrameLayer ctx={ctx} />
-
-        {/* Layer 6 — Reflection */}
-        <CardReflectionLayer ctx={ctx} />
-
-        {/* Layer 7 — Shine/glass reagindo ao mouse */}
-        <CardShineLayer ctx={ctx} />
-
-        {/* Layer 8 — HUD (100% React: OVR, posição, ribbon de raridade, nome) */}
-        <CardHudLayer
-          ctx={ctx}
-          ovrSlot={<CardOvrLayer ctx={ctx} />}
-          positionSlot={<CardPositionLayer ctx={ctx} />}
-          ribbonSlot={
-            isCommon ? null : (
-              <>
-                <span style={{ fontSize: RIBBON_FONT[size], lineHeight: 1 }}>{icon}</span>
-                {size !== 'xs' && (
-                  <span
-                    style={{
-                      fontSize: RIBBON_FONT[size] - 1.5,
-                      fontWeight: 800,
-                      color: accent,
-                      letterSpacing: '0.06em',
-                    }}
-                  >
-                    {label}
-                  </span>
-                )}
-              </>
-            )
-          }
-          nameSlot={<CardNameLayer ctx={ctx} />}
-          attributesSlot={
-            attributes ? <CardAttributesLayer ctx={ctx} attributes={attributes} /> : undefined
-          }
-        />
-
-        {/* Layer 9 — Glow (fonte de luz final, por cima de tudo) */}
-        <CardGlowLayer ctx={ctx} />
-      </div>
-    </div>
-  );
+/** @deprecated use `ResolvedWorldLegendsCard` diretamente em código novo (Sprint 36). */
+export function PlayerCard(props: Props) {
+  return <ResolvedWorldLegendsCard {...props} />;
 }
-
-function areEqual(prev: Props, next: Props): boolean {
-  return (
-    prev.card.cardId === next.card.cardId &&
-    prev.card.rarityCode === next.card.rarityCode &&
-    prev.card.overall === next.card.overall &&
-    prev.card.displayName === next.card.displayName &&
-    prev.card.nationality === next.card.nationality &&
-    prev.card.position === next.card.position &&
-    prev.card.flagEmoji === next.card.flagEmoji &&
-    prev.card.era === next.card.era &&
-    prev.size === next.size &&
-    prev.glow === next.glow &&
-    prev.attributes === next.attributes &&
-    prev.hiddenLayers === next.hiddenLayers &&
-    prev.debugOverride === next.debugOverride
-  );
-}
-
-export const PlayerCard = memo(PlayerCardImpl, areEqual);
