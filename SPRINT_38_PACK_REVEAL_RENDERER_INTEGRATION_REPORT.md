@@ -136,4 +136,4 @@ Odds, geração de recompensa, economia, distribuição de raridade, artwork, di
 
 ## URL de produção
 
-**Status: Ready.** https://world-legends.vercel.app (a confirmar após deploy desta sprint).
+**Status: Ready.** https://world-legends.vercel.app (deployment `world-legends-l482qaui8`, commit `54f5823b`).
