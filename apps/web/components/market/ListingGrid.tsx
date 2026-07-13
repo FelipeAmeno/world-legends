@@ -1,7 +1,8 @@
 'use client';
 
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
+import type { CollectionCard } from '@/lib/collection-data';
 import { RARITY_VISUAL } from '@/lib/collection-data';
-import { formatPrice } from '@/lib/marketplace/filters';
 import type { MarketListing } from '@/lib/marketplace/types';
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
@@ -10,12 +11,13 @@ import { useEffect, useRef, useState } from 'react';
 
 type GridProps = {
   listings: MarketListing[];
+  cardsById: ReadonlyMap<string, CollectionCard>;
   watchlist: ReadonlySet<string>;
   onSelect: (l: MarketListing) => void;
   onWatch: (id: string) => void;
 };
 
-export function ListingGrid({ listings, watchlist, onSelect, onWatch }: GridProps) {
+export function ListingGrid({ listings, cardsById, watchlist, onSelect, onWatch }: GridProps) {
   if (listings.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3">
@@ -38,6 +40,7 @@ export function ListingGrid({ listings, watchlist, onSelect, onWatch }: GridProp
           >
             <ListingCard
               listing={l}
+              card={cardsById.get(l.cardId)}
               inWatchlist={watchlist.has(l.id)}
               onSelect={onSelect}
               onWatch={onWatch}
@@ -53,25 +56,16 @@ export function ListingGrid({ listings, watchlist, onSelect, onWatch }: GridProp
 
 type CardProps = {
   listing: MarketListing;
+  card: CollectionCard | undefined;
   inWatchlist: boolean;
   onSelect: (l: MarketListing) => void;
   onWatch: (id: string) => void;
 };
 
-const RARITY_GLOW: Record<string, string> = {
-  common: 'rgba(150,150,150,0.4)',
-  rare: 'rgba(147,51,234,0.7)',
-  elite: 'rgba(59,130,246,0.8)',
-  legendary: 'rgba(201,168,76,0.9)',
-  ultra: 'rgba(236,72,153,0.9)',
-  world_cup_hero: 'rgba(240,244,255,1)',
-};
-
-export function ListingCard({ listing, inWatchlist, onSelect, onWatch }: CardProps) {
+export function ListingCard({ listing, card, inWatchlist, onSelect, onWatch }: CardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVis] = useState(false);
   const visual = RARITY_VISUAL[listing.rarityCode];
-  const glow = RARITY_GLOW[listing.rarityCode];
 
   // Lazy load
   useEffect(() => {
@@ -92,19 +86,19 @@ export function ListingCard({ listing, inWatchlist, onSelect, onWatch }: CardPro
 
   return (
     <div ref={ref}>
-      {visible ? (
+      {visible && card ? (
         <motion.div
-          className={[
-            'relative rounded-2xl border-2 overflow-hidden cursor-pointer group',
-            visual.bgClass,
-            visual.borderClass,
-            visual.glowClass,
-          ].join(' ')}
-          style={{ aspectRatio: '3/4' }}
+          className="relative rounded-2xl overflow-hidden cursor-pointer group"
           onClick={() => onSelect(listing)}
           whileHover={{ scale: 1.03, y: -2 }}
           whileTap={{ scale: 0.97 }}
         >
+          {/* Sprint 40 — Marketplace pede a densidade Compact do artwork
+              exclusivo (menor asset, sem nickname), igual à Collection/Squad.
+              resolvePlayerCardRendererForDensity decide full-artwork vs.
+              procedural; este componente só sabe o cardId da listagem. */}
+          <ResolvedWorldLegendsCard card={card} size="md" density="compact" glow />
+
           {/* Badges */}
           <div className="absolute top-1.5 left-1.5 flex flex-col gap-0.5 z-10">
             {listing.isNew && (
@@ -140,40 +134,12 @@ export function ListingCard({ listing, inWatchlist, onSelect, onWatch }: CardPro
             </button>
           </div>
 
-          {/* Card art / OVR */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div
-              className="absolute inset-0 opacity-20"
-              style={{
-                background: `radial-gradient(ellipse at 50% 25%, ${glow}, transparent 70%)`,
-              }}
-            />
-            <p
-              className="font-display leading-none relative z-10"
-              style={{
-                fontSize: 42,
-                background: `linear-gradient(180deg, #ffffff, ${glow})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                filter: `drop-shadow(0 0 8px ${glow})`,
-              }}
-            >
-              {listing.cardOvr}
-            </p>
-          </div>
-
-          {/* Bottom info */}
+          {/* Bottom info — preço/leilão: dado transacional que a carta em si não mostra */}
           <div
-            className="absolute bottom-0 left-0 right-0 px-2 pb-2 pt-4"
-            style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.9), transparent)' }}
+            className="absolute bottom-0 left-0 right-0 px-2 pb-2 pt-5 pointer-events-none"
+            style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.85), transparent)' }}
           >
-            <p className="text-parchment text-[9px] font-bold truncate">{listing.cardName}</p>
-            <p className="text-white/30 text-[7px]">
-              {listing.position} · {listing.flagEmoji}
-            </p>
-
-            {/* Preço */}
-            <div className="flex items-center justify-between mt-1">
+            <div className="flex items-center justify-between">
               <p className="font-display text-sm gold-text leading-none">
                 {listing.type === 'auction'
                   ? listing.auction?.currentBid.label

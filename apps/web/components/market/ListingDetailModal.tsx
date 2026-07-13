@@ -1,5 +1,7 @@
 'use client';
 
+import { ResolvedWorldLegendsCard } from '@/components/cards/ResolvedWorldLegendsCard';
+import type { CollectionCard } from '@/lib/collection-data';
 import { RARITY_VISUAL } from '@/lib/collection-data';
 import { priceChangeLabel } from '@/lib/marketplace/filters';
 import { getCardMarketStats } from '@/lib/marketplace/mock-listings';
@@ -9,6 +11,7 @@ import { useMemo } from 'react';
 
 type Props = {
   listing: MarketListing;
+  card: CollectionCard | undefined;
   inWatchlist: boolean;
   onClose: () => void;
   onWatch: () => void;
@@ -23,7 +26,7 @@ const RARITY_GLOW: Record<string, string> = {
   world_cup_hero: 'rgba(240,244,255,1)',
 };
 
-export function ListingDetailModal({ listing, inWatchlist, onClose, onWatch }: Props) {
+export function ListingDetailModal({ listing, card, inWatchlist, onClose, onWatch }: Props) {
   const visual = RARITY_VISUAL[listing.rarityCode];
   const glow = RARITY_GLOW[listing.rarityCode];
   const stats = useMemo(() => getCardMarketStats(listing.cardId), [listing.cardId]);
@@ -86,27 +89,21 @@ export function ListingDetailModal({ listing, inWatchlist, onClose, onWatch }: P
               </button>
             </div>
 
-            {/* Card visual */}
+            {/* Card visual — Sprint 40: o thumbnail inline aqui (~92x124)
+                é do mesmo porte do card de grade, não uma visão grande/
+                spotlight — por isso usa density="compact" igual ao grid,
+                nunca "standard" (regra: Standard só quando existe uma
+                visão realmente maior). */}
             <div className="flex items-end gap-5 relative z-10">
-              <div
-                className={`w-24 h-32 rounded-2xl border-2 flex items-center justify-center relative overflow-hidden shrink-0 ${visual.borderClass}`}
-                style={{ background: 'rgba(0,0,0,0.4)', boxShadow: `0 0 20px ${glow}` }}
-              >
-                <p
-                  className="font-display text-4xl leading-none"
-                  style={{
-                    background: `linear-gradient(180deg, #fff, ${glow})`,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                  }}
-                >
-                  {listing.cardOvr}
-                </p>
-                <div className="absolute bottom-1 left-0 right-0 text-center">
-                  <p className="text-parchment text-[7px] font-bold truncate px-1">
-                    {listing.cardName.split(' ').pop()}
-                  </p>
-                </div>
+              <div className="shrink-0" style={{ boxShadow: `0 0 20px ${glow}`, borderRadius: 16 }}>
+                {card ? (
+                  <ResolvedWorldLegendsCard card={card} size="sm" density="compact" glow />
+                ) : (
+                  <div
+                    className={`w-[92px] h-[124px] rounded-2xl border-2 ${visual.borderClass}`}
+                    style={{ background: 'rgba(0,0,0,0.4)' }}
+                  />
+                )}
               </div>
 
               <div className="flex-1 min-w-0">

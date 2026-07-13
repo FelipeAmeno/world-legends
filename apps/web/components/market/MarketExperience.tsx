@@ -22,6 +22,7 @@
  *   🔒 Leaderboard de traders
  */
 
+import { getCollectionMap } from '@/lib/collection-data';
 import { SORT_LABELS, buildMarketFacets, filterListings } from '@/lib/marketplace/filters';
 import {
   DEFAULT_MARKET_FILTERS,
@@ -142,6 +143,12 @@ export function MarketExperience({ listings }: Props) {
   const [state, dispatch] = useReducer(reducer, INITIAL);
   const deferredSearch = useDeferredValue(state.filters.search);
 
+  // Sprint 40 — lookup indexado O(1) por cardId, construído uma vez.
+  // MarketListing é um DTO achatado (T063) sem artworkPresetId/nickname/
+  // stats — em vez de duplicar esses dados no tipo, resolvemos a
+  // CollectionCard completa (mesma fonte de Collection/Squad) por cardId.
+  const cardsById = useMemo(() => getCollectionMap(), []);
+
   const facets = useMemo(() => buildMarketFacets(listings), [listings]);
 
   const filtered = useMemo(() => {
@@ -236,6 +243,7 @@ export function MarketExperience({ listings }: Props) {
       <div className="flex-1 min-h-0">
         <ListingGrid
           listings={filtered}
+          cardsById={cardsById}
           watchlist={state.watchlist}
           onSelect={(l) => dispatch({ type: 'SELECT', listing: l })}
           onWatch={(id) => dispatch({ type: 'TOGGLE_WATCH', id })}
@@ -247,6 +255,7 @@ export function MarketExperience({ listings }: Props) {
         {state.selected && (
           <ListingDetailModal
             listing={state.selected}
+            card={cardsById.get(state.selected.cardId)}
             inWatchlist={state.watchlist.has(state.selected.id)}
             onClose={() => dispatch({ type: 'SELECT', listing: null })}
             onWatch={() => dispatch({ type: 'TOGGLE_WATCH', id: state.selected!.id })}
