@@ -125,4 +125,4 @@ Artwork, direção visual, economia, odds, regras de raridade, gameplay, catálo
 
 ## URL de produção
 
-**Status: Ready.** https://world-legends.vercel.app (a confirmar após deploy desta sprint).
+**Status: Ready.** https://world-legends.vercel.app (deployment `world-legends-abig05h6b`, commit `d5de0880`).
