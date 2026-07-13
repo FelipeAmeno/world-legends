@@ -97,4 +97,4 @@ The QA account owns none of the 10 full-artwork pilot players, so full-artwork r
 
 ## 10. Production deployment
 
-URL: _pending — updated after deploy confirmation._
+URL: https://world-legends.vercel.app (confirmed aliased to commit `b210478f`, deployment `world-legends-kwlhw43uq`, status ● Ready)
