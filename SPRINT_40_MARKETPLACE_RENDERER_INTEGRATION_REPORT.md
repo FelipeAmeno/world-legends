@@ -93,4 +93,4 @@ None specific to Marketplace itself — the full catalog (not just owned cards) 
 
 ## 12. Production deployment
 
-URL: _pending — updated after deploy confirmation._
+URL: https://world-legends.vercel.app (confirmed aliased to commit `588d0a4c`, deployment `world-legends-gvf7vg3jv`, status ● Ready)
