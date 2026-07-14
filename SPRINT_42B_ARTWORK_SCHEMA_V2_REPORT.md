@@ -90,4 +90,4 @@ Documented in `docs/design/05-artwork-schema-v2.md` §10, not executed this spri
 
 ## 15. Production deployment
 
-URL: _pending — updated after deploy confirmation._
+URL: https://world-legends.vercel.app (confirmed aliased to commit `c500eb24`, deployment `world-legends-6s0mu72x5`, status ● Ready)
