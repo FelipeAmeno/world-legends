@@ -51,3 +51,20 @@ export type {
 export { getDailyLoginAction, claimDailyLoginAction } from './daily-login';
 
 export { getFavoriteCardIds, toggleFavoriteCardAction } from './favorites';
+
+// Sprint 43A — Asset Studio Foundation (ferramenta interna, ver
+// lib/asset-studio/). Toda ação checa autorização internamente.
+export {
+  approveCandidateAction,
+  cancelJobAction,
+  createDraftJobAction,
+  getJobDetailsAction,
+  listJobsAction,
+  markAttemptFailedAction,
+  markJobPublishedAction,
+  queueJobAction,
+  rejectCandidateAction,
+  requestRevisionAction,
+  startAttemptAction,
+  updateDraftJobAction,
+} from './asset-studio';
