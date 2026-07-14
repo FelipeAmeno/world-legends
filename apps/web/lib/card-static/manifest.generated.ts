@@ -18,6 +18,7 @@ export const CARD_STATIC_MANIFEST = [
     hudLayouts: null,
     experimental: false,
     productionEligible: false,
+    artworkSchemaVersion: 1,
     frame: null,
     generated: {
       compact: {
@@ -207,6 +208,7 @@ export const CARD_STATIC_MANIFEST = [
     },
     experimental: false,
     productionEligible: true,
+    artworkSchemaVersion: 1,
     generated: {
       compact: {
         src: '/assets/cards/generated/compact/wl-elite-mbappe-001.webp',
@@ -269,6 +271,7 @@ export const CARD_STATIC_MANIFEST = [
     hudLayouts: null,
     experimental: false,
     productionEligible: true,
+    artworkSchemaVersion: 1,
     generated: {
       compact: {
         src: '/assets/cards/generated/compact/wl-goat-brazil-001.webp',
@@ -457,6 +460,7 @@ export const CARD_STATIC_MANIFEST = [
     },
     experimental: false,
     productionEligible: true,
+    artworkSchemaVersion: 1,
     generated: {
       compact: {
         src: '/assets/cards/generated/compact/wl-goat-cristiano-001.webp',
@@ -645,6 +649,7 @@ export const CARD_STATIC_MANIFEST = [
     },
     experimental: false,
     productionEligible: true,
+    artworkSchemaVersion: 1,
     generated: {
       compact: {
         src: '/assets/cards/generated/compact/wl-goat-maradona-001.webp',
@@ -833,6 +838,7 @@ export const CARD_STATIC_MANIFEST = [
     },
     experimental: false,
     productionEligible: true,
+    artworkSchemaVersion: 1,
     generated: {
       compact: {
         src: '/assets/cards/generated/compact/wl-goat-messi-001.webp',
@@ -1021,6 +1027,7 @@ export const CARD_STATIC_MANIFEST = [
     },
     experimental: false,
     productionEligible: true,
+    artworkSchemaVersion: 1,
     generated: {
       compact: {
         src: '/assets/cards/generated/compact/wl-goat-ronaldo-001.webp',
@@ -1209,6 +1216,7 @@ export const CARD_STATIC_MANIFEST = [
     },
     experimental: false,
     productionEligible: true,
+    artworkSchemaVersion: 1,
     generated: {
       compact: {
         src: '/assets/cards/generated/compact/wl-legendary-beckenbauer-001.webp',
@@ -1397,6 +1405,7 @@ export const CARD_STATIC_MANIFEST = [
     },
     experimental: false,
     productionEligible: true,
+    artworkSchemaVersion: 1,
     generated: {
       compact: {
         src: '/assets/cards/generated/compact/wl-legendary-neymar-001.webp',
@@ -1585,6 +1594,7 @@ export const CARD_STATIC_MANIFEST = [
     },
     experimental: false,
     productionEligible: true,
+    artworkSchemaVersion: 1,
     generated: {
       compact: {
         src: '/assets/cards/generated/compact/wl-legendary-ronaldinho-001.webp',
@@ -1773,6 +1783,7 @@ export const CARD_STATIC_MANIFEST = [
     },
     experimental: false,
     productionEligible: true,
+    artworkSchemaVersion: 1,
     generated: {
       compact: {
         src: '/assets/cards/generated/compact/wl-legendary-zidane-001.webp',

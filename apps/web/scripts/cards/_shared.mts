@@ -49,6 +49,14 @@ export type CardArtworkPreset = {
   > | null;
   experimental?: boolean;
   productionEligible?: boolean;
+  /** Sprint 42B — ausente = 1 (V1). Ver lib/card-static/types.ts. */
+  artworkSchemaVersion?: 1 | 2;
+  /** Sprint 42B — só obrigatório quando artworkSchemaVersion === 2. */
+  safeZones?: {
+    upperLeftHudZone?: { x: number; y: number; width: number; height: number };
+    lowerIdentityZone?: { x: number; y: number; width: number; height: number };
+    countryOrTraitZone?: { x: number; y: number; width: number; height: number };
+  } | null;
   generated: { compact: string | null; standard: string | null; showcase: string | null };
   frame: string | null;
 };

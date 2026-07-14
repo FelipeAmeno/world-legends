@@ -20,6 +20,7 @@
  */
 import { existsSync } from 'node:fs';
 import sharp from 'sharp';
+import { validateArtworkSchema } from '../../lib/card-static/artwork-schema-v2.ts';
 import {
   checkArtworkResolution,
   checkCardAspectRatio,
@@ -169,10 +170,18 @@ async function main() {
       sourceType === 'full-card-artwork'
         ? await validateFullArtworkPreset(preset)
         : await validateLayeredPreset(preset);
-    for (const e of errors) console.error(`✗ ${e}`);
-    for (const w of warnings) console.warn(`⚠ ${w}`);
-    totalErrors += errors.length;
-    totalWarnings += warnings.length;
+
+    // Sprint 42B — validação do contrato de schema (versão + safe zones
+    // V2) roda pra TODO preset, independente do sourceType — um
+    // artworkSchemaVersion desconhecido é erro mesmo num preset layered.
+    const schemaResult = validateArtworkSchema(preset);
+
+    const allErrors = [...errors, ...schemaResult.errors];
+    const allWarnings = [...warnings, ...schemaResult.warnings];
+    for (const e of allErrors) console.error(`✗ ${e}`);
+    for (const w of allWarnings) console.warn(`⚠ ${w}`);
+    totalErrors += allErrors.length;
+    totalWarnings += allWarnings.length;
   }
 
   console.log(

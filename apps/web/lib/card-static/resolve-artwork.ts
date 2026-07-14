@@ -18,6 +18,10 @@ export type ManifestPreset = {
   hudLayouts?: unknown;
   /** Sprint 35D.3 — só presets elegíveis podem ser escolhidos em produção pelo resolver. */
   productionEligible?: boolean;
+  /** Sprint 42B — passthrough informativo (já resolvido, ausente vira 1 no manifesto gerado).
+   * O resolver (`resolvePlayerCardRenderer*`) NUNCA lê este campo — full-artwork
+   * vs. procedural continua decidido só por `generated`/`productionEligible`. */
+  artworkSchemaVersion?: 1 | 2;
 };
 
 export type Density = 'compact' | 'standard' | 'showcase';

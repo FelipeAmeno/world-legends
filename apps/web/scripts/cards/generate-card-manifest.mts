@@ -47,6 +47,10 @@ function main() {
       hudLayouts: preset.hudLayouts ?? null,
       experimental: preset.experimental ?? false,
       productionEligible: preset.productionEligible ?? false,
+      // Sprint 42B — sempre resolvido (nunca `undefined` no manifesto
+      // gerado), mesma regra de `resolveArtworkSchemaVersion`: ausente no
+      // preset-fonte vira 1 aqui.
+      artworkSchemaVersion: preset.artworkSchemaVersion ?? 1,
       frame: preset.frame,
       generated: Object.fromEntries(densities),
     };

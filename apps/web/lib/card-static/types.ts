@@ -52,6 +52,53 @@ export type CardArtworkGenerated = {
   showcase: string | null;
 };
 
+/**
+ * Sprint 42B (Artwork Schema V2 Contract) — versão do CONTRATO de arte,
+ * não da imagem em si (`version?: number` abaixo já existia e é outra
+ * coisa — metadata livre não usada pelo pipeline). `artworkSchemaVersion`
+ * ausente = 1 (nenhum preset V1 existente precisa ser editado). Só
+ * presets NOVOS, desenhados sem os 6 boxes de atributo e com
+ * `safeZones` formal, declaram `artworkSchemaVersion: 2` explicitamente.
+ * Nenhum outro valor é válido — `resolveArtworkSchemaVersion` (mesmo
+ * arquivo) e a validação de `cards:validate` tratam qualquer coisa fora
+ * de `1 | 2` como erro, nunca como um V3 silencioso ou um V1 assumido.
+ */
+export type ArtworkSchemaVersion = 1 | 2;
+
+/**
+ * Zona normalizada em porcentagem (0-100) da carta — MESMA convenção de
+ * `HudZone` (x/y = centro da zona, não canto superior-esquerdo) pra não
+ * duplicar um segundo sistema de coordenadas. Diferente de `HudZone`,
+ * aqui `width`/`height` são OBRIGATÓRIOS: uma safe zone sem dimensão
+ * não tem como ser validada (zero-size zone é erro, não um "campo sem
+ * largura própria" como em HudZone).
+ */
+export type ArtworkSafeZone = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+/**
+ * Contrato de safe zones do Artwork Schema V2 — reservado só pra ONDE a
+ * arte não pode ter texto/luz forte o bastante pra atrapalhar o HUD
+ * React por cima (OVR/posição no canto superior-esquerdo, nome/apelido
+ * embaixo). Isso é um contrato de AUTORIA/VALIDAÇÃO da imagem-fonte —
+ * não alimenta `hudLayout`/`hudLayouts` (que continuam sendo o que
+ * `FullArtworkWorldLegendsCard` lê em runtime pra posicionar o HUD).
+ * Os dois sistemas descrevem "zonas" com o mesmo formato de propósito,
+ * mas resolvem problemas diferentes — nunca foram unificados num só
+ * porque um é sobre a ARTE (essa carta tem espaço aqui?) e o outro é
+ * sobre o HUD (esse texto vai aqui). Ver docs/design/05-artwork-schema-v2.md.
+ */
+export type ArtworkSafeZones = {
+  upperLeftHudZone: ArtworkSafeZone;
+  lowerIdentityZone: ArtworkSafeZone;
+  /** Só exigido se a UI de produção atual realmente precisar (hoje: não). */
+  countryOrTraitZone?: ArtworkSafeZone;
+};
+
 export type CardArtworkPreset = {
   id: string;
   rarity: CardArtworkRarity;
@@ -73,9 +120,20 @@ export type CardArtworkPreset = {
   productionEligible?: boolean;
   /** Metadata livre não usada pelo pipeline (ex.: `version`) — presets reais podem trazer campos extras. */
   version?: number;
+  /** Sprint 42B — ausente = 1. Ver `ArtworkSchemaVersion` acima. */
+  artworkSchemaVersion?: ArtworkSchemaVersion;
+  /** Sprint 42B — só obrigatório quando `artworkSchemaVersion === 2`. */
+  safeZones?: ArtworkSafeZones | null;
   generated: CardArtworkGenerated;
   frame: string | null;
 };
+
+/** Ausência de `artworkSchemaVersion` sempre resolve como V1 — nunca inferido de raridade, pasta, dimensão ou presença de stat boxes. */
+export function resolveArtworkSchemaVersion(
+  preset: Pick<CardArtworkPreset, 'artworkSchemaVersion'> | null | undefined,
+): ArtworkSchemaVersion {
+  return preset?.artworkSchemaVersion ?? 1;
+}
 
 export const DEFAULT_COMPOSITION: CardArtworkComposition = {
   playerScale: 1,
