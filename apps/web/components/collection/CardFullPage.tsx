@@ -41,13 +41,19 @@ const RARITY_BG: Record<string, [string, string]> = {
   world_cup_hero: ['#04040a', '#0e0c18'],
 };
 
+// Sprint 42A — bug pré-existente encontrado ao confirmar que os 6
+// atributos continuam visíveis nesta página (fora da carta): as chaves
+// aqui eram em inglês ('pace', 'finishing'...) mas `CollectionCard.attributes`
+// (lib/collection-data.ts) é montado com chaves em português
+// ('Velocidade', 'Finalização'...) — o lookup nunca batia, então toda
+// barra sempre mostrava 0. Corrigido pra ler as chaves reais.
 const ATTR_LABELS: Array<{ key: string; label: string; icon: string; color: string }> = [
-  { key: 'pace', label: 'Ritmo', icon: '⚡', color: '#f59e0b' },
-  { key: 'finishing', label: 'Finalização', icon: '🎯', color: '#ef4444' },
-  { key: 'passing', label: 'Passe', icon: '🔄', color: '#10b981' },
-  { key: 'dribbling', label: 'Drible', icon: '🌀', color: '#3b82f6' },
-  { key: 'defending', label: 'Defesa', icon: '🛡', color: '#6366f1' },
-  { key: 'physical', label: 'Físico', icon: '💪', color: '#ec4899' },
+  { key: 'Velocidade', label: 'Ritmo', icon: '⚡', color: '#f59e0b' },
+  { key: 'Finalização', label: 'Finalização', icon: '🎯', color: '#ef4444' },
+  { key: 'Passe', label: 'Passe', icon: '🔄', color: '#10b981' },
+  { key: 'Drible', label: 'Drible', icon: '🌀', color: '#3b82f6' },
+  { key: 'Defesa', label: 'Defesa', icon: '🛡', color: '#6366f1' },
+  { key: 'Físico', label: 'Físico', icon: '💪', color: '#ec4899' },
 ];
 
 const TIER_STARS = ['', '★', '★★', '★★★'] as const;

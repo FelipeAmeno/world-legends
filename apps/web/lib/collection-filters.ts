@@ -251,14 +251,18 @@ export function compareCards(cards: CollectionCard[]): CardDiff[] {
     };
   };
 
+  // Sprint 42A — bug pré-existente: as chaves aqui eram em inglês, mas
+  // CollectionCard.attributes (lib/collection-data.ts) é montado com
+  // chaves em português ('Velocidade', 'Finalização'...) — o lookup
+  // nunca batia, então toda linha do comparativo sempre mostrava 0.
   return [
     numField('OVR Geral', (c) => c.overall),
-    numField('Ritmo', (c) => c.attributes.pace),
-    numField('Finalização', (c) => c.attributes.finishing),
-    numField('Passe', (c) => c.attributes.passing),
-    numField('Drible', (c) => c.attributes.dribbling),
-    numField('Defesa', (c) => c.attributes.defending),
-    numField('Físico', (c) => c.attributes.physical),
+    numField('Ritmo', (c) => c.attributes.Velocidade),
+    numField('Finalização', (c) => c.attributes.Finalização),
+    numField('Passe', (c) => c.attributes.Passe),
+    numField('Drible', (c) => c.attributes.Drible),
+    numField('Defesa', (c) => c.attributes.Defesa),
+    numField('Físico', (c) => c.attributes.Físico),
     numField('Contratos', (c) => c.contracts ?? 10),
     numField('Evolução', (c) => c.evolution ?? 0),
   ];

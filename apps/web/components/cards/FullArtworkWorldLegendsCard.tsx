@@ -164,12 +164,19 @@ export function FullArtworkWorldLegendsCard({
   const displayHeight = Math.round(displayWidth * (height / width));
   const baseFont = displayWidth * 0.09;
 
-  // Piso de densidade — só entra em jogo quando o preset NÃO declarou
-  // `visible` pra aquele campo (ver `shouldShowZone`). Mesma filosofia
-  // do Card Engine v3 (Sprint 33/34): Compact é minimalista por padrão.
-  const showStatsTop = shouldShowZone(hud.statsTop, density, ['compact']);
-  const showStatsBottom = shouldShowZone(hud.statsBottom, density, ['compact']);
-  const showStats = shouldShowZone(hud.stats, density, ['compact']);
+  // Sprint 42A (HUD Simplification) — os 6 atributos nunca aparecem na
+  // face da carta, em nenhuma densidade. Incondicional (ignora
+  // `zone.visible` do preset de propósito) pra garantir que nenhum
+  // preset, atual ou futuro, possa reativar isso sem uma decisão
+  // explícita de código. Caixas de stat já desenhadas na arte V1 podem
+  // ficar visualmente vazias (aprovado no brief) — só paramos de
+  // desenhar o overlay React de número/label por cima delas. Os 6
+  // valores continuam no modelo de dados (`card.attributes`) e
+  // aparecem em /collection/[cardId] (CardFullPage), numa seção
+  // separada da carta em si.
+  const showStatsTop = false;
+  const showStatsBottom = false;
+  const showStats = false;
   const showTrait = shouldShowZone(hud.trait, density, ['compact', 'standard']);
   const showNickname = shouldShowZone(hud.nickname, density, ['compact']) && Boolean(nickname);
 

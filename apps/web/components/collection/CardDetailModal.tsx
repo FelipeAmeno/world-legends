@@ -17,17 +17,21 @@ type Props = {
 const TIER_LABEL = ['', '★', '★★', '★★★'] as const;
 const TIER_COLOR = ['', 'text-muted', 'text-gold', 'text-amber-300'] as const;
 
+// Sprint 42A — bug pré-existente encontrado durante a auditoria de
+// atributos: as chaves aqui eram em inglês, mas CollectionCard.attributes
+// é montado com chaves em português — o lookup nunca batia, toda barra
+// sempre mostrava 0. Corrigido pra ler as chaves reais.
 const ATTR_LABELS: Array<{
   key: keyof CollectionCard['attributes'];
   label: string;
   sector: 'atk' | 'mid' | 'def' | 'gk';
 }> = [
-  { key: 'pace', label: 'Ritmo', sector: 'atk' },
-  { key: 'finishing', label: 'Finalização', sector: 'atk' },
-  { key: 'passing', label: 'Passe', sector: 'mid' },
-  { key: 'dribbling', label: 'Drible', sector: 'mid' },
-  { key: 'defending', label: 'Defesa', sector: 'def' },
-  { key: 'physical', label: 'Físico', sector: 'def' },
+  { key: 'Velocidade', label: 'Ritmo', sector: 'atk' },
+  { key: 'Finalização', label: 'Finalização', sector: 'atk' },
+  { key: 'Passe', label: 'Passe', sector: 'mid' },
+  { key: 'Drible', label: 'Drible', sector: 'mid' },
+  { key: 'Defesa', label: 'Defesa', sector: 'def' },
+  { key: 'Físico', label: 'Físico', sector: 'def' },
 ];
 
 const SECTOR_COLOR: Record<string, string> = {
