@@ -58,4 +58,4 @@ New file `apps/web/tests/lib/hud-simplification.test.ts` — 12 tests. Covers: t
 
 ## 8. Production deployment
 
-URL: _pending — updated after deploy confirmation._
+URL: https://world-legends.vercel.app (confirmed aliased to commit `b60227d3`, deployment `world-legends-529r72nde`, status ● Ready)
