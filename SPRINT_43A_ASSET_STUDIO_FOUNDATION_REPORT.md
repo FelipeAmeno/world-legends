@@ -98,4 +98,4 @@ Verified end-to-end in a real browser, logged in as the QA test account:
 
 ## 14. Production deployment
 
-URL: _pending — updated after deploy confirmation._
+URL: https://world-legends.vercel.app (confirmed aliased to commit `e8458e55`, deployment `world-legends-58cydyyzs`, status ● Ready)
