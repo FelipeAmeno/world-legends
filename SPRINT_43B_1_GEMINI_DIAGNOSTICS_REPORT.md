@@ -96,4 +96,4 @@ New functions in `gemini-image-provider.ts`:
 
 ## 11. Production deployment
 
-_Pending — filled in after push/deploy/confirm._
+URL: https://world-legends.vercel.app (confirmed aliased to commit `fb5dfad0`, deployment `world-legends-ptp8pm02v`, status ● Ready)
