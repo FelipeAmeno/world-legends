@@ -112,4 +112,4 @@ The Supabase Storage bucket migration (`20260714211734_asset_studio_storage_buck
 
 ## 12. Production deployment
 
-_Pending — filled in after push/deploy/confirm._
+URL: https://world-legends.vercel.app (confirmed aliased to commit `4b4a6036`, deployment `world-legends-55xyzeplx`, status ● Ready)
