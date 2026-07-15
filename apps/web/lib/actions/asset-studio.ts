@@ -13,13 +13,18 @@
  *   3. só então instancia `SupabaseAssetStudioRepository` e chama o
  *      service layer correspondente.
  *
- * Nenhuma ação aqui chama um provedor de geração de imagem.
+ * Sprint 43B (Gemini Nano Banana Image Provider) — adiciona
+ * `generateAttemptAction`/`getProviderStatusAction`. Geração real segue a
+ * MESMA autorização, nunca aprova/publica automaticamente.
  */
 
 import { checkAssetStudioAuthorization } from '@/lib/asset-studio/authorization';
 import type { JobStatus } from '@/lib/asset-studio/domain-types';
+import { generateJobAttempt } from '@/lib/asset-studio/generation-orchestrator';
 import type { CreateDraftJobInput } from '@/lib/asset-studio/job-validation';
+import { createImageProvider, getProviderStatus } from '@/lib/asset-studio/provider-config';
 import * as service from '@/lib/asset-studio/service';
+import { SupabaseAssetStudioStorage, inMemoryAssetStudioStorage } from '@/lib/asset-studio/storage';
 import { SupabaseAssetStudioRepository } from '@/lib/asset-studio/supabase-repository';
 import { getCurrentUser } from '@/lib/supabase/server';
 
@@ -129,4 +134,62 @@ export async function getJobDetailsAction(jobId: string) {
   if (!auth.ok) return { ok: false as const, error: auth.error, data: null };
   const data = await service.getJobDetails(repo(), jobId);
   return { ok: true as const, data };
+}
+
+// ─── Sprint 43B — Gemini Nano Banana Image Provider ────────────────────────
+
+/**
+ * Status seguro do provedor pra UI — nunca expõe a chave, só se ela
+ * existe/é válida. Não exige autorização (é só um indicador informativo
+ * sem efeito colateral), mas nunca é chamado fora de `/dev/asset-studio`.
+ */
+export async function getProviderStatusAction() {
+  return getProviderStatus();
+}
+
+function storage() {
+  // Mesmo fallback de dev local já documentado pra `getCurrentUser()`:
+  // sem Supabase configurado, usa o singleton em memória (nunca falha o
+  // fluxo de dev por falta de credenciais) — singleton porque uma
+  // instância nova por chamada perderia tudo que foi salvo antes.
+  return process.env.NEXT_PUBLIC_SUPABASE_URL
+    ? new SupabaseAssetStudioStorage()
+    : inMemoryAssetStudioStorage;
+}
+
+/**
+ * Dispara uma geração real (via fake provider em dev/test, Gemini em
+ * produção configurada). Nunca aprova/publica automaticamente — só cria
+ * attempt + candidates em staging, status `needs_review`.
+ */
+export async function generateAttemptAction(jobId: string) {
+  const auth = await authorizeOrFail();
+  if (!auth.ok) return { ok: false as const, error: auth.error };
+
+  const providerResult = createImageProvider();
+  if (!providerResult.ok) return { ok: false as const, error: providerResult.error };
+
+  const result = await generateJobAttempt(repo(), storage(), providerResult.provider, jobId);
+  if (!result.ok) return { ok: false as const, error: result.error };
+  return { ok: true as const, attemptId: result.attemptId, candidateIds: result.candidateIds };
+}
+
+/**
+ * Retorna um candidate gerado como data URL — pra `<img src>` na UI
+ * inspecionar a miniatura sem expor um caminho de storage bruto/URL
+ * pública. Nunca serve nada fora do bucket `asset-studio` (o caminho vem
+ * sempre de `candidate.storagePath`, nunca de input do cliente).
+ */
+export async function getCandidateImageDataUrlAction(candidateId: string) {
+  const auth = await authorizeOrFail();
+  if (!auth.ok) return { ok: false as const, error: auth.error };
+
+  const candidate = await repo().getCandidate(candidateId);
+  if (!candidate) return { ok: false as const, error: 'candidate não encontrado' };
+
+  const object = await storage().getObject(candidate.storagePath);
+  if (!object) return { ok: false as const, error: 'arquivo de staging não encontrado' };
+
+  const base64 = Buffer.from(object.bytes).toString('base64');
+  return { ok: true as const, dataUrl: `data:${object.mimeType};base64,${base64}` };
 }

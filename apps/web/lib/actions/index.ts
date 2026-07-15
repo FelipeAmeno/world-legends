@@ -54,11 +54,16 @@ export { getFavoriteCardIds, toggleFavoriteCardAction } from './favorites';
 
 // Sprint 43A — Asset Studio Foundation (ferramenta interna, ver
 // lib/asset-studio/). Toda ação checa autorização internamente.
+// Sprint 43B adiciona generateAttemptAction/getProviderStatusAction/
+// getCandidateImageDataUrlAction (Gemini Nano Banana Image Provider).
 export {
   approveCandidateAction,
   cancelJobAction,
   createDraftJobAction,
+  generateAttemptAction,
+  getCandidateImageDataUrlAction,
   getJobDetailsAction,
+  getProviderStatusAction,
   listJobsAction,
   markAttemptFailedAction,
   markJobPublishedAction,

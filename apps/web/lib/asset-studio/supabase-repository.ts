@@ -366,6 +366,21 @@ export class SupabaseAssetStudioRepository implements AssetStudioRepository {
     return ((data ?? []) as JobRow[]).map(jobFromRow);
   }
 
+  async claimJobForGenerating(jobId: string): Promise<boolean> {
+    const { data, error } = await this.db()
+      .from('asset_generation_jobs')
+      .update({
+        status: 'generating',
+        started_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', jobId)
+      .eq('status', 'queued') // condição atômica — 0 linhas afetadas = outra chamada já reivindicou
+      .select('id');
+    if (error) throw new Error(`claimJobForGenerating falhou: ${error.message}`);
+    return (data?.length ?? 0) > 0;
+  }
+
   async insertAttempt(input: InsertAttemptInput): Promise<AssetGenerationAttempt> {
     const { data, error } = await this.db()
       .from('asset_generation_attempts')

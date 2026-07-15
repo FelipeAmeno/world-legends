@@ -1,10 +1,10 @@
 # WORLD LEGENDS ASSET STUDIO — ARCHITECTURE (FOUNDATION)
 
-**Version:** 1.0 (Sprint 43A foundation — no generation implemented)
-**Status:** Domain persisted, service layer built, internal UI functional for fixture workflows
+**Version:** 1.1 (Sprint 43A foundation + Sprint 43B real generation provider)
+**Status:** Domain persisted, service layer built, internal UI functional for fixture workflows AND real generation (fake provider always; Gemini when explicitly configured)
 **Owner:** Creative Direction / Art Systems
 **Project Owner:** Felipe Ameno
-**Derived from:** `03-world-legends-asset-studio-spec-v1.md` (V1 layered-asset vision, largely superseded by the Sprint 35D full-card-artwork pivot); `05-artwork-schema-v2.md` (the artwork contract this domain generates against)
+**Derived from:** `03-world-legends-asset-studio-spec-v1.md` (V1 layered-asset vision, largely superseded by the Sprint 35D full-card-artwork pivot); `05-artwork-schema-v2.md` (the artwork contract this domain generates against); `07-gemini-image-provider.md` (Sprint 43B — the real provider integration described in this document's §12)
 **Language:** Portuguese
 **Last updated:** 2026-07-14
 
@@ -12,9 +12,9 @@
 
 ## 0. Purpose and scope
 
-This sprint (43A) builds the **persistent domain and internal workflow** for future automated Artwork Schema V2 generation: jobs, attempts, candidates, reviews, reference sets, prompt templates, a status state machine, storage-path conventions, a service layer, authorization, and a minimal internal UI to inspect and manually drive fixture jobs through safe test states.
+Sprint 43A built the **persistent domain and internal workflow** for future automated Artwork Schema V2 generation: jobs, attempts, candidates, reviews, reference sets, prompt templates, a status state machine, storage-path conventions, a service layer, authorization, and a minimal internal UI to inspect and manually drive fixture jobs through safe test states. At that point, nothing called a real provider, generated an image, or published artwork.
 
-**Nothing in this sprint calls Gemini, generates an image, or publishes artwork.** Real jobs created via the UI stay in `draft` forever unless manually moved through fixture states by an authorized internal user — there is no automated progression.
+**Sprint 43B (this update) connects that workflow to a real, server-only image-generation provider** — see §12 below and the dedicated `07-gemini-image-provider.md`. Jobs still never advance automatically: a human must move a job to `queued` and explicitly click Generate; nothing is ever auto-approved or auto-published.
 
 ## 1. Where this lives, and why
 
@@ -107,21 +107,32 @@ Matches the established project convention exactly: `InMemoryAssetStudioReposito
 
 Nothing this sprint writes to `public/assets/cards/`. `asset_candidates.storage_path` always resolves under the conceptual `asset-studio/` bucket prefix (verified by tests). No `cards:build`/`cards:validate` script references any Asset Studio table. Publishing a candidate into the real card pipeline (writing a source artwork file, bumping `artworkSchemaVersion`, re-running `cards:build`) remains an explicit, separate, human-driven step for a future sprint — `markJobPublished` only flips the job's own status and timestamp; it does not touch any file.
 
-## 9. Future work (explicitly out of scope this sprint)
+## 9. Future work (explicitly out of scope through Sprint 43B)
 
-- Real Gemini (or other provider) integration in `startAttempt` — currently a no-op registration.
-- Automated technical validation (dimension/aspect-ratio/watermark checks) and visual AI validation (the `needs_review` step is currently entered synchronously, with no real check performed).
+- Batch generation API across multiple jobs/providers.
+- Automated technical validation beyond byte/dimension checks (watermark detection, composition checks) and visual AI validation (the `needs_review` step is still entered synchronously after generation, with no automated visual check performed).
 - OCR-based text/logo detection on candidates.
-- Batch generation across multiple jobs/providers.
-- Real Supabase Storage upload/bucket creation.
 - Automatic `cards:build`/commit/deploy after publish.
 - A real admin/role model (`checkAssetStudioAuthorization` is the seam where this plugs in later).
-- Ingesting real, human-approved reference images into `lib/asset-studio/reference-sets/<id>/`.
+- Ingesting real, human-approved reference images into `lib/asset-studio/reference-sets/<id>/` (still all `files: []`/`active: false`).
+- Automatic approval or publishing of any generated candidate — always a separate human action.
 
 ## 10. Failure and retry strategy
 
-A failed attempt (`markAttemptFailed`) transitions its job to `failed`. From `failed`, the only valid next steps are `queued` (retry) or `cancelled` (give up) — `startAttempt` called again after re-queuing always creates a **new** attempt row with `attempt_number` incremented; the failed attempt's row, error code, and error message remain in the table forever as history.
+A failed attempt (`markAttemptFailed`) transitions its job to `failed`. From `failed`, the only valid next steps are `queued` (retry) or `cancelled` (give up) — generating again after re-queuing always creates a **new** attempt row with `attempt_number` incremented; the failed attempt's row, error code, and error message remain in the table forever as history. Sprint 43B's real orchestrator (`generation-orchestrator.ts`) additionally wraps the provider call itself in bounded timeout+retry (`retry.ts`) — see §12 and `07-gemini-image-provider.md` for the full error-classification and retry contract.
 
-## 11. Non-goals (explicit)
+## 11. Non-goals (explicit, through Sprint 43B)
 
-Gemini API calls, image generation, visual AI validation, OCR, a batch API, publishing into `source/artworks`, automatic `cards:build`, automatic commit/deploy, football-data APIs, and real production reference-image ingestion are all explicitly not implemented in this sprint.
+Batch API, visual AI validation, OCR, publishing into `source/artworks`, automatic `cards:build`, automatic commit/deploy, football-data APIs, real production reference-image ingestion, and any form of automated approval/publishing are all explicitly not implemented.
+
+## 12. Sprint 43B — real generation provider (summary; full detail in `07-gemini-image-provider.md`)
+
+The domain/service layer from §2–§8 above is unchanged. Sprint 43B adds a new layer on top, connected only through the existing `AssetStudioRepository` port and a new `AssetStudioStorage` port:
+
+- **`lib/asset-studio/image-provider.ts`** — the `ImageGenerationProvider` contract (`generate(request, signal) → GeneratedArtworkCandidate[]`). No Gemini-specific type crosses this boundary.
+- **`lib/asset-studio/providers/fake-image-provider.ts`** — deterministic, cost-free, real (but obviously-fixture) PNGs via `sharp`. Used by every test and by default in local dev (`ASSET_STUDIO_IMAGE_PROVIDER` unset or `fake`).
+- **`lib/asset-studio/providers/gemini-image-provider.ts`** — REST adapter (`fetch`, no new SDK dependency) over the Gemini `generateContent` API. Only reachable when `ASSET_STUDIO_IMAGE_PROVIDER=gemini`, `ASSET_STUDIO_GEMINI_ENABLED=true`, and both `GEMINI_API_KEY`/`GEMINI_IMAGE_MODEL` are set — otherwise `provider-config.ts` fails closed and never silently substitutes the fake provider.
+- **`lib/asset-studio/generation-orchestrator.ts`** — the only place that wires repository + storage + provider together for a real job. Validates template/reference-set/reference-files/placeholders *before* atomically claiming the job (`repo.claimJobForGenerating`, preventing two concurrent generations for the same job), then creates the attempt, invokes the provider under `withTimeoutAndRetry`, validates every returned candidate's bytes server-side (`image-validation.ts`, never trusting provider-claimed metadata), stores them under `asset-studio/candidates/<jobId>/<attemptId>/<variantIndex>.png` in the new private `asset-studio` Storage bucket, and hands off to the unchanged `service.attachCandidates` for the `generating → generated → validating → needs_review` transition. A failure at any point after the claim marks the attempt `failed` and the job `failed`, never leaving a job stuck in `generating`.
+- **`/dev/asset-studio`** now shows a safe provider-status indicator and a **Generate** button (with confirmation dialog) on eligible `queued` jobs, plus staging-labeled candidate thumbnails served through a server-action data-URL (never a public/signed storage URL) and a retry action for `failed` jobs. No candidate is ever auto-approved or auto-published from this UI.
+
+See `07-gemini-image-provider.md` for environment variables, the full retry/error-classification table, idempotency guarantees, observability, cost handling, and the key-rotation procedure.

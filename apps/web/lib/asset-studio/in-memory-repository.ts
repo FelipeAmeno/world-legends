@@ -96,6 +96,20 @@ export class InMemoryAssetStudioRepository implements AssetStudioRepository {
     return filtered.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
+  async claimJobForGenerating(jobId: string): Promise<boolean> {
+    const job = this.jobs.get(jobId);
+    if (!job || job.status !== 'queued') return false;
+    // JS é single-threaded — checar-e-escrever aqui é atômico o bastante
+    // pra teste; o adapter Supabase real usa um UPDATE...WHERE condicional.
+    this.jobs.set(jobId, {
+      ...job,
+      status: 'generating',
+      startedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    return true;
+  }
+
   // ─── Attempts ─────────────────────────────────────────────────────────────
 
   async insertAttempt(input: InsertAttemptInput): Promise<AssetGenerationAttempt> {

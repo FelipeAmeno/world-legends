@@ -2,18 +2,25 @@
 
 /**
  * components/dev/asset-studio/AssetStudioExperience.tsx — Sprint 43A
- * (Asset Studio Foundation)
+ * (Asset Studio Foundation) + Sprint 43B (Gemini Nano Banana Image Provider)
  *
- * Lista de jobs + filtro de status + formulário de criação de draft job.
- * Ferramenta interna, claramente incompleta — nenhum botão aqui chama um
- * provedor de geração de imagem.
+ * Lista de jobs + filtro de status + formulário de criação de draft job +
+ * indicador seguro de status do provedor. Ferramenta interna,
+ * claramente incompleta — nenhum botão NESTE arquivo chama um provedor
+ * de geração de imagem (o Generate real fica em `JobDetailView.tsx`,
+ * por job).
  */
 
-import { createDraftJobAction, listJobsAction } from '@/lib/actions/asset-studio';
+import {
+  createDraftJobAction,
+  getProviderStatusAction,
+  listJobsAction,
+} from '@/lib/actions/asset-studio';
 import type { AssetGenerationJob, JobStatus } from '@/lib/asset-studio/domain-types';
 import { MAX_REQUESTED_VARIANTS, MIN_REQUESTED_VARIANTS } from '@/lib/asset-studio/job-validation';
+import type { ProviderStatusInfo } from '@/lib/asset-studio/provider-config';
 import Link from 'next/link';
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 
 const STATUS_OPTIONS: Array<JobStatus | 'all'> = [
   'all',
@@ -37,7 +44,12 @@ export function AssetStudioExperience({ initialJobs }: Props) {
   const [statusFilter, setStatusFilter] = useState<JobStatus | 'all'>('all');
   const [formOpen, setFormOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [providerStatus, setProviderStatus] = useState<ProviderStatusInfo | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    getProviderStatusAction().then(setProviderStatus);
+  }, []);
 
   const filtered = statusFilter === 'all' ? jobs : jobs.filter((j) => j.status === statusFilter);
 
@@ -74,11 +86,31 @@ export function AssetStudioExperience({ initialJobs }: Props) {
         <span className="text-[10px] uppercase tracking-widest text-amber-400 font-bold">
           Ferramenta interna — incompleta
         </span>
-        <h1 className="font-display text-2xl text-parchment mt-1">Asset Studio (fundação)</h1>
+        <h1 className="font-display text-2xl text-parchment mt-1">Asset Studio</h1>
         <p className="text-muted text-xs mt-1">
-          Nenhum botão aqui gera arte de verdade. Nenhum provedor é chamado. Jobs ficam em
-          draft/fixture até uma sprint futura implementar geração real.
+          Geração real acontece por job (abra um job em "queued" pra ver o botão Generate). Nenhum
+          candidate é aprovado ou publicado automaticamente.
         </p>
+        {providerStatus && (
+          <p className="text-[10px] mt-1.5">
+            Provedor de imagem:{' '}
+            <span
+              className={
+                providerStatus.status === 'configured'
+                  ? 'text-emerald-400 font-bold'
+                  : providerStatus.status === 'disabled'
+                    ? 'text-muted'
+                    : 'text-red-400 font-bold'
+              }
+            >
+              {providerStatus.status === 'configured'
+                ? `Provider configured (${providerStatus.providerName})`
+                : providerStatus.status === 'disabled'
+                  ? 'Provider disabled'
+                  : 'Provider unavailable'}
+            </span>
+          </p>
+        )}
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">

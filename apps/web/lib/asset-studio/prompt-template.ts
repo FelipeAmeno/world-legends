@@ -153,3 +153,38 @@ export function buildV2ArtworkPrompt(input: Partial<PromptTemplateInput>): Promp
 
 /** Reexportado só pra testes confirmarem a lista sem duplicar o array. */
 export const V2_PROMPT_PROHIBITIONS = V2_PROHIBITED_ELEMENTS;
+
+// ─── Resolução de template persistido (Sprint 43B) ─────────────────────────
+
+export type ResolvePromptResult =
+  | { ok: true; text: string }
+  | { ok: false; error: string; missingPlaceholders: string[] };
+
+/**
+ * Substitui `{{PLACEHOLDER}}` no `content` de um `AssetPromptTemplate`
+ * persistido (`asset_prompt_templates.content`) por valores resolvidos
+ * do job — nunca aceita um prompt bruto vindo direto do cliente
+ * (regra 4 da sprint: "No raw client-authored provider prompt may
+ * bypass the template system"). Falha se algum placeholder OBRIGATÓRIO
+ * do template (`requiredPlaceholders`) não tiver valor não-vazio em
+ * `values`.
+ */
+export function resolvePromptTemplateContent(
+  templateContent: string,
+  requiredPlaceholders: string[],
+  values: Record<string, string>,
+): ResolvePromptResult {
+  const missingPlaceholders = requiredPlaceholders.filter((key) => !values[key]?.trim());
+  if (missingPlaceholders.length > 0) {
+    return {
+      ok: false,
+      error: `placeholders obrigatórios ausentes: ${missingPlaceholders.join(', ')}`,
+      missingPlaceholders,
+    };
+  }
+
+  const text = templateContent.replace(/\{\{(\w+)\}\}/g, (match, key: string) => {
+    return key in values ? (values[key] as string) : match;
+  });
+  return { ok: true, text };
+}

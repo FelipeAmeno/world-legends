@@ -50,6 +50,15 @@ export interface AssetStudioRepository {
   getJob(id: string): Promise<AssetGenerationJob | null>;
   updateJob(id: string, patch: Partial<AssetGenerationJob>): Promise<AssetGenerationJob>;
   listJobs(filter?: { status?: AssetGenerationJob['status'] }): Promise<AssetGenerationJob[]>;
+  /**
+   * Sprint 43B — UPDATE atômico condicional (`WHERE status = 'queued'`)
+   * — retorna `false` sem lançar se o job não estava mais `queued` (já
+   * reivindicado por outra chamada concorrente). Único jeito correto de
+   * prevenir duas gerações simultâneas pro mesmo job sem um lock
+   * distribuído — `updateJob` sozinho (leitura+escrita separadas) tem
+   * uma janela de corrida real.
+   */
+  claimJobForGenerating(jobId: string): Promise<boolean>;
 
   // Attempts
   insertAttempt(input: InsertAttemptInput): Promise<AssetGenerationAttempt>;

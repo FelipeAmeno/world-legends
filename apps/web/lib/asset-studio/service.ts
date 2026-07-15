@@ -245,21 +245,31 @@ async function findAttemptById(
 // ─── Candidates ─────────────────────────────────────────────────────────────
 
 /**
- * Anexa um candidate gerado a um attempt. Como nenhuma validação técnica/
- * visual automática existe nesta sprint (não-objetivo explícito), o job
- * avança generating → generated → validating → needs_review em sequência
+ * Anexa 1+ candidates (uma ou mais variantes) gerados num ÚNICO attempt.
+ * Sprint 43B — usado pelo orquestrador real (`generation-orchestrator.ts`),
+ * que pode receber N variantes de uma chamada de provedor. A transição
+ * de status do job acontece UMA VEZ só, depois de todos os candidates
+ * inseridos — chamar isso N vezes pra N variantes tentaria
+ * needs_review → needs_review na segunda chamada, uma transição
+ * inválida (mesmo status). Como nenhuma validação técnica/visual
+ * automática existe nesta sprint (não-objetivo explícito), o job avança
+ * generating → generated → validating → needs_review em sequência
  * síncrona — cada transição ainda é checada contra o mapa, só não há
  * trabalho assíncrono real entre elas ainda.
  */
-export async function attachCandidate(
+export async function attachCandidates(
   repo: AssetStudioRepository,
   attemptId: string,
-  input: Omit<InsertCandidateInput, 'attemptId' | 'jobId'>,
-): Promise<ServiceResult<AssetCandidate>> {
+  inputs: Array<Omit<InsertCandidateInput, 'attemptId' | 'jobId'>>,
+): Promise<ServiceResult<AssetCandidate[]>> {
   const attempt = await findAttemptById(repo, attemptId);
   if (!attempt) return fail(`attempt ${attemptId} não encontrado`);
+  if (inputs.length === 0) return fail('nenhum candidate pra anexar');
 
-  const candidate = await repo.insertCandidate({ ...input, attemptId, jobId: attempt.jobId });
+  const candidates: AssetCandidate[] = [];
+  for (const input of inputs) {
+    candidates.push(await repo.insertCandidate({ ...input, attemptId, jobId: attempt.jobId }));
+  }
   await repo.updateAttempt(attemptId, {
     status: 'succeeded',
     completedAt: new Date().toISOString(),
@@ -269,7 +279,18 @@ export async function attachCandidate(
     const result = await transitionJob(repo, attempt.jobId, to);
     if (!result.ok) return fail(result.error);
   }
-  return ok(candidate);
+  return ok(candidates);
+}
+
+/** Compatibilidade — mesmo comportamento de `attachCandidates` com um único candidate. */
+export async function attachCandidate(
+  repo: AssetStudioRepository,
+  attemptId: string,
+  input: Omit<InsertCandidateInput, 'attemptId' | 'jobId'>,
+): Promise<ServiceResult<AssetCandidate>> {
+  const result = await attachCandidates(repo, attemptId, [input]);
+  if (!result.ok) return result;
+  return ok(result.data[0] as AssetCandidate);
 }
 
 // ─── Reviews ────────────────────────────────────────────────────────────────
