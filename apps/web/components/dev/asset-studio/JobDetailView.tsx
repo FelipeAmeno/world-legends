@@ -26,6 +26,11 @@ import {
 } from '@/lib/actions/asset-studio';
 import type { JobDetails } from '@/lib/asset-studio/domain-types';
 import type { ProviderStatusInfo } from '@/lib/asset-studio/provider-config';
+import {
+  canPublishJob,
+  canReviewCandidate,
+  candidateSectionLabel,
+} from '@/lib/asset-studio/ui-eligibility';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
@@ -88,6 +93,7 @@ export function JobDetailView({ details }: { details: JobDetails }) {
         generating={generating}
         canGenerate={canGenerate}
         canRetry={canRetry}
+        canPublish={canPublishJob(job)}
         confirmingGenerate={confirmingGenerate}
         onQueue={() => run(() => queueJobAction(job.id))}
         onCancel={() => run(() => cancelJobAction(job.id))}
@@ -122,6 +128,7 @@ export function JobDetailView({ details }: { details: JobDetails }) {
           <div key={a.id} className="glass rounded-lg p-3 text-xs mb-2 border border-border">
             <p className="text-parchment font-bold">
               #{a.attemptNumber} · {a.status} · provider: {a.provider}
+              {a.model ? ` · model: ${a.model}` : ''}
             </p>
             <p className="text-muted mt-1">
               {a.startedAt ?? '—'} → {a.completedAt ?? a.failedAt ?? 'em andamento'}
@@ -131,11 +138,12 @@ export function JobDetailView({ details }: { details: JobDetails }) {
                 {a.errorCode}: {a.errorMessage}
               </p>
             )}
+            {a.status === 'failed' && <SafeAttemptDiagnostics usageMetadata={a.usageMetadata} />}
           </div>
         ))}
       </Section>
 
-      <Section title={`Candidates (${candidates.length}) — staging, não aprovado`}>
+      <Section title={`Candidates (${candidates.length}) — ${candidateSectionLabel(job)}`}>
         {candidates.length === 0 && <p className="text-muted text-xs">Nenhum candidate ainda.</p>}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {candidates.map((c) => (
@@ -146,6 +154,7 @@ export function JobDetailView({ details }: { details: JobDetails }) {
               reviewStatus={c.reviewStatus}
               reviews={reviewsByCandidateId[c.id] ?? []}
               isPending={isPending}
+              canReview={canReviewCandidate(job, c)}
               onApprove={() => run(() => approveCandidateAction(job.id, c.id, null))}
               onReject={() => run(() => rejectCandidateAction(job.id, c.id, null, []))}
               onRequestRevision={() => run(() => requestRevisionAction(job.id, c.id, null, []))}
@@ -154,6 +163,45 @@ export function JobDetailView({ details }: { details: JobDetails }) {
         </div>
       </Section>
     </div>
+  );
+}
+
+/**
+ * Diagnóstico de falha de provedor — SÓ campos individualmente
+ * allowlisted do metadata de uso (Sprint 43B.1, pós-smoke-test real de
+ * rate limit sem diagnóstico nenhum). Nunca serializa ou espalha o
+ * objeto inteiro na tela — cada campo é lido e validado por nome, então
+ * um campo inesperado (chave, header, corpo bruto) nunca teria como
+ * chegar na tela mesmo que acidentalmente persistido.
+ */
+function SafeAttemptDiagnostics({ usageMetadata }: { usageMetadata: Record<string, unknown> }) {
+  const httpStatus = typeof usageMetadata.httpStatus === 'number' ? usageMetadata.httpStatus : null;
+  const googleErrorStatus =
+    typeof usageMetadata.googleErrorStatus === 'string' ? usageMetadata.googleErrorStatus : null;
+  const rateLimitCategory =
+    typeof usageMetadata.rateLimitCategory === 'string' ? usageMetadata.rateLimitCategory : null;
+  const retryAfterSeconds =
+    typeof usageMetadata.retryAfterSeconds === 'number' ? usageMetadata.retryAfterSeconds : null;
+  const model = typeof usageMetadata.model === 'string' ? usageMetadata.model : null;
+
+  const rows: Array<[string, string]> = [];
+  if (httpStatus !== null) rows.push(['HTTP status', String(httpStatus)]);
+  if (googleErrorStatus) rows.push(['Google status', googleErrorStatus]);
+  if (rateLimitCategory) rows.push(['Quota type', rateLimitCategory]);
+  if (retryAfterSeconds !== null) rows.push(['Retry after', `${retryAfterSeconds}s`]);
+  if (model) rows.push(['Model', model]);
+
+  if (rows.length === 0) return null;
+
+  return (
+    <dl className="mt-1.5 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px] text-muted">
+      {rows.map(([label, value]) => (
+        <div key={label} className="contents">
+          <dt>{label}</dt>
+          <dd className="text-parchment">{value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -209,6 +257,7 @@ function GenerateControls({
   generating,
   canGenerate,
   canRetry,
+  canPublish,
   confirmingGenerate,
   onQueue,
   onCancel,
@@ -223,6 +272,7 @@ function GenerateControls({
   generating: boolean;
   canGenerate: boolean;
   canRetry: boolean;
+  canPublish: boolean;
   confirmingGenerate: boolean;
   onQueue: () => void;
   onCancel: () => void;
@@ -250,14 +300,16 @@ function GenerateControls({
         >
           Cancelar job
         </button>
-        <button
-          type="button"
-          disabled={isPending}
-          onClick={onPublish}
-          className="px-3 py-1.5 rounded-lg bg-white/10 text-parchment text-xs font-bold"
-        >
-          Marcar publicado (exige candidate aprovado)
-        </button>
+        {canPublish && (
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={onPublish}
+            className="px-3 py-1.5 rounded-lg bg-white/10 text-parchment text-xs font-bold"
+          >
+            Marcar publicado
+          </button>
+        )}
 
         {canGenerate && (
           <button
@@ -317,6 +369,7 @@ function CandidateCard({
   reviewStatus,
   reviews,
   isPending,
+  canReview,
   onApprove,
   onReject,
   onRequestRevision,
@@ -326,6 +379,7 @@ function CandidateCard({
   reviewStatus: string;
   reviews: JobDetails['reviewsByCandidateId'][string];
   isPending: boolean;
+  canReview: boolean;
   onApprove: () => void;
   onReject: () => void;
   onRequestRevision: () => void;
@@ -359,32 +413,34 @@ function CandidateCard({
       <p className="text-parchment font-bold">
         variante {variantIndex} · {reviewStatus}
       </p>
-      <div className="flex gap-1 mt-2 flex-wrap">
-        <button
-          type="button"
-          disabled={isPending}
-          onClick={onApprove}
-          className="px-2 py-1 rounded bg-emerald-800/60 text-emerald-200"
-        >
-          Aprovar
-        </button>
-        <button
-          type="button"
-          disabled={isPending}
-          onClick={onReject}
-          className="px-2 py-1 rounded bg-red-900/60 text-red-200"
-        >
-          Rejeitar
-        </button>
-        <button
-          type="button"
-          disabled={isPending}
-          onClick={onRequestRevision}
-          className="px-2 py-1 rounded bg-amber-900/60 text-amber-200"
-        >
-          Revisão
-        </button>
-      </div>
+      {canReview && (
+        <div className="flex gap-1 mt-2 flex-wrap">
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={onApprove}
+            className="px-2 py-1 rounded bg-emerald-800/60 text-emerald-200"
+          >
+            Aprovar
+          </button>
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={onReject}
+            className="px-2 py-1 rounded bg-red-900/60 text-red-200"
+          >
+            Rejeitar
+          </button>
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={onRequestRevision}
+            className="px-2 py-1 rounded bg-amber-900/60 text-amber-200"
+          >
+            Revisão
+          </button>
+        </div>
+      )}
       {reviews.length > 0 && (
         <div className="mt-2 border-t border-white/5 pt-2 space-y-1">
           {reviews.map((r) => (

@@ -204,11 +204,19 @@ export async function startAttempt(
   return ok(attempt);
 }
 
+/**
+ * `safeDetails` — Sprint 43B.1 — diagnóstico ALLOWLISTED do provedor
+ * (nunca segredo/header/corpo bruto, ver `ProviderError.safeDetails`),
+ * persistido em `usage_metadata`. Antes desta sprint, uma falha 429 real
+ * do Gemini não deixava NENHUM diagnóstico além do error_code/message
+ * genéricos — `usage_metadata` ficava `{}`.
+ */
 export async function markAttemptFailed(
   repo: AssetStudioRepository,
   attemptId: string,
   errorCode: string,
   errorMessage: string,
+  safeDetails?: Record<string, unknown>,
 ): Promise<ServiceResult<AssetGenerationAttempt>> {
   const attempt = await findAttemptById(repo, attemptId);
   if (!attempt) return fail(`attempt ${attemptId} não encontrado`);
@@ -218,6 +226,7 @@ export async function markAttemptFailed(
     failedAt: new Date().toISOString(),
     errorCode,
     errorMessage,
+    ...(safeDetails ? { usageMetadata: safeDetails } : {}),
   });
   const jobTransition = await transitionJob(repo, attempt.jobId, 'failed', {
     failedAt: new Date().toISOString(),

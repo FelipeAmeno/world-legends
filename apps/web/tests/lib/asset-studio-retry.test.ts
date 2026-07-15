@@ -1,7 +1,7 @@
 import { ProviderError } from '@/lib/asset-studio/image-provider';
 import {
-  computeBackoffDelay,
   DEFAULT_MAX_DELAY_MS,
+  computeBackoffDelay,
   withTimeoutAndRetry,
 } from '@/lib/asset-studio/retry';
 import { describe, expect, it, vi } from 'vitest';

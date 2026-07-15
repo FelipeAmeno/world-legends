@@ -167,7 +167,12 @@ export async function generateJobAttempt(
     jobId,
     attemptNumber,
     provider: provider.name,
-    model: job.model,
+    // Sprint 43B.1: resolvido do provedor NO MOMENTO da geração — nunca
+    // `job.model` (sempre null, nunca confiado de input do cliente).
+    // Attempts já existentes (ex.: o smoke test que falhou com 429)
+    // continuam com `model: null` pra sempre — snapshot histórico, nunca
+    // reescrito retroativamente.
+    model: provider.model,
     requestSnapshot: { artworkPresetId: job.artworkPresetId, rarity: job.rarity },
     promptSnapshot: promptText,
     referenceSnapshot: {
@@ -198,7 +203,13 @@ export async function generateJobAttempt(
   } catch (err) {
     const providerError =
       err instanceof ProviderError ? err : new ProviderError('internal-error', String(err), false);
-    await service.markAttemptFailed(repo, attempt.id, providerError.code, providerError.message);
+    await service.markAttemptFailed(
+      repo,
+      attempt.id,
+      providerError.code,
+      providerError.message,
+      providerError.safeDetails,
+    );
     return fail(providerError.message, providerError.code);
   }
 }
@@ -236,6 +247,7 @@ async function runGeneration(
       'provider-invalid-response',
       'provedor não retornou nenhuma imagem',
       false,
+      provider.model ? { model: provider.model } : undefined,
     );
   }
 

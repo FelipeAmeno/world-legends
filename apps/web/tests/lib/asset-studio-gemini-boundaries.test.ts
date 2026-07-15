@@ -75,7 +75,9 @@ describe('Sprint 43B — fronteiras de segurança do provedor Gemini (server-onl
       expect(src).not.toContain("from '@/lib/asset-studio/providers/gemini-image-provider'");
       // `import type { ProviderStatusInfo } from '.../provider-config'` é aceitável — é
       // apagado no build, nunca inclui código/segredo. Só um import RUNTIME seria um problema.
-      expect(src).not.toMatch(/^import\s+\{[^}]*\}\s+from ['"]@\/lib\/asset-studio\/provider-config['"]/m);
+      expect(src).not.toMatch(
+        /^import\s+\{[^}]*\}\s+from ['"]@\/lib\/asset-studio\/provider-config['"]/m,
+      );
       expect(src).not.toContain("from '@/lib/asset-studio/service'");
       expect(src).not.toContain("from '@/lib/asset-studio/supabase-repository'");
       expect(src).not.toContain('GEMINI_API_KEY');
@@ -86,7 +88,9 @@ describe('Sprint 43B — fronteiras de segurança do provedor Gemini (server-onl
   it('84. generateAttemptAction e getCandidateImageDataUrlAction exigem autorização (authorizeOrFail) antes de qualquer efeito colateral', () => {
     const src = readSource('lib/actions/asset-studio.ts');
     const generateFn = src.slice(src.indexOf('export async function generateAttemptAction'));
-    const thumbnailFn = src.slice(src.indexOf('export async function getCandidateImageDataUrlAction'));
+    const thumbnailFn = src.slice(
+      src.indexOf('export async function getCandidateImageDataUrlAction'),
+    );
     expect(generateFn.indexOf('authorizeOrFail()')).toBeLessThan(
       generateFn.indexOf('generateJobAttempt('),
     );
@@ -105,5 +109,22 @@ describe('Sprint 43B — fronteiras de segurança do provedor Gemini (server-onl
       const src = readSource(file);
       expect(src).not.toMatch(/providerStatus\.(apiKey|key|secret)/i);
     }
+  });
+
+  it('108. o diagnóstico de falha na UI (SafeAttemptDiagnostics) nunca faz dump bruto de usageMetadata — só lê campos individuais allowlisted por nome', () => {
+    const src = readSource('components/dev/asset-studio/JobDetailView.tsx');
+    expect(src).not.toMatch(/JSON\.stringify\(\s*usageMetadata/);
+    expect(src).not.toMatch(/\{\.\.\.\s*usageMetadata/);
+    // Confirma que os campos são lidos nomeadamente (allowlist), não iterados genericamente.
+    for (const field of [
+      'httpStatus',
+      'googleErrorStatus',
+      'rateLimitCategory',
+      'retryAfterSeconds',
+      'model',
+    ]) {
+      expect(src).toContain(`usageMetadata.${field}`);
+    }
+    expect(src).not.toMatch(/Object\.(keys|entries|values)\(usageMetadata\)/);
   });
 });

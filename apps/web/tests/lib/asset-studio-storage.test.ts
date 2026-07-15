@@ -5,7 +5,11 @@ describe('Sprint 43B — InMemoryAssetStudioStorage (dev local + todo teste, nun
   it('56. rejeita caminhos fora da convenção "asset-studio/"', async () => {
     const storage = new InMemoryAssetStudioStorage();
     await expect(
-      storage.putObject('public/assets/cards/source/artworks/x.png', new Uint8Array([1]), 'image/png'),
+      storage.putObject(
+        'public/assets/cards/source/artworks/x.png',
+        new Uint8Array([1]),
+        'image/png',
+      ),
     ).rejects.toThrow();
   });
 

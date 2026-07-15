@@ -21,16 +21,22 @@ describe('Sprint 43B — resolvePromptTemplateContent (nunca aceita prompt bruto
   });
 
   it('45. mesmo template + mesmos valores produz sempre o mesmo texto (determinístico, sem timestamp/random)', () => {
-    const args = ['Card: {{ARTWORK_PRESET_ID}}', ['ARTWORK_PRESET_ID'], { ARTWORK_PRESET_ID: 'wl-001' }] as const;
-    const r1 = resolvePromptTemplateContent(...args);
-    const r2 = resolvePromptTemplateContent(...args);
+    const templateContent = 'Card: {{ARTWORK_PRESET_ID}}';
+    const requiredPlaceholders = ['ARTWORK_PRESET_ID'];
+    const values = { ARTWORK_PRESET_ID: 'wl-001' };
+    const r1 = resolvePromptTemplateContent(templateContent, requiredPlaceholders, values);
+    const r2 = resolvePromptTemplateContent(templateContent, requiredPlaceholders, values);
     expect(r1).toEqual(r2);
   });
 
   it('placeholder não requerido e sem valor correspondente é deixado intacto no texto final', () => {
-    const result = resolvePromptTemplateContent('{{DISPLAY_NAME}} — {{UNKNOWN_TOKEN}}', ['DISPLAY_NAME'], {
-      DISPLAY_NAME: 'fixture-player',
-    });
+    const result = resolvePromptTemplateContent(
+      '{{DISPLAY_NAME}} — {{UNKNOWN_TOKEN}}',
+      ['DISPLAY_NAME'],
+      {
+        DISPLAY_NAME: 'fixture-player',
+      },
+    );
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.text).toBe('fixture-player — {{UNKNOWN_TOKEN}}');
   });

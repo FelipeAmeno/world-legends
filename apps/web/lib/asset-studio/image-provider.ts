@@ -52,21 +52,60 @@ export type ProviderErrorCode =
   | 'configuration-error'
   | 'internal-error';
 
+/**
+ * Diagnóstico seguro e ALLOWLISTED de uma falha de provedor — Sprint
+ * 43B.1 (pós-smoke-test real, rate limit 429 sem diagnóstico nenhum
+ * persistido). Cada campo é extraído individualmente da resposta do
+ * Google (nunca o corpo bruto, nunca headers de auth, nunca a chave).
+ * `rateLimitCategory` é uma classificação DERIVADA best-effort — nenhuma
+ * chamada real ao Gemini foi feita pra validar o formato exato da
+ * resposta 429 do Google contra estes campos (ver
+ * docs/design/07-gemini-image-provider.md); a heurística é documentada
+ * como tal, não afirmada como garantidamente correta.
+ */
+export type ProviderSafeDetails = {
+  httpStatus?: number;
+  googleErrorStatus?: string;
+  googleErrorCode?: number;
+  quotaMetric?: string;
+  quotaId?: string;
+  quotaValue?: string | number;
+  retryDelay?: string;
+  retryAfterSeconds?: number;
+  model?: string;
+  rateLimitCategory?:
+    | 'temporary-rate-limit'
+    | 'daily-quota-exhausted'
+    | 'zero-quota'
+    | 'unavailable-tier'
+    | 'unknown-rate-limit';
+};
+
 export class ProviderError extends Error {
   readonly code: ProviderErrorCode;
   /** Se `true`, `retry.ts` pode tentar de novo (sujeito ao limite máximo). */
   readonly retryable: boolean;
+  /** Nunca contém segredo, header ou corpo bruto — só campos individualmente extraídos. */
+  readonly safeDetails: ProviderSafeDetails | undefined;
 
-  constructor(code: ProviderErrorCode, message: string, retryable: boolean) {
+  constructor(
+    code: ProviderErrorCode,
+    message: string,
+    retryable: boolean,
+    safeDetails?: ProviderSafeDetails,
+  ) {
     super(message);
     this.name = 'ProviderError';
     this.code = code;
     this.retryable = retryable;
+    this.safeDetails = safeDetails;
   }
 }
 
 export interface ImageGenerationProvider {
   readonly name: string;
+  /** Modelo real configurado — resolvido no momento da geração, nunca confiado de input do cliente. `null` quando o provedor não tem conceito de modelo (ex.: fake). */
+  readonly model: string | null;
   generate(
     request: GenerateArtworkRequest,
     signal?: AbortSignal,

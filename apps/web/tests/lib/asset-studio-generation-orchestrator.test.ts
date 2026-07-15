@@ -1,10 +1,10 @@
+import { generateJobAttempt } from '@/lib/asset-studio/generation-orchestrator';
 import type {
   GenerateArtworkRequest,
   GeneratedArtworkCandidate,
   ImageGenerationProvider,
 } from '@/lib/asset-studio/image-provider';
 import { ProviderError } from '@/lib/asset-studio/image-provider';
-import { generateJobAttempt } from '@/lib/asset-studio/generation-orchestrator';
 import { InMemoryAssetStudioRepository } from '@/lib/asset-studio/in-memory-repository';
 import { FakeImageProvider } from '@/lib/asset-studio/providers/fake-image-provider';
 import * as service from '@/lib/asset-studio/service';
@@ -20,7 +20,8 @@ function seedFixtures(
     name: 'base-v2',
     schemaVersion: 2,
     templateVersion: 1,
-    content: 'Player {{DISPLAY_NAME}} — {{RARITY}} — {{ARTWORK_PRESET_ID}} — {{IDENTITY_NOTES}} — {{REFERENCE_SET}}',
+    content:
+      'Player {{DISPLAY_NAME}} — {{RARITY}} — {{ARTWORK_PRESET_ID}} — {{IDENTITY_NOTES}} — {{REFERENCE_SET}}',
     requiredPlaceholders: overrides.templateRequiredPlaceholders ?? [],
     active: overrides.templateActive ?? true,
     createdAt: '2026-01-01T00:00:00Z',
@@ -53,7 +54,7 @@ async function createQueuedFixtureJob(
       promptTemplateId: 'tpl-1',
       referenceSetId: 'ref-1',
       requestedVariants: overrides.requestedVariants ?? 2,
-      identityNotes: overrides.identityNotes,
+      ...(overrides.identityNotes !== undefined ? { identityNotes: overrides.identityNotes } : {}),
     },
     'user-1',
   );
@@ -66,6 +67,7 @@ async function createQueuedFixtureJob(
 
 class ThrowingProvider implements ImageGenerationProvider {
   readonly name = 'throwing-fixture';
+  readonly model = null;
   async generate(): Promise<GeneratedArtworkCandidate[]> {
     throw new ProviderError('provider-invalid-response', 'fixture provider failure', false);
   }
@@ -73,12 +75,43 @@ class ThrowingProvider implements ImageGenerationProvider {
 
 class PartiallyInvalidProvider implements ImageGenerationProvider {
   readonly name = 'partial-fixture';
+  readonly model = null;
   async generate(request: GenerateArtworkRequest): Promise<GeneratedArtworkCandidate[]> {
     const good = await new FakeImageProvider().generate(request);
     return [
       good[0] as GeneratedArtworkCandidate,
-      { variantIndex: 1, bytes: new Uint8Array([1, 2, 3]), mimeType: 'image/png', providerMetadata: {} },
+      {
+        variantIndex: 1,
+        bytes: new Uint8Array([1, 2, 3]),
+        mimeType: 'image/png',
+        providerMetadata: {},
+      },
     ];
+  }
+}
+
+/** Provedor fixture com um `model` real — só pra provar que o orquestrador persiste `provider.model` no attempt (Sprint 43B.1). */
+class ModelReportingProvider implements ImageGenerationProvider {
+  readonly name = 'model-fixture';
+  readonly model = 'test-model-xyz';
+  async generate(request: GenerateArtworkRequest): Promise<GeneratedArtworkCandidate[]> {
+    return new FakeImageProvider().generate(request);
+  }
+}
+
+/** Provedor fixture que lança um ProviderError com `safeDetails` — prova que o orquestrador persiste isso em `usage_metadata` (Sprint 43B.1). */
+class RateLimitProvider implements ImageGenerationProvider {
+  readonly name = 'rate-limit-fixture';
+  readonly model = 'test-model-xyz';
+  async generate(): Promise<GeneratedArtworkCandidate[]> {
+    throw new ProviderError('provider-rate-limit', 'limite de taxa do provedor atingido', false, {
+      httpStatus: 429,
+      googleErrorStatus: 'RESOURCE_EXHAUSTED',
+      quotaId: 'GenerateRequestsPerDayPerProjectPerModel-FreeTier',
+      quotaValue: '0',
+      rateLimitCategory: 'unavailable-tier',
+      model: 'test-model-xyz',
+    });
   }
 }
 
@@ -102,6 +135,7 @@ describe('Sprint 43B — generation-orchestrator (orquestração real via reposi
     const updatedJob = await repo.getJob(job.id);
     expect(updatedJob?.status).toBe('needs_review');
     expect(updatedJob?.approvedCandidateId).toBeNull();
+    expect(updatedJob?.completedAt).toBeNull();
 
     const candidates = await repo.listCandidatesForJob(job.id);
     expect(candidates).toHaveLength(2);
@@ -113,6 +147,16 @@ describe('Sprint 43B — generation-orchestrator (orquestração real via reposi
       const stored = await storage.getObject(candidate.storagePath);
       expect(stored).not.toBeNull();
     }
+
+    // Regressão (post-smoke-test 2026-07-15): confirma que list e detail
+    // enxergam o MESMO status pro mesmo job logo após a geração — a UI
+    // relatou list="draft"/detail="published" divergentes num smoke test
+    // real, mas a causa raiz era ação humana real (approve+publish
+    // clicados) mais uma página de lista não recarregada, nunca os dois
+    // repositórios/consultas divergindo de fato.
+    const listed = await service.listJobs(repo);
+    const detail = await service.getJobDetails(repo, job.id);
+    expect(listed.find((j) => j.id === job.id)?.status).toBe(detail?.job.status);
   });
 
   it('68. job fora de "queued" (ex.: draft) falha fechado — nenhum attempt é criado', async () => {
@@ -129,7 +173,12 @@ describe('Sprint 43B — generation-orchestrator (orquestração real via reposi
       'user-1',
     );
     if (!created.ok) throw new Error('setup');
-    const result = await generateJobAttempt(repo, storage, new FakeImageProvider(), created.data.id);
+    const result = await generateJobAttempt(
+      repo,
+      storage,
+      new FakeImageProvider(),
+      created.data.id,
+    );
     expect(result.ok).toBe(false);
     expect(await repo.listAttemptsForJob(created.data.id)).toHaveLength(0);
     expect((await repo.getJob(created.data.id))?.status).toBe('draft');
@@ -205,7 +254,9 @@ describe('Sprint 43B — generation-orchestrator (orquestração real via reposi
 
   it('73. placeholder obrigatório satisfeito permite geração e o prompt final fica snapshotado no attempt', async () => {
     seedFixtures(repo, { templateRequiredPlaceholders: ['IDENTITY_NOTES'] });
-    const job = await createQueuedFixtureJob(repo, { identityNotes: 'cabelo cacheado, uniforme azul' });
+    const job = await createQueuedFixtureJob(repo, {
+      identityNotes: 'cabelo cacheado, uniforme azul',
+    });
     const result = await generateJobAttempt(repo, storage, new FakeImageProvider(), job.id);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -290,5 +341,30 @@ describe('Sprint 43B — generation-orchestrator (orquestração real via reposi
       expect(candidate.storagePath).toMatch(/^asset-studio\/candidates\//);
       expect(candidate.storagePath).not.toContain('source/artworks');
     }
+  });
+
+  it('96. attempt.model registra o modelo REAL resolvido do provedor no momento da geração, nunca job.model (sempre null)', async () => {
+    const job = await createQueuedFixtureJob(repo, { requestedVariants: 1 });
+    expect(job.model).toBeNull();
+    const result = await generateJobAttempt(repo, storage, new ModelReportingProvider(), job.id);
+    expect(result.ok).toBe(true);
+    const attempts = await repo.listAttemptsForJob(job.id);
+    expect(attempts[0]?.model).toBe('test-model-xyz');
+  });
+
+  it('97. safeDetails de um ProviderError são persistidos em usage_metadata na falha, nunca perdidos', async () => {
+    const job = await createQueuedFixtureJob(repo, { requestedVariants: 1 });
+    const result = await generateJobAttempt(repo, storage, new RateLimitProvider(), job.id);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.errorCode).toBe('provider-rate-limit');
+
+    const attempts = await repo.listAttemptsForJob(job.id);
+    const usage = attempts[0]?.usageMetadata as Record<string, unknown>;
+    expect(usage.httpStatus).toBe(429);
+    expect(usage.googleErrorStatus).toBe('RESOURCE_EXHAUSTED');
+    expect(usage.rateLimitCategory).toBe('unavailable-tier');
+    expect(usage.model).toBe('test-model-xyz');
+    // Curto/genérico continua curto/genérico — o diagnóstico rico vai só em usage_metadata.
+    expect(attempts[0]?.errorMessage).toBe('limite de taxa do provedor atingido');
   });
 });

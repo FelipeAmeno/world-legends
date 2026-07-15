@@ -14,7 +14,6 @@ describe('Sprint 43B — provider-config (única leitura de env do provedor; sem
   beforeEach(() => {
     for (const key of ENV_KEYS) {
       original[key] = process.env[key];
-      // biome-ignore lint/performance/noDelete: process.env, não um objeto hot-path
       delete process.env[key];
     }
   });
@@ -22,7 +21,6 @@ describe('Sprint 43B — provider-config (única leitura de env do provedor; sem
   afterEach(() => {
     for (const key of ENV_KEYS) {
       if (original[key] === undefined) {
-        // biome-ignore lint/performance/noDelete: process.env, não um objeto hot-path
         delete process.env[key];
       } else {
         process.env[key] = original[key];

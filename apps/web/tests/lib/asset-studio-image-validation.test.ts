@@ -1,4 +1,7 @@
-import { MAX_CANDIDATE_BYTES, validateAndDeriveImageMetadata } from '@/lib/asset-studio/image-validation';
+import {
+  MAX_CANDIDATE_BYTES,
+  validateAndDeriveImageMetadata,
+} from '@/lib/asset-studio/image-validation';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 

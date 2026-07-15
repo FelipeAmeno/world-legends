@@ -8,7 +8,13 @@ import {
 import sharp from 'sharp';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-const FIXTURE_DIR = join(process.cwd(), 'lib', 'asset-studio', 'reference-sets', '__test_fixture_43b__');
+const FIXTURE_DIR = join(
+  process.cwd(),
+  'lib',
+  'asset-studio',
+  'reference-sets',
+  '__test_fixture_43b__',
+);
 
 function baseSet(overrides: Partial<AssetReferenceSet> = {}): AssetReferenceSet {
   return {

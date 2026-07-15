@@ -42,6 +42,8 @@ function fixtureColorForVariant(variantIndex: number): FixtureColor {
 
 export class FakeImageProvider implements ImageGenerationProvider {
   readonly name = 'fake';
+  /** Fake não tem conceito real de modelo — nunca inventa um nome de modelo. */
+  readonly model = null;
 
   async generate(request: GenerateArtworkRequest): Promise<GeneratedArtworkCandidate[]> {
     const candidates: GeneratedArtworkCandidate[] = [];
