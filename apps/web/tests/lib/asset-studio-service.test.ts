@@ -107,7 +107,13 @@ describe('Sprint 43A — service layer (regras de negócio, via repositório in-
       checksum: null,
       perceptualHash: null,
       artworkSchemaVersion: 2,
-      technicalValidation: {},
+      technicalValidation: {
+        passed: true,
+        warnings: [],
+        errors: [],
+        validatedAt: '2026-01-01T00:00:00Z',
+        validatorVersion: 'fixture',
+      },
       visualValidation: {},
       reviewStatus: 'pending',
     });
@@ -166,7 +172,13 @@ describe('Sprint 43A — service layer (regras de negócio, via repositório in-
       checksum: null,
       perceptualHash: null,
       artworkSchemaVersion: 2,
-      technicalValidation: {},
+      technicalValidation: {
+        passed: true,
+        warnings: [],
+        errors: [],
+        validatedAt: '2026-01-01T00:00:00Z',
+        validatorVersion: 'fixture',
+      },
       visualValidation: {},
       reviewStatus: 'pending',
     });
@@ -274,7 +286,13 @@ describe('Sprint 43A — service layer (regras de negócio, via repositório in-
       checksum: null,
       perceptualHash: null,
       artworkSchemaVersion: 2,
-      technicalValidation: {},
+      technicalValidation: {
+        passed: true,
+        warnings: [],
+        errors: [],
+        validatedAt: '2026-01-01T00:00:00Z',
+        validatorVersion: 'fixture',
+      },
       visualValidation: {},
       reviewStatus: 'pending',
     });

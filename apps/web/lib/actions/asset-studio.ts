@@ -193,3 +193,16 @@ export async function getCandidateImageDataUrlAction(candidateId: string) {
   const base64 = Buffer.from(object.bytes).toString('base64');
   return { ok: true as const, dataUrl: `data:${object.mimeType};base64,${base64}` };
 }
+
+// ─── Sprint 43C — Asset Candidate Validation and Human Approval ────────────
+
+/**
+ * Roda a validação técnica de um candidate a qualquer momento — nunca
+ * automático, sempre uma ação explícita. Aprovar exige que isso tenha
+ * rodado com sucesso primeiro (`service.approveCandidate`).
+ */
+export async function runTechnicalValidationAction(candidateId: string) {
+  const auth = await authorizeOrFail();
+  if (!auth.ok) return { ok: false as const, error: auth.error };
+  return service.runTechnicalValidation(repo(), storage(), candidateId);
+}

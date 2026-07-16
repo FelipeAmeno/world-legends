@@ -21,12 +21,23 @@ export function canPublishJob(
   return job.status === 'approved' && Boolean(job.approvedCandidateId);
 }
 
-/** Aprovar/rejeitar/pedir revisão só é válido com o job em `needs_review` e o candidate ainda `pending` (mesma regra de `service.approveCandidate`/`rejectCandidate`/`requestRevision`). */
+/**
+ * Aprovar/rejeitar/pedir revisão só é válido com o job em `needs_review`
+ * e o candidate `pending` OU `needs_revision` (Sprint 43C — um candidate
+ * que voltou de um pedido de revisão anterior continua revisável se o
+ * job voltar a `needs_review`; só `approved`/`rejected` — decisões já
+ * tomadas — ficam definitivamente fora). Mesma regra usada por
+ * `service.approveCandidate`/`rejectCandidate`/`requestRevision` no
+ * servidor — nunca reimplementada separadamente.
+ */
 export function canReviewCandidate(
   job: Pick<AssetGenerationJob, 'status'>,
   candidate: Pick<AssetCandidate, 'reviewStatus'>,
 ): boolean {
-  return job.status === 'needs_review' && candidate.reviewStatus === 'pending';
+  return (
+    job.status === 'needs_review' &&
+    (candidate.reviewStatus === 'pending' || candidate.reviewStatus === 'needs_revision')
+  );
 }
 
 /** Rótulo seguro da seção de candidates — sempre reflete `job.status`/`approvedCandidateId` reais, nunca um texto fixo. */

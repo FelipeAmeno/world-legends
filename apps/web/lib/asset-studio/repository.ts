@@ -74,6 +74,8 @@ export interface AssetStudioRepository {
   getCandidate(id: string): Promise<AssetCandidate | null>;
   updateCandidate(id: string, patch: Partial<AssetCandidate>): Promise<AssetCandidate>;
   listCandidatesForJob(jobId: string): Promise<AssetCandidate[]>;
+  /** Sprint 43C — detecção de checksum duplicado entre candidates (mesmo artwork gerado mais de uma vez). */
+  findCandidatesByChecksum(checksum: string): Promise<AssetCandidate[]>;
 
   // Reviews
   insertReview(input: InsertReviewInput): Promise<AssetReview>;

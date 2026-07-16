@@ -23,6 +23,13 @@ import type {
 import { type CreateDraftJobInput, validateCreateDraftJob } from './job-validation';
 import type { AssetStudioRepository, InsertCandidateInput } from './repository';
 import { assertJobStatusTransition } from './status-transitions';
+import type { AssetStudioStorage } from './storage';
+import {
+  type TechnicalValidationResult,
+  runTechnicalValidation as runTechnicalValidationPipeline,
+} from './technical-validation';
+import { canReviewCandidate } from './ui-eligibility';
+import { isValidHumanIssueCode } from './visual-validation';
 
 export type ServiceResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -302,6 +309,61 @@ export async function attachCandidate(
   return ok(result.data[0] as AssetCandidate);
 }
 
+// ─── Validação técnica (Sprint 43C) ────────────────────────────────────────
+
+/**
+ * Re-executa a validação técnica de um candidate a qualquer momento
+ * (não só na geração) — lê os bytes reais do storage (nunca confia em
+ * metadata já persistida), persiste o resultado tipado em
+ * `technicalValidation`, e atualiza width/height/checksum/perceptualHash
+ * derivados dos bytes reais.
+ */
+export async function runTechnicalValidation(
+  repo: AssetStudioRepository,
+  storage: AssetStudioStorage,
+  candidateId: string,
+): Promise<ServiceResult<AssetCandidate>> {
+  const candidate = await repo.getCandidate(candidateId);
+  if (!candidate) return fail(`candidate ${candidateId} não encontrado`);
+
+  const object = await storage.getObject(candidate.storagePath);
+  if (!object) {
+    const result: TechnicalValidationResult = {
+      passed: false,
+      warnings: [],
+      errors: [`missing-staging-object: arquivo não encontrado em ${candidate.storagePath}`],
+      validatedAt: new Date().toISOString(),
+      validatorVersion: '2026-07-16.1',
+    };
+    const updated = await repo.updateCandidate(candidateId, { technicalValidation: result });
+    return ok(updated);
+  }
+
+  const attempts = await repo.listAttemptsForJob(candidate.jobId);
+  const attempt = attempts.find((a) => a.id === candidate.attemptId);
+
+  const outcome = await runTechnicalValidationPipeline(object.bytes, {
+    claimedMimeType: object.mimeType,
+    storagePath: candidate.storagePath,
+    artworkSchemaVersion: candidate.artworkSchemaVersion,
+    promptSnapshot: attempt?.promptSnapshot ?? null,
+    isDuplicateChecksum: async (checksum) => {
+      const matches = await repo.findCandidatesByChecksum(checksum);
+      return matches.some((c) => c.id !== candidateId);
+    },
+  });
+
+  const updated = await repo.updateCandidate(candidateId, {
+    technicalValidation: outcome.result,
+    width: outcome.width,
+    height: outcome.height,
+    fileSize: outcome.fileSize,
+    checksum: outcome.checksum,
+    perceptualHash: outcome.perceptualHash,
+  });
+  return ok(updated);
+}
+
 // ─── Reviews ────────────────────────────────────────────────────────────────
 
 export async function submitReview(
@@ -315,6 +377,46 @@ export async function submitReview(
   return repo.insertReview({ candidateId, reviewerId, decision, notes, issueCodes });
 }
 
+function validateIssueCodes(issueCodes: string[]): string | null {
+  const invalid = issueCodes.filter((code) => !isValidHumanIssueCode(code));
+  if (invalid.length > 0) return `issue code(s) inválido(s): ${invalid.join(', ')}`;
+  return null;
+}
+
+/**
+ * Regra 1 do brief: só um candidate `pending`/`needs_revision` com o job
+ * em `needs_review` pode ser revisado — checado aqui NO SERVIDOR (a
+ * mesma regra existe em `ui-eligibility.ts` pra esconder os botões, mas
+ * esconder um botão não é uma garantia de segurança; esta é).
+ */
+async function assertReviewEligible(
+  repo: AssetStudioRepository,
+  jobId: string,
+  candidateId: string,
+): Promise<
+  { ok: true; job: AssetGenerationJob; candidate: AssetCandidate } | { ok: false; error: string }
+> {
+  const [job, candidate] = await Promise.all([repo.getJob(jobId), repo.getCandidate(candidateId)]);
+  if (!job) return { ok: false, error: `job ${jobId} não encontrado` };
+  if (!candidate) return { ok: false, error: `candidate ${candidateId} não encontrado` };
+  if (candidate.jobId !== jobId) {
+    return { ok: false, error: `candidate ${candidateId} não pertence ao job ${jobId}` };
+  }
+  if (!canReviewCandidate(job, candidate)) {
+    return {
+      ok: false,
+      error: `candidate ${candidateId} não é elegível pra revisão (job status "${job.status}", candidate review_status "${candidate.reviewStatus}")`,
+    };
+  }
+  return { ok: true, job, candidate };
+}
+
+/**
+ * Regra "Approve requires successful technical validation" — nunca
+ * aprova um candidate que não tenha `technicalValidation.passed === true`
+ * (nunca rodada, ou rodada e reprovada). Nada impede rodar a validação e
+ * aprovar em seguida — só impede pular a etapa.
+ */
 export async function approveCandidate(
   repo: AssetStudioRepository,
   jobId: string,
@@ -322,11 +424,14 @@ export async function approveCandidate(
   reviewerId: string | null,
   notes: string | null = null,
 ): Promise<ServiceResult<AssetGenerationJob>> {
-  const candidate = await repo.getCandidate(candidateId);
-  if (!candidate) return fail(`candidate ${candidateId} não encontrado`);
-  // Regra 9 do brief: o candidate aprovado precisa pertencer ao mesmo job.
-  if (candidate.jobId !== jobId) {
-    return fail(`candidate ${candidateId} não pertence ao job ${jobId}`);
+  const eligible = await assertReviewEligible(repo, jobId, candidateId);
+  if (!eligible.ok) return fail(eligible.error);
+
+  const passed = eligible.candidate.technicalValidation?.passed === true;
+  if (!passed) {
+    return fail(
+      `candidate ${candidateId} não pode ser aprovado sem validação técnica bem-sucedida (rode "Rodar validação técnica" primeiro)`,
+    );
   }
 
   const transition = await transitionJob(repo, jobId, 'approved', {
@@ -347,11 +452,11 @@ export async function rejectCandidate(
   notes: string | null = null,
   issueCodes: string[] = [],
 ): Promise<ServiceResult<AssetGenerationJob>> {
-  const candidate = await repo.getCandidate(candidateId);
-  if (!candidate) return fail(`candidate ${candidateId} não encontrado`);
-  if (candidate.jobId !== jobId) {
-    return fail(`candidate ${candidateId} não pertence ao job ${jobId}`);
-  }
+  const eligible = await assertReviewEligible(repo, jobId, candidateId);
+  if (!eligible.ok) return fail(eligible.error);
+
+  const issueCodeError = validateIssueCodes(issueCodes);
+  if (issueCodeError) return fail(issueCodeError);
 
   const transition = await transitionJob(repo, jobId, 'rejected');
   if (!transition.ok) return transition;
@@ -361,6 +466,7 @@ export async function rejectCandidate(
   return transition;
 }
 
+/** Regra 4 do brief: pedir revisão exige notas OU issue codes — nunca uma revisão muda sem dizer o quê. */
 export async function requestRevision(
   repo: AssetStudioRepository,
   jobId: string,
@@ -369,10 +475,14 @@ export async function requestRevision(
   notes: string | null = null,
   issueCodes: string[] = [],
 ): Promise<ServiceResult<AssetGenerationJob>> {
-  const candidate = await repo.getCandidate(candidateId);
-  if (!candidate) return fail(`candidate ${candidateId} não encontrado`);
-  if (candidate.jobId !== jobId) {
-    return fail(`candidate ${candidateId} não pertence ao job ${jobId}`);
+  const eligible = await assertReviewEligible(repo, jobId, candidateId);
+  if (!eligible.ok) return fail(eligible.error);
+
+  const issueCodeError = validateIssueCodes(issueCodes);
+  if (issueCodeError) return fail(issueCodeError);
+
+  if (!notes?.trim() && issueCodes.length === 0) {
+    return fail('pedido de revisão exige notas ou pelo menos um issue code');
   }
 
   const transition = await transitionJob(repo, jobId, 'queued');

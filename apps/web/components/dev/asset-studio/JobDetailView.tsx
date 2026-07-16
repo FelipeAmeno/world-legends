@@ -23,6 +23,7 @@ import {
   queueJobAction,
   rejectCandidateAction,
   requestRevisionAction,
+  runTechnicalValidationAction,
 } from '@/lib/actions/asset-studio';
 import type { JobDetails } from '@/lib/asset-studio/domain-types';
 import type { ProviderStatusInfo } from '@/lib/asset-studio/provider-config';
@@ -31,6 +32,7 @@ import {
   canReviewCandidate,
   candidateSectionLabel,
 } from '@/lib/asset-studio/ui-eligibility';
+import { HUMAN_ISSUE_CODES, type HumanIssueCode } from '@/lib/asset-studio/visual-validation';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
@@ -144,20 +146,28 @@ export function JobDetailView({ details }: { details: JobDetails }) {
       </Section>
 
       <Section title={`Candidates (${candidates.length}) — ${candidateSectionLabel(job)}`}>
+        <p className="text-[10px] text-muted mb-2">
+          "Tecnicamente válido" (validação automática), "aprovado" (decisão humana) e "publicado"
+          (só status de auditoria — nunca move arquivo, nunca roda cards:build) são estados
+          separados. Múltiplas variantes ficam lado a lado abaixo pra comparação visual.
+        </p>
         {candidates.length === 0 && <p className="text-muted text-xs">Nenhum candidate ainda.</p>}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {candidates.map((c) => (
             <CandidateCard
               key={c.id}
-              candidateId={c.id}
-              variantIndex={c.variantIndex}
-              reviewStatus={c.reviewStatus}
+              candidate={c}
               reviews={reviewsByCandidateId[c.id] ?? []}
               isPending={isPending}
               canReview={canReviewCandidate(job, c)}
               onApprove={() => run(() => approveCandidateAction(job.id, c.id, null))}
-              onReject={() => run(() => rejectCandidateAction(job.id, c.id, null, []))}
-              onRequestRevision={() => run(() => requestRevisionAction(job.id, c.id, null, []))}
+              onReject={(notes, issueCodes) =>
+                run(() => rejectCandidateAction(job.id, c.id, notes, issueCodes))
+              }
+              onRequestRevision={(notes, issueCodes) =>
+                run(() => requestRevisionAction(job.id, c.id, notes, issueCodes))
+              }
+              onRunValidation={() => run(() => runTechnicalValidationAction(c.id))}
             />
           ))}
         </div>
@@ -305,9 +315,10 @@ function GenerateControls({
             type="button"
             disabled={isPending}
             onClick={onPublish}
+            title="Só marca um status de auditoria no banco — nunca copia arquivo pra source/artworks, nunca roda cards:build, nunca faz deploy. O jogo não vê nenhuma mudança."
             className="px-3 py-1.5 rounded-lg bg-white/10 text-parchment text-xs font-bold"
           >
-            Marcar publicado
+            Marcar publicado (placeholder de status — não publica de verdade)
           </button>
         )}
 
@@ -363,44 +374,98 @@ function GenerateControls({
   );
 }
 
+type ValidationStatus = 'not-run' | 'passed' | 'passed-with-warnings' | 'failed';
+
+const VALIDATION_STATUS_LABEL: Record<ValidationStatus, { text: string; className: string }> = {
+  'not-run': { text: 'validação técnica não rodada', className: 'text-muted' },
+  passed: { text: 'tecnicamente válido', className: 'text-emerald-400' },
+  'passed-with-warnings': { text: 'tecnicamente válido (com avisos)', className: 'text-amber-400' },
+  failed: { text: 'validação técnica falhou', className: 'text-red-400' },
+};
+
+/** Nunca confia cegamente no shape — `technicalValidation` é `Record<string, unknown>` até ser lido aqui campo a campo. */
+function readValidationStatus(technicalValidation: Record<string, unknown>): {
+  status: ValidationStatus;
+  warnings: string[];
+  errors: string[];
+} {
+  const passed = technicalValidation.passed;
+  const warnings = Array.isArray(technicalValidation.warnings)
+    ? (technicalValidation.warnings as string[])
+    : [];
+  const errors = Array.isArray(technicalValidation.errors)
+    ? (technicalValidation.errors as string[])
+    : [];
+  if (typeof passed !== 'boolean') return { status: 'not-run', warnings, errors };
+  if (!passed) return { status: 'failed', warnings, errors };
+  return { status: warnings.length > 0 ? 'passed-with-warnings' : 'passed', warnings, errors };
+}
+
 function CandidateCard({
-  candidateId,
-  variantIndex,
-  reviewStatus,
+  candidate,
   reviews,
   isPending,
   canReview,
   onApprove,
   onReject,
   onRequestRevision,
+  onRunValidation,
 }: {
-  candidateId: string;
-  variantIndex: number;
-  reviewStatus: string;
+  candidate: JobDetails['candidates'][number];
   reviews: JobDetails['reviewsByCandidateId'][string];
   isPending: boolean;
   canReview: boolean;
   onApprove: () => void;
-  onReject: () => void;
-  onRequestRevision: () => void;
+  onReject: (notes: string | null, issueCodes: HumanIssueCode[]) => void;
+  onRequestRevision: (notes: string | null, issueCodes: HumanIssueCode[]) => void;
+  onRunValidation: () => void;
 }) {
   const [dataUrl, setDataUrl] = useState<string | null>(null);
+  const [reviewForm, setReviewForm] = useState<'reject' | 'revision' | null>(null);
+  const [notes, setNotes] = useState('');
+  const [selectedIssueCodes, setSelectedIssueCodes] = useState<HumanIssueCode[]>([]);
 
   useEffect(() => {
-    getCandidateImageDataUrlAction(candidateId).then((result) => {
+    getCandidateImageDataUrlAction(candidate.id).then((result) => {
       if (result.ok) setDataUrl(result.dataUrl);
     });
-  }, [candidateId]);
+  }, [candidate.id]);
+
+  function toggleIssueCode(code: HumanIssueCode) {
+    setSelectedIssueCodes((prev) =>
+      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code],
+    );
+  }
+
+  function resetReviewForm() {
+    setReviewForm(null);
+    setNotes('');
+    setSelectedIssueCodes([]);
+  }
+
+  function submitReviewForm() {
+    const trimmedNotes = notes.trim() ? notes.trim() : null;
+    if (reviewForm === 'reject') onReject(trimmedNotes, selectedIssueCodes);
+    if (reviewForm === 'revision') onRequestRevision(trimmedNotes, selectedIssueCodes);
+    resetReviewForm();
+  }
+
+  const {
+    status: validationStatus,
+    warnings,
+    errors,
+  } = readValidationStatus(candidate.technicalValidation);
+  const validationLabel = VALIDATION_STATUS_LABEL[validationStatus];
 
   return (
-    <div className="glass rounded-lg p-2 text-xs border border-border">
-      <div className="relative rounded overflow-hidden mb-2" style={{ aspectRatio: '2/3' }}>
+    <div className="glass rounded-lg p-2 text-xs border border-border space-y-2">
+      <div className="relative rounded overflow-hidden" style={{ aspectRatio: '2/3' }}>
         {dataUrl ? (
           // Data URL de staging, não asset de produção — <img> simples é
           // intencional aqui (next/image exige um domínio/loader configurado).
           <img
             src={dataUrl}
-            alt={`variante ${variantIndex} — staging, não aprovado`}
+            alt={`variante ${candidate.variantIndex} — staging, não aprovado`}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -410,10 +475,53 @@ function CandidateCard({
           staging
         </span>
       </div>
+
       <p className="text-parchment font-bold">
-        variante {variantIndex} · {reviewStatus}
+        variante {candidate.variantIndex} · {candidate.reviewStatus}
       </p>
-      {canReview && (
+
+      <dl className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px] text-muted">
+        <dt>Dimensões</dt>
+        <dd className="text-parchment">
+          {candidate.width && candidate.height ? `${candidate.width}×${candidate.height}` : '—'}
+        </dd>
+        <dt>Formato</dt>
+        <dd className="text-parchment">{candidate.mimeType}</dd>
+        <dt>Tamanho</dt>
+        <dd className="text-parchment">
+          {candidate.fileSize ? `${Math.round(candidate.fileSize / 1024)} KB` : '—'}
+        </dd>
+        <dt>Checksum</dt>
+        <dd className="text-parchment font-mono">
+          {candidate.checksum ? `${candidate.checksum.slice(0, 10)}…` : '—'}
+        </dd>
+      </dl>
+
+      <p className={`text-[10px] font-bold ${validationLabel.className}`}>{validationLabel.text}</p>
+      {errors.length > 0 && (
+        <ul className="text-[10px] text-red-400 list-disc list-inside space-y-0.5">
+          {errors.map((e) => (
+            <li key={e}>{e}</li>
+          ))}
+        </ul>
+      )}
+      {warnings.length > 0 && (
+        <ul className="text-[10px] text-amber-400 list-disc list-inside space-y-0.5">
+          {warnings.map((w) => (
+            <li key={w}>{w}</li>
+          ))}
+        </ul>
+      )}
+      <button
+        type="button"
+        disabled={isPending}
+        onClick={onRunValidation}
+        className="px-2 py-1 rounded bg-white/10 text-parchment text-[10px]"
+      >
+        Rodar validação técnica
+      </button>
+
+      {canReview && !reviewForm && (
         <div className="flex gap-1 mt-2 flex-wrap">
           <button
             type="button"
@@ -426,7 +534,7 @@ function CandidateCard({
           <button
             type="button"
             disabled={isPending}
-            onClick={onReject}
+            onClick={() => setReviewForm('reject')}
             className="px-2 py-1 rounded bg-red-900/60 text-red-200"
           >
             Rejeitar
@@ -434,18 +542,68 @@ function CandidateCard({
           <button
             type="button"
             disabled={isPending}
-            onClick={onRequestRevision}
+            onClick={() => setReviewForm('revision')}
             className="px-2 py-1 rounded bg-amber-900/60 text-amber-200"
           >
             Revisão
           </button>
         </div>
       )}
+
+      {canReview && reviewForm && (
+        <div className="mt-2 border border-white/10 rounded-lg p-2 space-y-2">
+          <p className="text-[10px] uppercase tracking-widest text-muted">
+            {reviewForm === 'reject' ? 'Rejeitar' : 'Pedir revisão — exige notas ou issue code'}
+          </p>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="notas (opcional pra rejeitar; obrigatório pra revisão se nenhum issue code for marcado)"
+            className="w-full text-[10px] bg-white/5 border border-white/10 rounded p-1"
+            rows={2}
+          />
+          <div className="flex flex-wrap gap-1">
+            {HUMAN_ISSUE_CODES.map((code) => (
+              <button
+                key={code}
+                type="button"
+                onClick={() => toggleIssueCode(code)}
+                className={`px-1.5 py-0.5 rounded text-[9px] border ${
+                  selectedIssueCodes.includes(code)
+                    ? 'bg-gold-dim text-obsidian border-gold-dim'
+                    : 'border-white/10 text-muted'
+                }`}
+              >
+                {code}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1">
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={submitReviewForm}
+              className="px-2 py-1 rounded bg-white/10 text-parchment"
+            >
+              Confirmar
+            </button>
+            <button
+              type="button"
+              onClick={resetReviewForm}
+              className="px-2 py-1 rounded bg-white/5 text-muted"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
       {reviews.length > 0 && (
         <div className="mt-2 border-t border-white/5 pt-2 space-y-1">
           {reviews.map((r) => (
             <p key={r.id} className="text-muted">
               {r.decision} · {r.notes ?? 'sem notas'}
+              {r.issueCodes.length > 0 ? ` · [${r.issueCodes.join(', ')}]` : ''}
             </p>
           ))}
         </div>

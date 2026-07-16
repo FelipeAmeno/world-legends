@@ -56,6 +56,8 @@ export { getFavoriteCardIds, toggleFavoriteCardAction } from './favorites';
 // lib/asset-studio/). Toda ação checa autorização internamente.
 // Sprint 43B adiciona generateAttemptAction/getProviderStatusAction/
 // getCandidateImageDataUrlAction (Gemini Nano Banana Image Provider).
+// Sprint 43C adiciona runTechnicalValidationAction (Asset Candidate
+// Validation and Human Approval).
 export {
   approveCandidateAction,
   cancelJobAction,
@@ -70,6 +72,7 @@ export {
   queueJobAction,
   rejectCandidateAction,
   requestRevisionAction,
+  runTechnicalValidationAction,
   startAttemptAction,
   updateDraftJobAction,
 } from './asset-studio';

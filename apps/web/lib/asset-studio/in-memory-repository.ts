@@ -177,6 +177,10 @@ export class InMemoryAssetStudioRepository implements AssetStudioRepository {
     return [...this.candidates.values()].filter((c) => c.jobId === jobId);
   }
 
+  async findCandidatesByChecksum(checksum: string): Promise<AssetCandidate[]> {
+    return [...this.candidates.values()].filter((c) => c.checksum === checksum);
+  }
+
   // ─── Reviews ──────────────────────────────────────────────────────────────
 
   async insertReview(input: InsertReviewInput): Promise<AssetReview> {

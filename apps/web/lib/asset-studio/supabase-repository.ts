@@ -478,6 +478,8 @@ export class SupabaseAssetStudioRepository implements AssetStudioRepository {
     if ('reviewStatus' in patch) row.review_status = patch.reviewStatus;
     if ('technicalValidation' in patch) row.technical_validation = patch.technicalValidation;
     if ('visualValidation' in patch) row.visual_validation = patch.visualValidation;
+    if ('perceptualHash' in patch) row.perceptual_hash = patch.perceptualHash;
+    if ('checksum' in patch) row.checksum = patch.checksum;
     const { data, error } = await this.db()
       .from('asset_candidates')
       .update(row)
@@ -490,6 +492,11 @@ export class SupabaseAssetStudioRepository implements AssetStudioRepository {
 
   async listCandidatesForJob(jobId: string): Promise<AssetCandidate[]> {
     const { data } = await this.db().from('asset_candidates').select().eq('job_id', jobId);
+    return ((data ?? []) as CandidateRow[]).map(candidateFromRow);
+  }
+
+  async findCandidatesByChecksum(checksum: string): Promise<AssetCandidate[]> {
+    const { data } = await this.db().from('asset_candidates').select().eq('checksum', checksum);
     return ((data ?? []) as CandidateRow[]).map(candidateFromRow);
   }
 
