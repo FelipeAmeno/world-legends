@@ -67,4 +67,4 @@ Real Gemini generation QA is paused because the current Google project cannot en
 
 ## 10. Production deployment
 
-_Pending — filled in after push/deploy/confirm._
+URL: https://world-legends.vercel.app (confirmed aliased to commit `7ff75b03`, deployment `world-legends-dss4h8avr`, status ● Ready)
