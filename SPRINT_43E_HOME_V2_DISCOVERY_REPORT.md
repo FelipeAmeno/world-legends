@@ -95,4 +95,4 @@ New code this sprint is limited to `apps/web/lib/home-v2/select-top-cards.ts` + 
 
 ## 14. Production deployment
 
-_Pending — filled in after push/deploy/confirm._
+URL: https://world-legends.vercel.app (confirmed aliased to commit `9f9ac89c`, deployment `world-legends-29f5scswa`, status ● Ready)
