@@ -54,7 +54,7 @@ export function NavIcon({ d, size = 20 }: { d: string | readonly string[]; size?
   );
 }
 
-const PRIMARY_AREAS: Array<{
+export const PRIMARY_AREAS: Array<{
   id: PrimaryArea;
   label: string;
   icon: string | readonly string[];
@@ -217,7 +217,7 @@ function scaledCardStyle(scale: number): React.CSSProperties {
   return { width: 148 * scale, height: 199 * scale, position: 'relative' };
 }
 
-function HeroSection({
+export function HeroSection({
   presentation,
 }: {
   presentation: ReturnType<typeof selectHeroPresentation>;

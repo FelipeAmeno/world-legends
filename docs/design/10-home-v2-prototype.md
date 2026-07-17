@@ -1,7 +1,7 @@
 # WORLD LEGENDS — HOME V2 PROTOTYPE (INTERNAL ROUTE)
 
-**Version:** 1.2 (Sprint 43F + Sprint 43F.1 visual hierarchy pass + Sprint 43F.2 final polish)
-**Status:** Functional prototype at `/dev/home-v2`, final polish pass applied per owner QA. Architecture and desktop visual direction approved; production migration still pending manual QA sign-off. The live Home (`/`) is unchanged.
+**Version:** 1.3 (Sprint 43F + Sprint 43F.1 visual hierarchy pass + Sprint 43F.2 final polish + Sprint 43G AppShell integration)
+**Status:** Two isolated prototype routes now exist: `/dev/home-v2` (fullscreen, own header/nav — content/visual direction approved) and `/dev/home-v2-shell` (same content reused inside the shared AppShell, no duplicate header/nav — Sprint 43G). Neither replaces `/`. Production migration still pending owner sign-off on the AppShell variant.
 **Owner:** Product / Game Design
 **Project Owner:** Felipe Ameno
 **Derived from:** `09-home-v2-information-architecture.md` (Sprint 43E discovery/spec)
@@ -147,3 +147,22 @@ QA do dono contra a Sprint 43F.1 aprovou a arquitetura e a direção visual desk
 **Testes**: 26 novos/atualizados (`home-v2-final-polish.test.ts`, 12 novos; `home-v2-visual-hierarchy.test.ts` teste 180 atualizado pros novos valores de escala, teste 181 corrigido pro mesmo motivo). Suite completa: 698/698.
 
 **Escopo respeitado**: `selectTopCards()`, `selectHeroPresentation()`, `HomeV2ViewModel` e o roteamento das 5 áreas não foram tocados nesta sprint — só apresentação visual e cópia. `AppShell.tsx`, Asset Studio e Gemini não foram tocados. `/` continua servindo `PremiumHome` sem alteração.
+
+## 14. Sprint 43G — Integração com a AppShell compartilhada
+
+QA do dono aprovou a Sprint 43F.2 como conteúdo/experiência visual, mas decidiu explicitamente **não** migrar o protótipo fullscreen direto pra `/`. Decisão arquitetural: o conteúdo aprovado precisa viver dentro da mesma AppShell compartilhada que Coleção/Álbum/Conquistas/Squad já usam (Sidebar + GameTopBar no desktop, MobileHeader + PremiumBottomNav no mobile) — o header e a faixa de 5 abas grandes do protótipo fullscreen nunca podem virar uma segunda casca de navegação global.
+
+**Nova rota isolada**: `/dev/home-v2-shell` (`app/dev/home-v2-shell/page.tsx`), irmã de `/dev/home-v2`, mesma convenção de autorização `/dev/*` (fail-closed, redirect pro login antes de qualquer busca de dado), mesmo padrão de busca de dado real em paralelo. Deliberadamente **não** foi acrescentada a `FULLSCREEN_ROUTES` — é exatamente essa ausência que faz a rota renderizar dentro da AppShell compartilhada automaticamente, sem precisar tocar `AppShell.tsx` (zero linhas alteradas nesse arquivo nesta sprint).
+
+**O que foi removido** (por não estar mais em `/dev/home-v2-shell`):
+- O `HomeV2Header` próprio (identidade/nível/XP/moedas/configurações) — esses dados já chegam de graça via `headerSummary`, o mesmo objeto real que `RootLayout` já calcula e passa pra toda página autenticada.
+- O `PrimaryNav` de 5 abas grandes com glow por área — substituído por `HomeV2AreaSwitcher` (`components/dev/home-v2-shell/HomeV2AreaSwitcher.tsx`), uma faixa de abas fina de uma linha só, sem caixas de destaque por item, claramente um controle de conteúdo secundário (como abas de uma página de perfil) e não uma segunda navegação primária.
+
+**O que foi preservado exatamente** (reuso, nunca reimplementação):
+- `HeroSection` — exportado de `HomeV2Experience.tsx` (antes privado ao módulo) e importado sem alteração; cartas em destaque, escala responsiva de dois níveis, `selectHeroPresentation()` sobre `selectTopCards()` — tudo idêntico ao protótipo fullscreen.
+- `HomeV2ContextPanel` — os 5 painéis (Jogar/Meu Squad/Coleção/Mercado/Packs) reusados sem nenhuma alteração, incluindo todos os ajustes da Sprint 43F.2 (Aproveitamento, ícone real, legibilidade seletiva, painel Jogar preenchido).
+- `PRIMARY_AREAS`/`NavIcon` — também exportados de `HomeV2Experience.tsx` pra alimentar o novo seletor sem duplicar a config de ícone/cor/rótulo por área.
+
+**Testes**: 13 novos (`home-v2-shell-integration.test.ts`, testes 204–216) — auth fail-closed na nova rota, ausência de header próprio, ausência da rota em `FULLSCREEN_ROUTES`, reuso comprovado de `HeroSection`/`HomeV2ContextPanel`/`PRIMARY_AREAS` (nunca reimplementados), seletor de área sem layout de grid de largura total, `selectTopCards`/`selectHeroPresentation` intocados, isolamento (nunca referenciado por Sidebar/MobileHeader/PremiumBottomNav), `/` intocada, sem dado mock, sem Gemini/Asset Studio. Suite completa: 711/711.
+
+**Escopo respeitado**: nenhuma rota de produção foi alterada; `/` continua `PremiumHome` sem mudança; gameplay, economia, Asset Studio e Gemini não foram tocados; a rota fullscreen `/dev/home-v2` (Sprint 43F/43F.1/43F.2) permanece intocada e funcional em paralelo — as duas variantes convivem até uma decisão final de produção.
