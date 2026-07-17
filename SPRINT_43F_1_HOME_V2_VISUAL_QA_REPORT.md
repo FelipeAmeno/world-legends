@@ -84,4 +84,4 @@ Same list as Sprint 43F's report, updated: destination duplication on live `/` i
 
 ## 14. Production deployment
 
-_Pending — filled in after push/deploy/confirm._
+URL: https://world-legends.vercel.app (confirmed aliased to commit `296bd272`, deployment `world-legends-jqof2ix9i`, status ● Ready). The refreshed prototype is at https://world-legends.vercel.app/dev/home-v2 (login required).
