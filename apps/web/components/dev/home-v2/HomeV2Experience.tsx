@@ -27,7 +27,13 @@ export type PrimaryArea = 'jogar' | 'squad' | 'collection' | 'market' | 'packs';
 
 // ─── Ícones — reusados de Sidebar.tsx/PremiumBottomNav.tsx, nunca reinventados ─
 
-function NavIcon({ d, size = 20 }: { d: string | readonly string[]; size?: number }) {
+/** Mesmo path do ícone "Jogar" da nav (círculo + play) — Sprint 43F.2 reusa isto no botão "Jogar agora" do painel contextual, nunca mais o emoji ⚽. */
+export const PLAY_ICON_PATH = [
+  'M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10z',
+  'M10 8l6 4-6 4V8z',
+] as const;
+
+export function NavIcon({ d, size = 20 }: { d: string | readonly string[]; size?: number }) {
   const paths = Array.isArray(d) ? d : [d];
   return (
     <svg
@@ -57,10 +63,7 @@ const PRIMARY_AREAS: Array<{
   {
     id: 'jogar',
     label: 'Jogar',
-    icon: [
-      'M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10z',
-      'M10 8l6 4-6 4V8z',
-    ],
+    icon: PLAY_ICON_PATH,
     accent: '#10b981',
   },
   {
@@ -119,19 +122,19 @@ function HomeV2Header({ viewModel }: { viewModel: HomeV2ViewModel }) {
       : 0;
 
   return (
-    <header className="glass-surface rounded-2xl px-4 py-3 lg:px-5 lg:py-3.5 flex items-center justify-between gap-4">
+    <header className="glass-surface rounded-2xl px-4 py-2.5 lg:px-5 lg:py-2.5 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3 min-w-0">
         <span
-          className="font-display text-xl lg:text-2xl tracking-wide shrink-0"
+          className="font-display text-lg lg:text-xl tracking-wide shrink-0"
           style={{ color: '#c9a84c', textShadow: '0 0 18px rgba(201,168,76,0.45)' }}
         >
           World Legends
         </span>
-        <div className="w-px h-8 bg-white/10 shrink-0" />
+        <div className="w-px h-7 bg-white/[0.06] shrink-0" />
         <div className="min-w-0">
           <div className="flex items-baseline gap-2">
             <p className="text-parchment text-sm font-bold truncate">{userSummary.username}</p>
-            <span className="text-[10px] font-bold text-gold-dim shrink-0">
+            <span className="text-[11px] font-bold text-gold-dim shrink-0">
               Nível {progression.level}
             </span>
           </div>
@@ -145,7 +148,7 @@ function HomeV2Header({ viewModel }: { viewModel: HomeV2ViewModel }) {
                 }}
               />
             </div>
-            <span className="text-[9px] text-white/40 tabular-nums">
+            <span className="text-[10px] text-white/55 tabular-nums font-semibold">
               {progression.xp}/{progression.xpForNext} XP
             </span>
           </div>
@@ -157,7 +160,7 @@ function HomeV2Header({ viewModel }: { viewModel: HomeV2ViewModel }) {
           <span className="text-[12px] lg:text-sm text-parchment font-bold tabular-nums">
             {currencies.softCurrency.toLocaleString('pt-BR')}c
           </span>
-          <span className="w-px h-3.5 bg-white/15" />
+          <span className="w-px h-3.5 bg-white/[0.08]" />
           <span className="text-[12px] lg:text-sm text-white/60 font-bold tabular-nums">
             {currencies.fragmentBalance.toLocaleString('pt-BR')} frag.
           </span>
@@ -165,11 +168,11 @@ function HomeV2Header({ viewModel }: { viewModel: HomeV2ViewModel }) {
         <Link
           href="/settings"
           aria-label="Configurações"
-          className="w-10 h-10 rounded-full glass flex items-center justify-center text-white/50 hover:text-parchment hover:border-white/20 transition-colors"
+          className="w-10 h-10 min-w-11 min-h-11 rounded-full glass flex items-center justify-center text-white/50 hover:text-parchment hover:border-white/20 transition-colors"
         >
           <NavIcon
             d="M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"
-            size={17}
+            size={16}
           />
         </Link>
       </div>
@@ -181,15 +184,21 @@ function HomeV2Header({ viewModel }: { viewModel: HomeV2ViewModel }) {
 
 /**
  * Escala responsiva — dois níveis (mobile/desktop), nunca um valor fixo
- * só pra desktop. A proporção lateral/central fica sempre entre 72% e
- * 82% nos dois níveis (0.66/0.85=77.6%, 1.209/1.55=78%). No mobile a
- * escala é bem menor especificamente pra 3 cartas caberem lado a lado
- * sem overflow horizontal (390px de viewport, ~358px de área útil após
- * padding) — nunca corta/estica a carta, só reduz a escala inteira.
+ * só pra desktop. A proporção lateral/central fica sempre em exatos 78%
+ * (dentro da faixa 72–82% pedida) nos dois níveis — só o valor central
+ * muda. No mobile a escala é bem menor especificamente pra 3 cartas
+ * caberem lado a lado sem overflow horizontal (390px de viewport,
+ * ~358px de área útil após padding) — nunca corta/estica a carta, só
+ * reduz a escala inteira.
+ *
+ * Sprint 43F.2 — reduzido de 0.85/1.55 pra 0.78/1.4 (± 12% de altura de
+ * seção a menos, junto com o padding vertical reduzido logo abaixo)
+ * pra expor mais do painel contextual acima da dobra, sem voltar ao
+ * tamanho subdimensionado da Sprint 43F original.
  */
 const HERO_SCALE = {
-  mobile: { center: 0.85, side: 0.85 * 0.78 },
-  desktop: { center: 1.55, side: 1.55 * 0.78 },
+  mobile: { center: 0.78, side: 0.78 * 0.78 },
+  desktop: { center: 1.4, side: 1.4 * 0.78 },
 } as const;
 
 function useIsDesktopViewport(): boolean {
@@ -239,13 +248,17 @@ function HeroSection({
   return (
     <section
       aria-label="Cartas em destaque"
-      className="relative rounded-2xl overflow-hidden py-8 lg:py-10"
-      style={{
-        background:
-          'radial-gradient(ellipse 70% 80% at 50% 35%, rgba(140,111,39,0.16) 0%, transparent 65%), linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%)',
-        border: '1px solid rgba(255,255,255,0.05)',
-      }}
+      className="glass-surface relative rounded-2xl overflow-hidden py-6 lg:py-7"
     >
+      {/* Camada de fundo radial — separada do surface token pra nunca sobrescrever a borda/fundo compartilhados com header/painel. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse 70% 80% at 50% 35%, rgba(140,111,39,0.16) 0%, transparent 65%)',
+        }}
+      />
       {/* Spotlight ambiente — respeita prefers-reduced-motion (motion-safe:) */}
       <div
         aria-hidden="true"

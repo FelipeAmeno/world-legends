@@ -1,12 +1,12 @@
 # WORLD LEGENDS — HOME V2 PROTOTYPE (INTERNAL ROUTE)
 
-**Version:** 1.1 (Sprint 43F + Sprint 43F.1 visual hierarchy pass)
-**Status:** Functional prototype at `/dev/home-v2`, visually refined per owner QA. The live Home (`/`) is unchanged.
+**Version:** 1.2 (Sprint 43F + Sprint 43F.1 visual hierarchy pass + Sprint 43F.2 final polish)
+**Status:** Functional prototype at `/dev/home-v2`, final polish pass applied per owner QA. Architecture and desktop visual direction approved; production migration still pending manual QA sign-off. The live Home (`/`) is unchanged.
 **Owner:** Product / Game Design
 **Project Owner:** Felipe Ameno
 **Derived from:** `09-home-v2-information-architecture.md` (Sprint 43E discovery/spec)
 **Language:** Portuguese
-**Last updated:** 2026-07-16
+**Last updated:** 2026-07-17
 
 ---
 
@@ -78,6 +78,8 @@ app/dev/home-v2/page.tsx (server)
 
 **Sprint 43F.1** — as cartas em destaque agora usam uma escala responsiva de dois níveis (`useIsDesktopViewport()`, `matchMedia('(min-width: 1024px)')`), não um tamanho fixo: mobile usa uma escala menor especificamente calculada pra caber as 3 cartas lado a lado sem overflow horizontal em 390px de viewport (matemática provada por teste, §9), desktop usa uma escala bem maior pra dominância visual real. A proporção lateral/central (72–82%) é mantida idêntica nos dois níveis. Testado nas larguras representativas 390/430 (mobile) e 1280/1440/1920 (desktop) via inspeção de layout — QA visual completa em navegador real depende de sessão autenticada (§9).
 
+**Sprint 43F.2** — escala central reduzida (`0.85→0.78` mobile, `1.55→1.4` desktop) e padding vertical do hero reduzido (`py-8/lg:py-10` → `py-6/lg:py-7`), redução combinada de altura de seção de ~12–14%, especificamente pra expor mais do painel contextual acima da dobra em viewport inicial, sem voltar ao tamanho subdimensionado da Sprint 43F original. A proporção lateral/central de 78% (dentro da faixa 72–82% pedida) foi preservada matematicamente — `side` é sempre `center * 0.78`, então a redução do valor central nunca desalinha a proporção. Matriz de QA responsivo completa nos 6 viewports pedidos pelo dono está no `SPRINT_43F_2_HOME_V2_FINAL_QA_REPORT.md`.
+
 ## 7. Acessibilidade implementada
 
 - Heading único por painel contextual (`<h2>` dentro de cada painel, nunca pulando nível).
@@ -100,7 +102,7 @@ app/dev/home-v2/page.tsx (server)
 
 **Testes automatizados**: 38 novos testes (`home-v2-select-top-cards.test.ts` do Sprint 43E + `home-v2-view-model.test.ts` + `home-v2-prototype-boundaries.test.ts`, ambos novos nesta sprint) — cobrindo seleção determinística de cartas (0/1/2/3+ cartas), agregação do view-model sem dado mock, autorização fail-closed, ausência de EventBanner/contagem de evento mock, rota canônica única de Coleção, Mercado sempre desabilitado, nunca `showcase`, nenhuma referência a Gemini/Asset Studio/cards:build, e a mudança aditiva em `AppShell.tsx`. Suite completa: 664/664.
 
-**QA manual**: confirmado via build de produção que a rota compila (`/dev/home-v2`, 4.06 kB) e via curl que tanto `/dev/home-v2` quanto `/` retornam `307` pra requisição não-autenticada (redirect correto pro login, nenhum crash). **Limitação honesta**: não tenho um mecanismo de navegador autenticado nesta sessão — o clique-a-clique real (3+/2/1/0 cartas, squad vazio, mobile vs desktop reais, teclado) precisa da mesma verificação manual que toda sprint anterior deste projeto já pediu ao usuário (mesmo padrão estabelecido desde a Sprint 43A).
+**QA manual**: confirmado via build de produção que a rota compila (`/dev/home-v2`, 6.87 kB na Sprint 43F.2) e via curl que tanto `/dev/home-v2` quanto `/` retornam `307` pra requisição não-autenticada (redirect correto pro login, nenhum crash). **Limitação honesta**: não tenho um mecanismo de navegador autenticado nesta sessão — o clique-a-clique real (3+/2/1/0 cartas, squad vazio, mobile vs desktop reais, teclado) precisa da mesma verificação manual que toda sprint anterior deste projeto já pediu ao usuário (mesmo padrão estabelecido desde a Sprint 43A). Ver `SPRINT_43F_2_HOME_V2_FINAL_QA_REPORT.md` pra matriz completa de QA responsivo/interação/dado pendente de confirmação humana.
 
 ## 10. Gaps antes de uma migração pra produção
 
@@ -129,3 +131,19 @@ QA visual do dono encontrou a arquitetura correta, mas o protótipo "visualmente
 - **Navegação**: ícones SVG reais (reusados de `Sidebar.tsx`/`PremiumBottomNav.tsx`, nenhuma dependência nova), estado selecionado com glow colorido por área (mesma cor de acento que a Sidebar já usa por rota) em vez de preenchimento dourado genérico.
 - **Painéis contextuais**: layout de 2 zonas (info/ação primária + apoio visual) reusando o padrão de "stat chip" de `QuickStats.tsx` — Jogar/Squad/Coleção agora mostram números como HUD de jogo; Mercado/Packs indisponíveis usam uma composição de estado vazio (ícone + título + descrição) em vez de uma frase solta.
 - **Bug real encontrado e corrigido durante a implementação**: a primeira versão do hero (escala fixa só pensada pro desktop) teria estourado a largura da viewport em mobile (390px) — descoberto ANTES do QA visual, corrigido com a escala responsiva de dois níveis (§6), nunca chegou a ser visto quebrado por um humano.
+
+## 13. Sprint 43F.2 — Polish final e QA do dono
+
+QA do dono contra a Sprint 43F.1 aprovou a arquitetura e a direção visual desktop, mas ainda não pra migração de produção — só um polish final direcionado. Detalhe completo (matriz de QA responsivo, QA de interação por área, QA de estado de dado, recomendação go/no-go) no `SPRINT_43F_2_HOME_V2_FINAL_QA_REPORT.md`. Resumo das 7 mudanças pedidas:
+
+1. **Altura do hero reduzida** (§6) — escala central e padding vertical reduzidos (~12–14% de altura de seção a menos), proporção lateral/central de 78% preservada, painel contextual mais visível na dobra inicial.
+2. **Header refinado** — altura reduzida (`py-3/lg:py-3.5` → `py-2.5`), divisores mais sutis (`bg-white/10` → `bg-white/[0.06]`), nenhuma informação removida (identidade/nível/XP/moedas/configurações todos presentes), alvo de toque do botão de configurações mantido em 44px reais via `min-w-11 min-h-11` mesmo com a caixa visual compactada pra 40px.
+3. **"Taxa Win" → "Aproveitamento"** — label mista português/inglês eliminada do painel Jogar.
+4. **Emoji ⚽ → ícone real** — botão "Jogar agora" agora usa `NavIcon`/`PLAY_ICON_PATH` (mesmo path do ícone "Jogar" da nav, exportado de `HomeV2Experience.tsx`), nenhuma dependência de ícone nova.
+5. **Legibilidade seletiva** — nível (`text-[10px]` → `text-[11px]`), valor de XP (`text-white/40` → `text-white/55 font-semibold`), texto de explicação de modo indisponível no painel Jogar (`text-white/30` → `text-white/45 leading-relaxed`) — sem clarear todo o texto secundário indiscriminadamente (ex.: "Nenhuma partida jogada ainda" e a descrição do Mercado permanecem no mesmo tom).
+6. **Espaço vazio do painel Jogar preenchido** — zona de apoio antes vazia agora mostra um chip real "Modo disponível: Partida Rápida" (fato real sobre o roteamento atual do app, não um dado inventado) acima do botão de ação.
+7. **Superfície/raio normalizados** — hero migrado de um `background`/`border` inline customizado pro mesmo token `glass-surface` já usado por header e painel contextual (o glow radial próprio do hero foi movido pra uma camada `<div>` sobreposta, preservando o efeito sem duplicar o token de superfície).
+
+**Testes**: 26 novos/atualizados (`home-v2-final-polish.test.ts`, 12 novos; `home-v2-visual-hierarchy.test.ts` teste 180 atualizado pros novos valores de escala, teste 181 corrigido pro mesmo motivo). Suite completa: 698/698.
+
+**Escopo respeitado**: `selectTopCards()`, `selectHeroPresentation()`, `HomeV2ViewModel` e o roteamento das 5 áreas não foram tocados nesta sprint — só apresentação visual e cópia. `AppShell.tsx`, Asset Studio e Gemini não foram tocados. `/` continua servindo `PremiumHome` sem alteração.

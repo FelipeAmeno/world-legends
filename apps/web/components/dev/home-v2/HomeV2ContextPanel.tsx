@@ -14,7 +14,7 @@
 
 import type { HomeV2ViewModel } from '@/lib/home-v2/view-model';
 import Link from 'next/link';
-import type { PrimaryArea } from './HomeV2Experience';
+import { NavIcon, PLAY_ICON_PATH, type PrimaryArea } from './HomeV2Experience';
 
 export function HomeV2ContextPanel({
   area,
@@ -57,7 +57,7 @@ function PrimaryActionLink({
   return (
     <Link
       href={href}
-      className="inline-flex items-center justify-center px-5 py-3 rounded-xl text-obsidian text-sm font-bold min-h-11 leading-none transition-transform hover:scale-[1.02]"
+      className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-obsidian text-sm font-bold min-h-11 leading-none transition-transform hover:scale-[1.02]"
       style={{ background: accent, boxShadow: `0 8px 24px ${accent}40` }}
     >
       {children}
@@ -153,7 +153,7 @@ function JogarPanel({ viewModel }: { viewModel: HomeV2ViewModel }) {
               { label: 'Vitórias', value: wins, color: accent },
               { label: 'Empates', value: draws, color: '#c9a84c' },
               { label: 'Derrotas', value: losses, color: '#ef4444' },
-              { label: 'Taxa Win', value: `${Math.round(winRate * 100)}%`, color: '#3b82f6' },
+              { label: 'Aproveitamento', value: `${Math.round(winRate * 100)}%`, color: '#3b82f6' },
             ]}
           />
           {recentResult ? (
@@ -171,16 +171,28 @@ function JogarPanel({ viewModel }: { viewModel: HomeV2ViewModel }) {
           ) : (
             <p className="text-white/40 text-xs mt-4">Nenhuma partida jogada ainda.</p>
           )}
-          <p className="text-white/30 text-[10px] mt-2">
+          <p className="text-white/45 text-[10px] mt-2 leading-relaxed">
             Liga WL e Copa do Mundo ainda não têm rota própria — só a Partida Rápida está disponível
             hoje.
           </p>
         </>
       }
       support={
-        <PrimaryActionLink href="/match" accent={accent}>
-          ⚽ Jogar agora
-        </PrimaryActionLink>
+        <div className="flex flex-col items-center gap-3">
+          <div
+            className="w-full rounded-xl px-3 py-2.5 text-center"
+            style={{ background: `${accent}12`, border: `1px solid ${accent}30` }}
+          >
+            <p className="text-[9px] uppercase tracking-wider text-white/45 mb-0.5">
+              Modo disponível
+            </p>
+            <p className="text-parchment text-xs font-bold">Partida Rápida</p>
+          </div>
+          <PrimaryActionLink href="/match" accent={accent}>
+            <NavIcon d={PLAY_ICON_PATH} size={16} />
+            Jogar agora
+          </PrimaryActionLink>
+        </div>
       }
     />
   );

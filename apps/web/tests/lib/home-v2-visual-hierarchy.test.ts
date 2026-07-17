@@ -31,8 +31,8 @@ describe('Sprint 43F.1 — Home V2 visual hierarchy (hero dominante, sem overflo
 
   it('180. a carta central é sempre maior que as laterais (dominância visual real, não só CSS de destaque)', () => {
     const src = readSource('components/dev/home-v2/HomeV2Experience.tsx');
-    expect(src).toMatch(/center:\s*0\.85/);
-    expect(src).toMatch(/center:\s*1\.55/);
+    expect(src).toMatch(/center:\s*0\.78/);
+    expect(src).toMatch(/center:\s*1\.4\b/);
   });
 
   it('181. as 3 cartas em destaque no mobile cabem dentro de ~358px de área útil (390px de viewport menos padding) sem overflow horizontal', () => {
@@ -40,8 +40,8 @@ describe('Sprint 43F.1 — Home V2 visual hierarchy (hero dominante, sem overflo
     // tamanho "lg", escala mobile, gap-2 = 8px) — prova a decisão de
     // design, não confia só na leitura visual.
     const CARD_BASE_WIDTH = 148;
-    const MOBILE_CENTER_SCALE = 0.85;
-    const MOBILE_SIDE_SCALE = 0.85 * 0.78;
+    const MOBILE_CENTER_SCALE = 0.78; // Sprint 43F.2 — reduzido de 0.85 (43F.1)
+    const MOBILE_SIDE_SCALE = 0.78 * 0.78;
     const GAP = 8;
     const totalWidth =
       CARD_BASE_WIDTH * MOBILE_SIDE_SCALE * 2 + CARD_BASE_WIDTH * MOBILE_CENTER_SCALE + GAP * 2;
