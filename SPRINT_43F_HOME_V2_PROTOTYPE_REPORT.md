@@ -77,4 +77,4 @@ Confirmed via production build that the route compiles, and via `curl` that both
 
 ## 13. Production deployment
 
-_Pending — filled in after push/deploy/confirm._
+URL: https://world-legends.vercel.app (confirmed aliased to commit `61e24b3b`, deployment `world-legends-k8l9dqlsf`, status ● Ready). The prototype itself is at https://world-legends.vercel.app/dev/home-v2 (login required, same as every other `/dev/*` route).
