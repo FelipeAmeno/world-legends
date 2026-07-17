@@ -19,7 +19,18 @@ type HeaderSummary = {
 
 type Props = { children: React.ReactNode; headerSummary?: HeaderSummary };
 
-const FULLSCREEN_ROUTES = ['/', '/enter', '/packs', '/match', '/rewards', '/login'];
+const FULLSCREEN_ROUTES = [
+  '/',
+  '/enter',
+  '/packs',
+  '/match',
+  '/rewards',
+  '/login',
+  // Sprint 43F — protótipo interno da Home V2, tem shell própria (header +
+  // nav de 5 áreas) igual "/" já tem. Nunca visitado fora de /dev/*, nunca
+  // linkado da navegação real.
+  '/dev/home-v2',
+];
 
 export function AppShell({ children, headerSummary }: Props) {
   const pathname = usePathname();
