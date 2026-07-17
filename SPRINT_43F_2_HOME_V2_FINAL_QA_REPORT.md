@@ -89,4 +89,4 @@ No mock data appears as authenticated real data anywhere touched this sprint (te
 
 ## 9. Production deployment
 
-_Pending — updated after push and Vercel confirmation._
+URL: https://world-legends.vercel.app (confirmed aliased to commit `0e77fa42`, deployment `world-legends-msoi9ylul`, id `dpl_DY93ePSTqeEerrh9Qq1NxPEDKR8z`, status ● Ready). The polished prototype is at https://world-legends.vercel.app/dev/home-v2 (login required).
