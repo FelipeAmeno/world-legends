@@ -1,7 +1,7 @@
 # WORLD LEGENDS — HOME V2 PROTOTYPE (INTERNAL ROUTE)
 
-**Version:** 1.0 (Sprint 43F)
-**Status:** Functional prototype at `/dev/home-v2`. The live Home (`/`) is unchanged.
+**Version:** 1.1 (Sprint 43F + Sprint 43F.1 visual hierarchy pass)
+**Status:** Functional prototype at `/dev/home-v2`, visually refined per owner QA. The live Home (`/`) is unchanged.
 **Owner:** Product / Game Design
 **Project Owner:** Felipe Ameno
 **Derived from:** `09-home-v2-information-architecture.md` (Sprint 43E discovery/spec)
@@ -74,7 +74,9 @@ app/dev/home-v2/page.tsx (server)
 
 ## 6. Comportamento responsivo
 
-`max-w-6xl` centralizado; nav de 5 botões em grid fixo (nunca empilha verticalmente, cabe em telas estreitas); cartas em destaque em `flex` horizontal com `gap` menor em mobile (`gap-2`) e maior em desktop (`gap-4` a partir de `lg:`); painel contextual sempre abaixo das cartas em destaque, nunca ao lado (mesma ordem em qualquer largura, evita reflow chocante). Testado nas larguras representativas 375px (mobile) e 1440px (desktop) via inspeção de layout — QA visual completa depende de sessão autenticada real (§8).
+`max-w-5xl` centralizado (reduzido de `6xl` na Sprint 43F.1 pra evitar o "vazio desktop" apontado pelo QA do dono); nav de 5 botões em grid fixo no desktop e scroll horizontal no mobile se necessário; painel contextual sempre abaixo das cartas em destaque, nunca ao lado (mesma ordem em qualquer largura, evita reflow chocante).
+
+**Sprint 43F.1** — as cartas em destaque agora usam uma escala responsiva de dois níveis (`useIsDesktopViewport()`, `matchMedia('(min-width: 1024px)')`), não um tamanho fixo: mobile usa uma escala menor especificamente calculada pra caber as 3 cartas lado a lado sem overflow horizontal em 390px de viewport (matemática provada por teste, §9), desktop usa uma escala bem maior pra dominância visual real. A proporção lateral/central (72–82%) é mantida idêntica nos dois níveis. Testado nas larguras representativas 390/430 (mobile) e 1280/1440/1920 (desktop) via inspeção de layout — QA visual completa em navegador real depende de sessão autenticada (§9).
 
 ## 7. Acessibilidade implementada
 
@@ -103,10 +105,11 @@ app/dev/home-v2/page.tsx (server)
 ## 10. Gaps antes de uma migração pra produção
 
 1. **Duplicação de destino não foi resolvida em produção** — só neste protótipo isolado; `/` continua com os 3 caminhos pra `/collection` e 4 pra `/match` documentados na Sprint 43E.
-2. **Variante desktop é intencional mas não testada em navegador real** — precisa de QA visual humana antes de qualquer cutover.
+2. ~~Variante desktop é intencional mas não testada em navegador real~~ — parcialmente endereçado na Sprint 43F.1 (§12): a escala responsiva e o `max-w-5xl` foram ajustados especificamente pro feedback de "vazio demais" em desktop; ainda falta QA visual humana em navegador real pra confirmar.
 3. **Componentes órfãos (`HomeHero`, `NewUserWelcome`, `NextBestAction`) continuam intocados** — a decisão de deletar/reaproveitar (Sprint 43E §13) não foi tomada nesta sprint.
 4. **`RootLayout`'s fetch redundante não foi corrigido** — continua rodando em paralelo com o fetch do protótipo quando `/dev/home-v2` é acessado (mesma ineficiência documentada pra `/`).
 5. **Painel de Mercado ficou mais restrito que o doc 09 original cogitava** — decisão tomada durante a implementação (§5); precisa de validação de produto antes de virar o padrão final.
+6. **Regra de apresentação do hero (§12) ainda não foi validada contra cartas full-artwork reais em navegador** — a lógica é testada (9 testes, `select-hero-presentation.ts`), mas nunca foi vista rodando contra o catálogo real de presets full-artwork existente.
 
 ## 11. Recomendação exata para a Sprint 43G
 
@@ -115,3 +118,14 @@ app/dev/home-v2/page.tsx (server)
 3. Decidir e implementar o destino dos 3 componentes órfãos.
 4. Corrigir o fetch redundante do `RootLayout`.
 5. Só depois disso, avaliar um cutover real de `/` — atrás de flag, nunca uma troca direta.
+
+## 12. Sprint 43F.1 — Hierarquia visual e identidade de jogo
+
+QA visual do dono encontrou a arquitetura correta, mas o protótipo "visualmente desconectado" de Packs/Match — cartas pequenas demais, painel parecendo relatório de texto, navegação genérica, espaço morto excessivo. Detalhe completo no relatório da sprint (`SPRINT_43F_1_HOME_V2_VISUAL_QA_REPORT.md`); resumo das decisões:
+
+- **Hero das cartas**: `ResolvedWorldLegendsCard` continua o único componente de renderização de carta (nunca reimplementado) — o que mudou foi o **wrapper**: cada carta é envolvida num container com `transform: scale()` proporcional (escala responsiva §6), preservando o pipeline real de asset/full-artwork/procedural intacto. Central ≈ 1.55× (desktop) / 0.85× (mobile) do tamanho base `lg`; laterais sempre 78% disso (dentro da faixa 72–82% pedida, provado por teste). Brilho ambiente (`glowBreathe`, reusado de `globals.css`, nunca uma keyframe nova) só anima com `motion-safe:` — respeita `prefers-reduced-motion` pela primeira vez neste protótipo.
+- **Regra de apresentação central** (`lib/home-v2/select-hero-presentation.ts`, novo): entre as 3 cartas do ranking de domínio (`selectTopCards()`, Sprint 43E, **nunca alterado**), a primeira que for elegível pra full-artwork (via `resolvePlayerCardRendererForDensity`, nunca reimplementado) vira o centro visual. Trade-off documentado explicitamente pedido pelo brief: esta é uma decisão de **apresentação**, separada do ranking de **domínio** — o conjunto de 3 cartas nunca muda, só a posição central dentro desse conjunto já decidido.
+- **Header**: logo maior com glow, agrupamento visual claro (usuário + nível + barra de XP num bloco, moedas noutra cápsula `glass-gold`), botão de configurações com ícone real (reusado de `Sidebar.tsx`) em vez de engrenagem unicode solta.
+- **Navegação**: ícones SVG reais (reusados de `Sidebar.tsx`/`PremiumBottomNav.tsx`, nenhuma dependência nova), estado selecionado com glow colorido por área (mesma cor de acento que a Sidebar já usa por rota) em vez de preenchimento dourado genérico.
+- **Painéis contextuais**: layout de 2 zonas (info/ação primária + apoio visual) reusando o padrão de "stat chip" de `QuickStats.tsx` — Jogar/Squad/Coleção agora mostram números como HUD de jogo; Mercado/Packs indisponíveis usam uma composição de estado vazio (ícone + título + descrição) em vez de uma frase solta.
+- **Bug real encontrado e corrigido durante a implementação**: a primeira versão do hero (escala fixa só pensada pro desktop) teria estourado a largura da viewport em mobile (390px) — descoberto ANTES do QA visual, corrigido com a escala responsiva de dois níveis (§6), nunca chegou a ser visto quebrado por um humano.
