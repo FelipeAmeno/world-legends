@@ -60,4 +60,4 @@ No production route was changed. `/` still serves `PremiumHome`, unmodified. `Ap
 
 ## 7. Production deployment
 
-_Pending — updated after push and Vercel confirmation._
+URL: https://world-legends.vercel.app (confirmed aliased to commit `cf61ab0b`, deployment `world-legends-ab1pw7a7x`, id `dpl_CjXTdC7yULk3jpmXWcPTeT5zkjjt`, status ● Ready). The AppShell-integrated variant is at https://world-legends.vercel.app/dev/home-v2-shell (login required); the fullscreen prototype remains at https://world-legends.vercel.app/dev/home-v2.
